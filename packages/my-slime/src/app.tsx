@@ -1,15 +1,20 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useKeyboard } from "@opentui/react";
 import {
   COLORS,
   CURRENT_BRANCH_INDEX,
+  IDLE_QUIP_INTERVAL_MS,
   LOCAL_BRANCH_INDEX,
   MENU_OPTIONS,
   NUMBER_OPTION_GAP,
   PROMPT_TEXT,
   REMOTE_BRANCH_INDEX,
   SOMETHING_ELSE_INDEX,
+  TYPEWRITER_SHADES,
+  TYPEWRITER_TICK_MS,
 } from "./constants";
+import { getRandomQuip } from "./utils/idle-quips";
+import { useTypewriter } from "./utils/use-typewriter";
 import { MenuItem } from "./menu-item";
 import { LocalBranchScreen } from "./local-branch-screen";
 import { RemoteBranchScreen } from "./remote-branch-screen";
@@ -24,8 +29,32 @@ export const App = () => {
   const [selectedRemoteBranch, setSelectedRemoteBranch] = useState<string | null>(null);
   const [somethingElseValue, setSomethingElseValue] = useState("");
   const [includeUnstaged, setIncludeUnstaged] = useState(false);
+  const [bubbleText, setBubbleText] = useState(PROMPT_TEXT);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetIdleTimer = useCallback(() => {
+    setBubbleText(PROMPT_TEXT);
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+    idleTimerRef.current = setTimeout(() => {
+      setBubbleText(getRandomQuip());
+    }, IDLE_QUIP_INTERVAL_MS);
+  }, []);
+
+  useEffect(() => {
+    resetIdleTimer();
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    };
+  }, [resetIdleTimer]);
+
+  const bubbleChars = useTypewriter(bubbleText, TYPEWRITER_SHADES, TYPEWRITER_TICK_MS);
 
   useKeyboard((key) => {
+    resetIdleTimer();
     if (screen !== "main") {
       if (key.name === "escape") {
         setScreen("main");
@@ -103,7 +132,11 @@ export const App = () => {
             borderColor={COLORS.ORANGE}
             paddingX={1}
           >
-            <text fg={COLORS.TEXT}>{PROMPT_TEXT}</text>
+            <text>
+              {bubbleChars.map((charState, index) => (
+                <span key={index} fg={charState.color}>{charState.char}</span>
+              ))}
+            </text>
           </box>
           <text fg={COLORS.ORANGE}>{"──╯"}</text>
         </box>

@@ -31,16 +31,16 @@ const DESCRIPTORS = [
 ];
 
 const AUTHORS = [
-  "alice",
-  "bob",
-  "carol",
-  "dan",
-  "eve",
-  "frank",
-  "grace",
-  "heidi",
-  "ivan",
-  "judy",
+  "alicezhou",
+  "bob-martinez",
+  "carolw",
+  "dan.nguyen",
+  "evepatel",
+  "frankt92",
+  "grace-kim",
+  "heidimüller",
+  "ivan.petrov",
+  "judychen-dev",
 ];
 
 const PR_STATUSES: ("open" | "draft" | "merged")[] = ["open", "draft", "merged"];
