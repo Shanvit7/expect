@@ -17,7 +17,6 @@ const loadFixture = (name: string): Record<string, unknown>[] =>
 
 const defaultOptions: LanguageModelV3CallOptions = {
   prompt: [{ role: "user", content: [{ type: "text", text: "test" }] }],
-  mode: { type: "regular" },
 };
 
 const generateWith = (events: Record<string, unknown>[]) => {

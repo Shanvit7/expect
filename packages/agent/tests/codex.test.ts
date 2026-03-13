@@ -23,7 +23,6 @@ import { createCodexModel } from "../src/codex.js";
 
 const defaultOptions: LanguageModelV3CallOptions = {
   prompt: [{ role: "user", content: [{ type: "text", text: "test" }] }],
-  mode: { type: "regular" },
 };
 
 const completedItem = (item: Record<string, unknown>) => ({ type: "item.completed", item });
