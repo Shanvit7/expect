@@ -1,10 +1,4 @@
-import { createCliRenderer } from "@opentui/core";
-import { createRoot } from "@opentui/react";
-import { App } from "./app";
+import { render } from "ink";
+import { App } from "./app.js";
 
-const start = async () => {
-  const renderer = await createCliRenderer();
-  createRoot(renderer).render(<App />);
-};
-
-start();
+render(<App />);

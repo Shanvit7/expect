@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useKeyboard } from "@opentui/react";
+import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
 import {
   COLORS,
   CURRENT_BRANCH_INDEX,
@@ -11,12 +12,12 @@ import {
   SOMETHING_ELSE_INDEX,
   TYPEWRITER_SHADES,
   TYPEWRITER_TICK_MS,
-} from "./constants";
-import { useTypewriter } from "./utils/use-typewriter";
-import { MenuItem } from "./menu-item";
-import { LocalBranchScreen } from "./local-branch-screen";
-import { RemoteBranchScreen } from "./remote-branch-screen";
-import { ColoredLogo } from "./colored-logo";
+} from "./constants.js";
+import { useTypewriter } from "./utils/use-typewriter.js";
+import { MenuItem } from "./menu-item.js";
+import { LocalBranchScreen } from "./local-branch-screen.js";
+import { RemoteBranchScreen } from "./remote-branch-screen.js";
+import { ColoredLogo } from "./colored-logo.js";
 
 type Screen = "main" | "local-branch" | "remote-branch";
 
@@ -30,37 +31,37 @@ export const App = () => {
 
   const promptChars = useTypewriter(PROMPT_TEXT, TYPEWRITER_SHADES, TYPEWRITER_TICK_MS);
 
-  useKeyboard((key) => {
+  useInput((input, key) => {
     if (screen !== "main") {
-      if (key.name === "escape") {
+      if (key.escape) {
         setScreen("main");
       }
       return;
     }
 
-    if (key.name === "up") {
-      setSelectedIndex((previous) => Math.max(0, previous - 1));
-    }
-    if (key.name === "down") {
+    if (key.downArrow) {
       setSelectedIndex((previous) => Math.min(MENU_OPTIONS.length - 1, previous + 1));
+    }
+    if (key.upArrow) {
+      setSelectedIndex((previous) => Math.max(0, previous - 1));
     }
 
     if (selectedIndex === SOMETHING_ELSE_INDEX) return;
 
-    if (key.name === "k") {
+    if (input === "k") {
       setSelectedIndex((previous) => Math.max(0, previous - 1));
     }
-    if (key.name === "j") {
+    if (input === "j") {
       setSelectedIndex((previous) => Math.min(MENU_OPTIONS.length - 1, previous + 1));
     }
-    const numberPressed = Number(key.name);
+    const numberPressed = Number(input);
     if (numberPressed >= 1 && numberPressed <= MENU_OPTIONS.length) {
       setSelectedIndex(numberPressed - 1);
     }
-    if (selectedIndex === CURRENT_BRANCH_INDEX && key.name === "space") {
+    if (selectedIndex === CURRENT_BRANCH_INDEX && input === " ") {
       setIncludeUnstaged((previous) => !previous);
     }
-    if (key.name === "return") {
+    if (key.return) {
       if (selectedIndex === LOCAL_BRANCH_INDEX) {
         setScreen("local-branch");
       }
@@ -89,36 +90,33 @@ export const App = () => {
   }
 
   return (
-    <box
+    <Box
       flexDirection="column"
       width="100%"
-      height="100%"
-      backgroundColor={COLORS.BACKGROUND}
       paddingX={2}
       paddingY={1}
     >
       <ColoredLogo />
 
-      <box flexDirection="row" marginTop={2} alignItems="flex-end">
-        <text fg={COLORS.ORANGE}>{"(•‿•)"}</text>
-        <box flexDirection="column" marginLeft={1}>
-          <box
-            border
-            borderStyle="rounded"
+      <Box flexDirection="row" marginTop={2} alignItems="flex-end">
+        <Text color={COLORS.ORANGE}>{"(•‿•)"}</Text>
+        <Box flexDirection="column" marginLeft={1}>
+          <Box
+            borderStyle="round"
             borderColor={COLORS.ORANGE}
             paddingX={1}
           >
-            <text>
+            <Text>
               {promptChars.map((charState, index) => (
-                <span key={index} fg={charState.color}>{charState.char}</span>
+                <Text key={index} color={charState.color}>{charState.char}</Text>
               ))}
-            </text>
-          </box>
-          <text fg={COLORS.ORANGE}>{"──╯"}</text>
-        </box>
-      </box>
+            </Text>
+          </Box>
+          <Text color={COLORS.ORANGE}>{"──╯"}</Text>
+        </Box>
+      </Box>
 
-      <box flexDirection="column" marginTop={2} gap={1}>
+      <Box flexDirection="column" marginTop={2} gap={1}>
         {MENU_OPTIONS.map((option, index) => {
           let detail: string = option.detail;
           if (index === LOCAL_BRANCH_INDEX && selectedBranch) {
@@ -128,33 +126,31 @@ export const App = () => {
             detail = `(${selectedRemoteBranch})`;
           }
           return (
-            <box key={index} flexDirection="column" gap={"separated" in option ? 0 : 1}>
+            <Box key={index} flexDirection="column" gap={"separated" in option ? 0 : 1}>
               {"separated" in option && option.separated && (
-                <box
-                  height={1}
-                  width="100%"
-                  border={["top"]}
-                  borderColor={COLORS.DIVIDER}
+                <Box
                   borderStyle="single"
+                  borderTop
+                  borderBottom={false}
+                  borderLeft={false}
+                  borderRight={false}
+                  borderColor={COLORS.DIVIDER}
                 />
               )}
               {index === SOMETHING_ELSE_INDEX ? (
-                <box flexDirection="row">
-                  <text fg={index === selectedIndex ? COLORS.SELECTION : COLORS.TEXT}>
+                <Box flexDirection="row">
+                  <Text color={index === selectedIndex ? COLORS.SELECTION : COLORS.TEXT}>
                     {index === selectedIndex ? `➤ ${index + 1}${NUMBER_OPTION_GAP}` : `  ${index + 1}${NUMBER_OPTION_GAP}`}
-                  </text>
-                  <input
-                    focused={index === selectedIndex}
-                    textColor={COLORS.TEXT}
+                  </Text>
+                  <TextInput
+                    focus={index === selectedIndex}
                     placeholder={option.label}
-                    placeholderColor={index === selectedIndex ? COLORS.SELECTION : COLORS.DIM}
                     value={somethingElseValue}
-                    onInput={setSomethingElseValue}
-                    flexGrow={1}
+                    onChange={setSomethingElseValue}
                   />
-                </box>
+                </Box>
               ) : (
-                <box flexDirection="column">
+                <Box flexDirection="column">
                   <MenuItem
                     index={index}
                     label={option.label}
@@ -162,35 +158,37 @@ export const App = () => {
                     isSelected={index === selectedIndex}
                   />
                   {index === CURRENT_BRANCH_INDEX && index === selectedIndex && (
-                    <text fg={COLORS.DIM} marginLeft={5}>
-                      <span fg={includeUnstaged ? COLORS.GREEN : COLORS.DIM}>
+                    <Text color={COLORS.DIM}>
+                      {"     "}
+                      <Text color={includeUnstaged ? COLORS.GREEN : COLORS.DIM}>
                         {includeUnstaged ? "[" : "[ ]"}
-                      </span>
-                      {includeUnstaged && <span fg={COLORS.WHITE}>{"x"}</span>}
-                      {includeUnstaged && <span fg={COLORS.GREEN}>{"]"}</span>}
-                      <span> include unstaged changes </span>
-                      <span fg={COLORS.DIM}>(space to toggle)</span>
-                    </text>
+                      </Text>
+                      {includeUnstaged && <Text color={COLORS.WHITE}>{"x"}</Text>}
+                      {includeUnstaged && <Text color={COLORS.GREEN}>{"]"}</Text>}
+                      <Text> include unstaged changes </Text>
+                      <Text color={COLORS.DIM}>(space to toggle)</Text>
+                    </Text>
                   )}
-                </box>
+                </Box>
               )}
-            </box>
+            </Box>
           );
         })}
-      </box>
+      </Box>
 
-      <box
+      <Box
         marginTop={2}
-        height={1}
-        width="100%"
-        border={["top"]}
-        borderColor={COLORS.DIVIDER}
         borderStyle="single"
+        borderTop
+        borderBottom={false}
+        borderLeft={false}
+        borderRight={false}
+        borderColor={COLORS.DIVIDER}
       />
 
-      <text fg={COLORS.DIM} marginTop={1}>
+      <Text color={COLORS.DIM}>
         ↑/↓ to navigate · Enter to select
-      </text>
-    </box>
+      </Text>
+    </Box>
   );
 };

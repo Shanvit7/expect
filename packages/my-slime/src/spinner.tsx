@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { COLORS } from "./constants";
+import { Text } from "ink";
+import { COLORS } from "./constants.js";
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
@@ -20,9 +21,9 @@ export const Spinner = ({ message }: SpinnerProps) => {
   }, []);
 
   return (
-    <text fg={COLORS.DIM}>
-      <span fg={COLORS.SELECTION}>{SPINNER_FRAMES[frameIndex]}</span>
-      <span> {message}</span>
-    </text>
+    <Text color={COLORS.DIM}>
+      <Text color={COLORS.SELECTION}>{SPINNER_FRAMES[frameIndex]}</Text>
+      <Text> {message}</Text>
+    </Text>
   );
 };

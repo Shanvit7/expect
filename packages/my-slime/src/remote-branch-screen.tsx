@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useKeyboard } from "@opentui/react";
+import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
 import {
   BRANCH_COUNT,
   COLORS,
@@ -8,10 +9,10 @@ import {
   REMOTE_BRANCH_INDEX,
   REMOTE_NAME,
   SEARCH_PLACEHOLDER,
-} from "./constants";
-import { generateRemoteBranches, type RemoteBranch } from "./utils/generate-remote-branches";
-import { Spinner } from "./spinner";
-import { PrFilterBar, PR_FILTERS, type PrFilter } from "./pr-filter";
+} from "./constants.js";
+import { generateRemoteBranches, type RemoteBranch } from "./utils/generate-remote-branches.js";
+import { Spinner } from "./spinner.js";
+import { PrFilterBar, PR_FILTERS, type PrFilter } from "./pr-filter.js";
 
 interface RemoteBranchScreenProps {
   onSelect: (branch: string) => void;
@@ -27,9 +28,9 @@ const PrBadge = ({ branch }: { branch: RemoteBranch }) => {
   } as const;
 
   return (
-    <span fg={colorMap[branch.prStatus]}>
+    <Text color={colorMap[branch.prStatus]}>
       {` PR #${branch.prNumber} (${branch.prStatus})`}
-    </span>
+    </Text>
   );
 };
 
@@ -89,98 +90,93 @@ export const RemoteBranchScreen = ({ onSelect }: RemoteBranchScreenProps) => {
     [activeFilter],
   );
 
-  useKeyboard((key) => {
+  useInput((_input, key) => {
     if (isLoading) return;
-    if (key.name === "down") {
+    if (key.downArrow) {
       setHighlightedIndex((previous) => Math.min(filteredBranches.length - 1, previous + 1));
     }
-    if (key.name === "up") {
+    if (key.upArrow) {
       setHighlightedIndex((previous) => Math.max(0, previous - 1));
     }
-    if (key.name === "tab" || key.name === "right") {
+    if (key.tab || key.rightArrow) {
       cycleFilter(1);
     }
-    if (key.shift && key.name === "tab") {
+    if (key.shift && key.tab) {
       cycleFilter(-1);
     }
-    if (key.name === "left") {
+    if (key.leftArrow) {
       cycleFilter(-1);
     }
-    if (key.name === "return" && filteredBranches.length > 0) {
+    if (key.return && filteredBranches.length > 0) {
       onSelect(filteredBranches[highlightedIndex].name);
     }
   });
 
   return (
-    <box
+    <Box
       flexDirection="column"
       width="100%"
-      height="100%"
-      backgroundColor={COLORS.BACKGROUND}
       paddingX={2}
       paddingY={1}
     >
-      <box flexDirection="row" justifyContent="space-between" width="100%">
-        <text fg={COLORS.TEXT}>
-          <b>{`${REMOTE_BRANCH_INDEX + 1}. ${option.label}`}</b>
-        </text>
-        <text fg={COLORS.DIM}>{REMOTE_NAME}</text>
-      </box>
+      <Box flexDirection="row" justifyContent="space-between" width="100%">
+        <Text color={COLORS.TEXT}>
+          <Text bold>{`${REMOTE_BRANCH_INDEX + 1}. ${option.label}`}</Text>
+        </Text>
+        <Text color={COLORS.DIM}>{REMOTE_NAME}</Text>
+      </Box>
 
-      <box
+      <Box
         marginTop={1}
-        height={1}
-        width="100%"
-        border={["top"]}
-        borderColor={COLORS.DIVIDER}
         borderStyle="single"
+        borderTop
+        borderBottom={false}
+        borderLeft={false}
+        borderRight={false}
+        borderColor={COLORS.DIVIDER}
       />
 
       {isLoading ? (
-        <box marginTop={1}>
+        <Box marginTop={1}>
           <Spinner message={`fetching remote branches from ${REMOTE_NAME}`} />
-        </box>
+        </Box>
       ) : (
-        <box flexDirection="column" marginTop={1}>
+        <Box flexDirection="column" marginTop={1}>
           <PrFilterBar activeFilter={activeFilter} />
 
-          <box flexDirection="column" marginTop={1} gap={0}>
+          <Box flexDirection="column" marginTop={1}>
             {filteredBranches.map((branch, index) => (
-              <text key={index} fg={index === highlightedIndex ? COLORS.SELECTION : COLORS.TEXT}>
+              <Text key={index} color={index === highlightedIndex ? COLORS.SELECTION : COLORS.TEXT}>
                 {index === highlightedIndex ? "➤ " : "  "}
                 {branch.name.padEnd(maxBranchWidth + 2)}
-                <span fg={COLORS.YELLOW}>{branch.author.padEnd(maxAuthorWidth + 2)}</span>
+                <Text color={COLORS.YELLOW}>{branch.author.padEnd(maxAuthorWidth + 2)}</Text>
                 <PrBadge branch={branch} />
-              </text>
+              </Text>
             ))}
-            {filteredBranches.length === 0 && <text fg={COLORS.DIM}>No matching branches</text>}
-          </box>
-        </box>
+            {filteredBranches.length === 0 && <Text color={COLORS.DIM}>No matching branches</Text>}
+          </Box>
+        </Box>
       )}
 
       {!isLoading && (
-        <box
+        <Box
           marginTop={2}
-          width="80%"
-          border
-          borderStyle="rounded"
+          borderStyle="round"
           borderColor={COLORS.BORDER}
           paddingX={2}
         >
-          <input
-            focused
-            width="100%"
-            textColor={COLORS.TEXT}
+          <TextInput
+            focus
             placeholder={SEARCH_PLACEHOLDER}
             value={searchQuery}
-            onInput={handleInput}
+            onChange={handleInput}
           />
-        </box>
+        </Box>
       )}
 
-      <text fg={COLORS.DIM} marginTop={1}>
+      <Text color={COLORS.DIM}>
         {isLoading ? "Esc to go back" : "↑/↓ navigate · ←/→ filter · Enter select · Esc back"}
-      </text>
-    </box>
+      </Text>
+    </Box>
   );
 };

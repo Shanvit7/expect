@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
-import { useKeyboard } from "@opentui/react";
-import { BRANCH_COUNT, COLORS, LOCAL_BRANCH_INDEX, MENU_OPTIONS, SEARCH_PLACEHOLDER } from "./constants";
-import { generateBranches } from "./utils/generate-branches";
+import { Box, Text, useInput } from "ink";
+import TextInput from "ink-text-input";
+import { BRANCH_COUNT, COLORS, LOCAL_BRANCH_INDEX, MENU_OPTIONS, SEARCH_PLACEHOLDER } from "./constants.js";
+import { generateBranches } from "./utils/generate-branches.js";
 
 interface LocalBranchScreenProps {
   onSelect: (branch: string) => void;
@@ -27,71 +28,66 @@ export const LocalBranchScreen = ({ onSelect }: LocalBranchScreenProps) => {
     [],
   );
 
-  useKeyboard((key) => {
-    if (key.name === "down") {
+  useInput((_input, key) => {
+    if (key.downArrow) {
       setHighlightedIndex((previous) => Math.min(filteredBranches.length - 1, previous + 1));
     }
-    if (key.name === "up") {
+    if (key.upArrow) {
       setHighlightedIndex((previous) => Math.max(0, previous - 1));
     }
-    if (key.name === "return" && filteredBranches.length > 0) {
+    if (key.return && filteredBranches.length > 0) {
       onSelect(filteredBranches[highlightedIndex]);
     }
   });
 
   return (
-    <box
+    <Box
       flexDirection="column"
       width="100%"
-      height="100%"
-      backgroundColor={COLORS.BACKGROUND}
       paddingX={2}
       paddingY={1}
     >
-      <text fg={COLORS.TEXT}>
-        <b>{`${LOCAL_BRANCH_INDEX + 1}. ${option.label}`}</b>
-        <span fg={COLORS.DIM}>{` (${filteredBranches.length})`}</span>
-      </text>
+      <Text color={COLORS.TEXT}>
+        <Text bold>{`${LOCAL_BRANCH_INDEX + 1}. ${option.label}`}</Text>
+        <Text color={COLORS.DIM}>{` (${filteredBranches.length})`}</Text>
+      </Text>
 
-      <box
+      <Box
         marginTop={1}
-        height={1}
-        width="100%"
-        border={["top"]}
-        borderColor={COLORS.DIVIDER}
         borderStyle="single"
+        borderTop
+        borderBottom={false}
+        borderLeft={false}
+        borderRight={false}
+        borderColor={COLORS.DIVIDER}
       />
 
-      <box flexDirection="column" marginTop={1} gap={0}>
+      <Box flexDirection="column" marginTop={1}>
         {filteredBranches.map((branch, index) => (
-          <text key={index} fg={index === highlightedIndex ? COLORS.SELECTION : COLORS.TEXT}>
+          <Text key={index} color={index === highlightedIndex ? COLORS.SELECTION : COLORS.TEXT}>
             {index === highlightedIndex ? `➤ ${branch}` : `  ${branch}`}
-          </text>
+          </Text>
         ))}
-        {filteredBranches.length === 0 && <text fg={COLORS.DIM}>No matching branches</text>}
-      </box>
+        {filteredBranches.length === 0 && <Text color={COLORS.DIM}>No matching branches</Text>}
+      </Box>
 
-      <box
+      <Box
         marginTop={2}
-        width="80%"
-        border
-        borderStyle="rounded"
+        borderStyle="round"
         borderColor={COLORS.BORDER}
         paddingX={2}
       >
-        <input
-          focused
-          width="100%"
-          textColor={COLORS.TEXT}
+        <TextInput
+          focus
           placeholder={SEARCH_PLACEHOLDER}
           value={searchQuery}
-          onInput={handleInput}
+          onChange={handleInput}
         />
-      </box>
+      </Box>
 
-      <text fg={COLORS.DIM} marginTop={1}>
+      <Text color={COLORS.DIM}>
         ↑/↓ to navigate · Enter to select · Esc to go back
-      </text>
-    </box>
+      </Text>
+    </Box>
   );
 };

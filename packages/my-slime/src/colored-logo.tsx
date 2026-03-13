@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Box, Text } from "ink";
 
 const LOGO_LINES = [
   "   __            __  _    ",
@@ -32,15 +33,15 @@ export const ColoredLogo = () => {
   }, []);
 
   return (
-    <box flexDirection="column">
+    <Box flexDirection="column">
       {LOGO_LINES.map((line, lineIndex) => {
         const shadeIndex = (lineIndex + offset) % SHADES.length;
         return (
-          <text key={lineIndex} fg={SHADES[shadeIndex]}>
+          <Text key={lineIndex} color={SHADES[shadeIndex]}>
             {line}
-          </text>
+          </Text>
         );
       })}
-    </box>
+    </Box>
   );
 };

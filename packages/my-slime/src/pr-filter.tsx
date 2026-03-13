@@ -1,4 +1,5 @@
-import { COLORS } from "./constants";
+import { Text } from "ink";
+import { COLORS } from "./constants.js";
 
 export type PrFilter = "all" | "open" | "draft" | "merged" | "no-pr";
 
@@ -17,18 +18,18 @@ interface PrFilterBarProps {
 }
 
 export const PrFilterBar = ({ activeFilter }: PrFilterBarProps) => (
-  <text fg={COLORS.DIM}>
+  <Text color={COLORS.DIM}>
     {PR_FILTERS.map((filter, index) => {
       const isActive = filter === activeFilter;
       const separator = index < PR_FILTERS.length - 1 ? "  " : "";
       return (
-        <span key={filter}>
-          <span fg={isActive ? FILTER_COLORS[filter] : COLORS.DIM}>
+        <Text key={filter}>
+          <Text color={isActive ? FILTER_COLORS[filter] : COLORS.DIM}>
             {isActive ? `[${filter}]` : ` ${filter} `}
-          </span>
+          </Text>
           {separator}
-        </span>
+        </Text>
       );
     })}
-  </text>
+  </Text>
 );
