@@ -2,7 +2,8 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { homedir, platform } from "node:os";
 import path from "node:path";
 import { execCommand } from "@browser-tester/utils";
-import type { BrowserInfo, BrowserProfile, LocalStateProfile } from "../types.js";
+import type { Browser, BrowserInfo, BrowserProfile, LocalStateProfile } from "../types.js";
+import { browserDisplayNameToKey } from "../utils/browser-name-map.js";
 import { naturalCompare } from "../utils/natural-sort.js";
 import { parseProfilesIni } from "../utils/parse-profiles-ini.js";
 import { SAFARI_COOKIE_RELATIVE_PATHS } from "../constants.js";
@@ -273,7 +274,11 @@ const detectSafariProfiles = (currentPlatform: string): BrowserProfile[] => {
   return [];
 };
 
-export const detectBrowserProfiles = (): BrowserProfile[] => {
+export interface DetectBrowserProfilesOptions {
+  browser?: Browser;
+}
+
+export const detectBrowserProfiles = (options?: DetectBrowserProfilesOptions): BrowserProfile[] => {
   const currentPlatform = platform();
   const allProfiles: BrowserProfile[] = [];
 
@@ -301,6 +306,12 @@ export const detectBrowserProfiles = (): BrowserProfile[] => {
 
   allProfiles.push(...detectFirefoxProfiles(currentPlatform));
   allProfiles.push(...detectSafariProfiles(currentPlatform));
+
+  if (options?.browser) {
+    return allProfiles.filter(
+      (profile) => browserDisplayNameToKey(profile.browser.name) === options.browser,
+    );
+  }
 
   return allProfiles;
 };

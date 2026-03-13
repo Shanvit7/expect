@@ -1,6 +1,6 @@
 # @browser-tester/cookies
 
-Extract cookies from local browsers. Two methods: **SQLite** (reads cookie databases from disk) and **CDP** (launches headless Chrome via DevTools Protocol).
+Extract cookies from local browsers for use in automated testing.
 
 ## Install
 
@@ -8,97 +8,139 @@ Extract cookies from local browsers. Two methods: **SQLite** (reads cookie datab
 pnpm add @browser-tester/cookies
 ```
 
-## SQLite Extraction
+## Quick Start
 
-Reads cookies directly from browser SQLite databases. Requires keychain/DPAPI access on macOS/Windows.
+Extract cookies for a URL from your installed browsers:
 
 ```ts
-import { extractCookies } from "@browser-tester/cookies";
+import { extractCookies, CookieJar } from "@browser-tester/cookies";
 
+const { cookies } = await extractCookies({ url: "https://github.com" });
+
+const jar = new CookieJar(cookies);
+jar.toCookieHeader("https://github.com"); // "session=abc; user=xyz"
+jar.toPlaywright(); // ready for Playwright's addCookies()
+jar.toPuppeteer(); // ready for Puppeteer's setCookie()
+```
+
+Extract cookies from a specific browser profile:
+
+```ts
+import { detectBrowserProfiles, extractProfileCookies } from "@browser-tester/cookies";
+
+const profiles = detectBrowserProfiles({ browser: "chrome" });
+const { cookies } = await extractProfileCookies({ profile: profiles[0] });
+```
+
+Detect the system default browser:
+
+```ts
+import { detectDefaultBrowser } from "@browser-tester/cookies";
+
+const browser = await detectDefaultBrowser(); // "chrome" | "safari" | ... | null
+```
+
+---
+
+## API Reference
+
+### `extractCookies(options)`
+
+Reads cookies from browser SQLite databases on disk. Searches multiple browsers in parallel and deduplicates results.
+
+```ts
 const { cookies, warnings } = await extractCookies({
   url: "https://github.com",
-  browsers: ["chrome", "firefox"], // optional, defaults to chrome/brave/edge/arc/firefox/safari
-  names: ["session"], // optional, filter by cookie name
-  includeExpired: false, // optional, default false
-  timeoutMs: 5000, // optional, keychain command timeout
+  browsers: ["chrome", "firefox"],
+  names: ["session"],
+  includeExpired: false,
+  timeoutMs: 5000,
   onKeychainAccess: async (browser) => {
-    // optional, fires before keychain/DPAPI/secret-tool prompt
     console.log(`Requesting credential access for ${browser}...`);
   },
 });
 ```
 
-### Supported browsers
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `url` | `string` | required | URL to match cookies against |
+| `browsers` | `Browser[]` | `["chrome","brave","edge","arc","firefox","safari"]` | Browsers to search |
+| `names` | `string[]` | all | Filter by cookie name |
+| `includeExpired` | `boolean` | `false` | Include expired cookies |
+| `timeoutMs` | `number` | `5000` | Keychain/DPAPI command timeout |
+| `onKeychainAccess` | `(browser) => void` | - | Fires before credential prompt |
 
-`chrome` `edge` `brave` `arc` `dia` `helium` `chromium` `vivaldi` `opera` `ghost` `sidekick` `yandex` `iridium` `thorium` `sigmaos` `wavebox` `comet` `blisk` `firefox` `safari`
+Supported browsers: `chrome` `edge` `brave` `arc` `dia` `helium` `chromium` `vivaldi` `opera` `ghost` `sidekick` `yandex` `iridium` `thorium` `sigmaos` `wavebox` `comet` `blisk` `firefox` `safari`
 
-### Per-browser extraction
+### `detectBrowserProfiles(options?)`
+
+Detects installed browser profiles across Chromium, Firefox, and Safari.
 
 ```ts
-import {
-  extractChromiumCookies,
-  extractFirefoxCookies,
-  extractSafariCookies,
-} from "@browser-tester/cookies";
-
-const result = await extractChromiumCookies("chrome", ["github.com"], { names: ["session"] });
-const firefox = await extractFirefoxCookies(["github.com"]);
-const safari = await extractSafariCookies(["github.com"]);
+const allProfiles = detectBrowserProfiles();
+const chromeOnly = detectBrowserProfiles({ browser: "chrome" });
 ```
 
-## CDP Extraction
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `browser` | `Browser` | all | Filter to a specific browser |
 
-Launches a headless browser with a copied profile, extracts cookies via `Network.getAllCookies`. No keychain popup -- Chrome decrypts its own cookies.
+Returns `BrowserProfile[]`.
+
+### `extractProfileCookies(options)`
+
+Extracts all cookies from a browser profile. Chromium browsers are launched headless via CDP. Firefox and Safari profiles are read directly from disk.
 
 ```ts
-import { detectBrowserProfiles, extractProfileCookies } from "@browser-tester/cookies";
-
-const profiles = detectBrowserProfiles();
-// [{ profileName: "Default", displayName: "Person 1", browser: { name: "Google Chrome", ... }, ... }]
-
 const { cookies, warnings } = await extractProfileCookies({
   profile: profiles[0],
-  port: 9222, // optional, CDP debugging port
+  port: 9222,
 });
 ```
 
-### Extract from all profiles
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `profile` | `BrowserProfile` | required | Profile from `detectBrowserProfiles` |
+| `port` | `number` | `9222` | CDP debugging port (Chromium only) |
+
+### `extractAllProfileCookies(profiles)`
+
+Extracts cookies from multiple profiles sequentially, aggregating results.
 
 ```ts
-import { detectBrowserProfiles, extractAllProfileCookies } from "@browser-tester/cookies";
-
-const profiles = detectBrowserProfiles();
 const { cookies, warnings } = await extractAllProfileCookies(profiles);
 ```
 
-## CookieJar
+### `CookieJar`
 
-Utility for matching, converting, and serializing cookies.
+Wraps a `Cookie[]` with matching, conversion, and serialization.
 
-```ts
-import { CookieJar } from "@browser-tester/cookies";
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `match(url)` | `Cookie[]` | Cookies matching domain, path, secure flag, and expiry |
+| `toCookieHeader(url)` | `string` | `"name=value; name2=value2"` for matched cookies |
+| `toPlaywright()` | `PlaywrightCookie[]` | Playwright format (sameSite defaults to `"Lax"`) |
+| `toPuppeteer()` | `PuppeteerCookie[]` | Puppeteer format |
+| `toJSON()` | `string` | Serialize to JSON |
+| `fromJSON(json)` | `CookieJar` | Static deserializer |
 
-const jar = new CookieJar(cookies);
+### `toCookieHeader(cookies)`
 
-jar.match("https://github.com/settings"); // Cookie[] matching domain/path/secure/expiry
-jar.toCookieHeader("https://github.com"); // "name=value; name2=value2"
-jar.toPlaywright(); // PlaywrightCookie[] (sameSite defaults to "Lax")
-jar.toPuppeteer(); // PuppeteerCookie[]
-jar.toJSON(); // serialized string
-CookieJar.fromJSON(json); // deserialize
-```
-
-## `toCookieHeader`
-
-Format a cookie array as a `Cookie` header string without URL matching.
+Formats a `Cookie[]` as a header string without URL matching.
 
 ```ts
-import { toCookieHeader } from "@browser-tester/cookies";
-
 toCookieHeader(cookies); // "name=value; name2=value2"
 ```
 
-## Types
+### `detectDefaultBrowser()`
+
+Returns the system default browser key, or `null` if detection fails.
+
+```ts
+const browser = await detectDefaultBrowser(); // "chrome" | "safari" | ... | null
+```
+
+### Types
 
 ```ts
 interface Cookie {
@@ -106,20 +148,11 @@ interface Cookie {
   value: string;
   domain: string;
   path: string;
-  expires?: number; // unix seconds, undefined = session
+  expires?: number;
   secure: boolean;
   httpOnly: boolean;
   sameSite?: "Strict" | "Lax" | "None";
   browser: Browser;
-}
-
-interface ExtractOptions {
-  url: string;
-  browsers?: Browser[];
-  names?: string[];
-  includeExpired?: boolean;
-  timeoutMs?: number;
-  onKeychainAccess?: (browser: Browser) => void | Promise<void>;
 }
 
 interface ExtractResult {
@@ -128,44 +161,24 @@ interface ExtractResult {
 }
 
 interface BrowserProfile {
-  profileName: string; // directory name ("Default", "Profile 1")
-  profilePath: string; // absolute path to profile directory
-  displayName: string; // human-readable name from Local State
+  profileName: string;
+  profilePath: string;
+  displayName: string;
   browser: BrowserInfo;
 }
 
 interface BrowserInfo {
-  name: string; // display name ("Google Chrome", "Arc")
+  name: string;
   executablePath: string;
 }
-
-interface ExtractProfileOptions {
-  profile: BrowserProfile;
-  port?: number; // CDP port, default 9222
-}
 ```
 
-## Default Browser Detection
+### SQLite vs Profile Extraction
 
-Detects the system default browser without keychain access.
-
-```ts
-import { detectDefaultBrowser } from "@browser-tester/cookies";
-
-const browser = detectDefaultBrowser(); // "chrome" | "arc" | "safari" | ... | null
-```
-
-- **macOS**: reads LaunchServices plist for the HTTPS handler bundle ID
-- **Linux**: `xdg-settings get default-web-browser`
-- **Windows**: registry `UserChoice` ProgId for HTTPS
-
-## SQLite vs CDP
-
-|                            | SQLite                   | CDP                       |
-| -------------------------- | ------------------------ | ------------------------- |
-| Speed                      | Fast (no browser launch) | ~3s startup               |
-| Keychain popup (macOS)     | Yes                      | No                        |
-| Firewall popup (macOS)     | No                       | Once (remembered)         |
-| Firefox/Safari             | Yes                      | No (Chromium only)        |
-| Requires browser installed | No (reads DB files)      | Yes (launches executable) |
-| Cookie decryption          | Manual (keychain/DPAPI)  | Chrome handles it         |
+|                            | SQLite                   | Profile                              |
+| -------------------------- | ------------------------ | ------------------------------------ |
+| Speed                      | Fast (no browser launch) | ~3s startup (Chromium), fast (others)|
+| Keychain popup (macOS)     | Yes                      | No                                   |
+| Firefox/Safari             | Yes                      | Yes                                  |
+| Requires browser installed | No (reads DB files)      | Yes                                  |
+| Cookie decryption          | Manual (keychain/DPAPI)  | Chromium handles it / not needed     |

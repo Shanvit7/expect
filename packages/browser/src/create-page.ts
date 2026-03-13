@@ -1,5 +1,4 @@
 import {
-  browserDisplayNameToKey,
   detectBrowserProfiles,
   detectDefaultBrowser,
   extractAllProfileCookies,
@@ -16,9 +15,7 @@ const extractDefaultBrowserCookies = async (
   defaultBrowser: BrowserKey | null,
 ): Promise<Cookie[]> => {
   if (defaultBrowser) {
-    const profiles = detectBrowserProfiles().filter(
-      (profile) => browserDisplayNameToKey(profile.browser.name) === defaultBrowser,
-    );
+    const profiles = detectBrowserProfiles({ browser: defaultBrowser });
 
     if (profiles.length > 0) {
       const result = await extractAllProfileCookies(profiles);
