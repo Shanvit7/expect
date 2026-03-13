@@ -307,6 +307,9 @@ export const App = () => {
               recommended={index === 0 && menuOptions.length > 1}
             />
           ))}
+          {menuOptions.length === 1 && (
+            <Text color={COLORS.DIM}>  press <Text color={COLORS.TEXT}>return</Text> to continue</Text>
+          )}
         </Box>
       </Box>
 
