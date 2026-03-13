@@ -1,0 +1,7 @@
+export const GIT_TIMEOUT_MS = 5000;
+export const RECENT_COMMIT_LIMIT = 10;
+export const CHANGED_FILE_LIMIT = 40;
+export const DIFF_PREVIEW_CHAR_LIMIT = 12000;
+export const PLANNER_MAX_STEP_COUNT = 8;
+export const STEP_ID_PAD_LENGTH = 2;
+export const DEFAULT_BROWSER_MCP_SERVER_NAME = "browser";

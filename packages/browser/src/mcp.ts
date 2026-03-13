@@ -2,8 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod/v4";
 import type { Browser as PlaywrightBrowser, BrowserContext, Page } from "playwright";
-import { chromium } from "playwright";
-import { HEADLESS_CHROMIUM_ARGS } from "./constants";
+import { createPage } from "./create-page";
 import { snapshot } from "./snapshot";
 import { annotatedScreenshot } from "./annotated-screenshot";
 import { diffSnapshots } from "./diff";
@@ -89,25 +88,28 @@ export const createBrowserMcpServer = () => {
       inputSchema: {
         url: z.string().describe("URL to navigate to"),
         headed: z.boolean().optional().describe("Show browser window"),
+        cookies: z
+          .boolean()
+          .optional()
+          .describe("Reuse local browser cookies for the target URL when available"),
         waitUntil: z
           .enum(["load", "domcontentloaded", "networkidle", "commit"])
           .optional()
           .describe("Wait strategy"),
       },
     },
-    async ({ url, headed, waitUntil }) => {
+    async ({ url, headed, cookies, waitUntil }) => {
       if (session) {
         await session.page.goto(url, { waitUntil: waitUntil ?? "load" });
         return textResult(`Navigated to ${url}`);
       }
 
-      const browser = await chromium.launch({
-        headless: !headed,
-        args: HEADLESS_CHROMIUM_ARGS,
+      const pageResult = await createPage(url, {
+        headed,
+        cookies,
+        waitUntil,
       });
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await page.goto(url, { waitUntil: waitUntil ?? "load" });
+      const { browser, context, page } = pageResult;
       session = { browser, context, page, consoleMessages: [], networkRequests: [] };
       setupPageTracking(page, session);
       return textResult(`Opened ${url}`);

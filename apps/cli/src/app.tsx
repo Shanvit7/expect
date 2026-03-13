@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
+import type { BrowserEnvironmentHints, BrowserFlowPlan, TestTarget } from "@browser-tester/orchestrator";
 import { COLORS, VERSION } from "./constants.js";
 import { MenuItem } from "./menu-item.js";
 import { BranchSwitcherScreen } from "./branch-switcher-screen.js";
 import { CommitPickerScreen } from "./commit-picker-screen.js";
 import { ColoredLogo } from "./colored-logo.js";
+import { FlowInputScreen } from "./flow-input-screen.js";
+import { PlanningScreen } from "./planning-screen.js";
+import { PlanReviewScreen } from "./plan-review-screen.js";
 import { Spinner } from "./spinner.js";
 import {
   getGitState,
@@ -15,9 +19,16 @@ import {
 import { TestingScreen } from "./testing-screen.js";
 import { switchBranch } from "./utils/switch-branch.js";
 import type { Commit } from "./utils/fetch-commits.js";
-import type { TestAction } from "./utils/mock-agent-stream.js";
+import { generateBrowserPlan, type TestAction } from "./utils/browser-agent.js";
 
-type Screen = "main" | "switch-branch" | "select-commit" | "testing";
+type Screen =
+  | "main"
+  | "switch-branch"
+  | "select-commit"
+  | "flow-input"
+  | "planning"
+  | "review-plan"
+  | "testing";
 
 type MenuAction = "test-unstaged" | "test-branch" | "select-commit" | "select-branch";
 
@@ -70,12 +81,46 @@ export const App = () => {
   const [screen, setScreen] = useState<Screen>("main");
   const [testAction, setTestAction] = useState<TestAction | null>(null);
   const [selectedCommit, setSelectedCommit] = useState<Commit | null>(null);
-  const [reviewPlan, setReviewPlan] = useState(false);
+  const [autoRunAfterPlanning, setAutoRunAfterPlanning] = useState(false);
+  const [flowInstruction, setFlowInstruction] = useState("");
+  const [generatedPlan, setGeneratedPlan] = useState<BrowserFlowPlan | null>(null);
+  const [resolvedTarget, setResolvedTarget] = useState<TestTarget | null>(null);
+  const [browserEnvironment, setBrowserEnvironment] = useState<BrowserEnvironmentHints | null>(null);
+  const [planningError, setPlanningError] = useState<string | null>(null);
 
   useEffect(() => {
     const state = getGitState();
     setGitState(state);
   }, []);
+
+  useEffect(() => {
+    if (screen !== "planning" || !gitState || !testAction || !flowInstruction.trim()) return;
+
+    let isCancelled = false;
+    setPlanningError(null);
+
+    void generateBrowserPlan({
+      action: testAction,
+      commit: selectedCommit ?? undefined,
+      userInstruction: flowInstruction,
+    })
+      .then(({ target, plan, environment }) => {
+        if (isCancelled) return;
+        setResolvedTarget(target);
+        setGeneratedPlan(plan);
+        setBrowserEnvironment(environment);
+        setScreen(autoRunAfterPlanning ? "testing" : "review-plan");
+      })
+      .catch((caughtError) => {
+        if (isCancelled) return;
+        const errorMessage = caughtError instanceof Error ? caughtError.message : "Unknown error";
+        setPlanningError(errorMessage);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [autoRunAfterPlanning, flowInstruction, gitState, screen, selectedCommit, testAction]);
 
   const recommendedScope = gitState ? getRecommendedScope(gitState) : null;
   const menuOptions =
@@ -85,7 +130,11 @@ export const App = () => {
 
     if (screen !== "main") {
       if (key.escape) {
-        setScreen("main");
+        if (screen === "review-plan" || screen === "planning") {
+          setScreen("flow-input");
+        } else if (screen !== "testing") {
+          setScreen("main");
+        }
       }
       return;
     }
@@ -98,7 +147,7 @@ export const App = () => {
     }
 
     if (key.tab) {
-      setReviewPlan((previous) => !previous);
+      setAutoRunAfterPlanning((previous) => !previous);
     }
 
     if (input === "b") {
@@ -114,7 +163,10 @@ export const App = () => {
       } else if (selected.action === "test-unstaged" || selected.action === "test-branch") {
         setTestAction(selected.action);
         setSelectedCommit(null);
-        setScreen("testing");
+        setGeneratedPlan(null);
+        setResolvedTarget(null);
+        setBrowserEnvironment(null);
+        setScreen("flow-input");
       }
     }
   });
@@ -122,12 +174,20 @@ export const App = () => {
   const handleCommitSelect = (commit: Commit) => {
     setTestAction("select-commit");
     setSelectedCommit(commit);
-    setScreen("testing");
+    setGeneratedPlan(null);
+    setResolvedTarget(null);
+    setBrowserEnvironment(null);
+    setScreen("flow-input");
   };
 
   const handleTestingExit = () => {
     setTestAction(null);
     setSelectedCommit(null);
+    setFlowInstruction("");
+    setGeneratedPlan(null);
+    setResolvedTarget(null);
+    setBrowserEnvironment(null);
+    setPlanningError(null);
     setScreen("main");
   };
 
@@ -150,11 +210,19 @@ export const App = () => {
   }
 
   if (screen === "testing" && testAction) {
+    if (!resolvedTarget || !generatedPlan || !browserEnvironment) {
+      return (
+        <Box flexDirection="column" paddingX={2} paddingY={1}>
+          <Text color={COLORS.RED}>Missing execution context. Press Esc to go back.</Text>
+        </Box>
+      );
+    }
+
     return (
       <TestingScreen
-        action={testAction}
-        commit={selectedCommit ?? undefined}
-        gitState={gitState}
+        target={resolvedTarget}
+        plan={generatedPlan}
+        environment={browserEnvironment}
         onExit={handleTestingExit}
       />
     );
@@ -166,6 +234,49 @@ export const App = () => {
 
   if (screen === "switch-branch") {
     return <BranchSwitcherScreen onSelect={handleBranchSwitch} />;
+  }
+
+  if (screen === "flow-input" && testAction) {
+    return (
+      <FlowInputScreen
+        action={testAction}
+        initialValue={flowInstruction}
+        onSubmit={(nextInstruction) => {
+          setFlowInstruction(nextInstruction);
+          setPlanningError(null);
+          setGeneratedPlan(null);
+          setResolvedTarget(null);
+          setBrowserEnvironment(null);
+          setScreen("planning");
+        }}
+      />
+    );
+  }
+
+  if (screen === "planning") {
+    return (
+      <Box flexDirection="column" width="100%">
+        <PlanningScreen userInstruction={flowInstruction} />
+        {planningError ? (
+          <Box paddingX={2}>
+            <Text color={COLORS.RED}>Planning failed: {planningError}</Text>
+          </Box>
+        ) : null}
+      </Box>
+    );
+  }
+
+  if (screen === "review-plan" && generatedPlan) {
+    return (
+      <PlanReviewScreen
+        plan={generatedPlan}
+        onChange={setGeneratedPlan}
+        onApprove={(approvedPlan) => {
+          setGeneratedPlan(approvedPlan);
+          setScreen("testing");
+        }}
+      />
+    );
   }
 
   return (
@@ -220,8 +331,8 @@ export const App = () => {
             </>
           ) : null}
         </Text>
-        <Text color={reviewPlan ? COLORS.DIM : COLORS.YELLOW}>
-          {reviewPlan ? "⏵⏵" : "⏵⏵"} Automatically begin testing after planning
+        <Text color={autoRunAfterPlanning ? COLORS.YELLOW : COLORS.DIM}>
+          Auto run after planning: {autoRunAfterPlanning ? "On" : "Off"}
           <Text color={COLORS.DIM}> (tab)</Text>
         </Text>
       </Box>

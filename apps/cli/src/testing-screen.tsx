@@ -1,25 +1,41 @@
 import { useEffect, useRef, useState } from "react";
 import { Box, Text, useInput } from "ink";
+import type { BrowserEnvironmentHints, BrowserFlowPlan, BrowserRunEvent, TestTarget } from "@browser-tester/orchestrator";
 import { COLORS } from "./constants.js";
 import { Spinner } from "./spinner.js";
-import { agentStream, type TestAction } from "./utils/mock-agent-stream.js";
-import type { Commit } from "./utils/fetch-commits.js";
-import type { GitState } from "./utils/get-git-state.js";
+import { executeApprovedPlan } from "./utils/browser-agent.js";
 
 interface TestingScreenProps {
-  action: TestAction;
-  commit?: Commit;
-  gitState: GitState;
+  target: TestTarget;
+  plan: BrowserFlowPlan;
+  environment: BrowserEnvironmentHints;
   onExit: () => void;
 }
 
-const ACTION_LABELS: Record<TestAction, string> = {
-  "test-unstaged": "unstaged changes",
-  "test-branch": "branch",
-  "select-commit": "commit",
+const formatRunEvent = (event: BrowserRunEvent): string | null => {
+  switch (event.type) {
+    case "run-started":
+      return `Starting ${event.planTitle}`;
+    case "step-started":
+      return `→ ${event.stepId} ${event.title}`;
+    case "step-completed":
+      return `  ✓ ${event.stepId} ${event.summary}`;
+    case "assertion-failed":
+      return `  ✗ ${event.stepId} ${event.message}`;
+    case "browser-log":
+      return `    browser:${event.action} ${event.message}`;
+    case "text":
+      return event.text;
+    case "error":
+      return `Error: ${event.message}`;
+    case "run-completed":
+      return `Run ${event.status}: ${event.summary}`;
+    default:
+      return null;
+  }
 };
 
-export const TestingScreen = ({ action, commit, gitState, onExit }: TestingScreenProps) => {
+export const TestingScreen = ({ target, plan, environment, onExit }: TestingScreenProps) => {
   const [lines, setLines] = useState<string[]>([]);
   const [running, setRunning] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,23 +47,19 @@ export const TestingScreen = ({ action, commit, gitState, onExit }: TestingScree
 
     const run = async () => {
       try {
-        const stream = agentStream({
-          action,
-          gitState,
-          commit,
+        for await (const event of executeApprovedPlan({
+          target,
+          plan,
+          environment,
           signal: abortController.signal,
-        });
-        let buffer = "";
-        for await (const chunk of stream) {
-          buffer += chunk;
-          const parts = buffer.split("\n");
-          buffer = parts.pop() ?? "";
-          if (parts.length > 0) {
-            setLines((previous) => [...previous, ...parts]);
+        })) {
+          const line = formatRunEvent(event);
+          if (line) {
+            setLines((previous) => [...previous, line]);
           }
-        }
-        if (buffer.length > 0) {
-          setLines((previous) => [...previous, buffer]);
+          if (abortController.signal.aborted) {
+            break;
+          }
         }
       } catch (caughtError) {
         if (caughtError instanceof DOMException && caughtError.name === "AbortError") {
@@ -66,7 +78,7 @@ export const TestingScreen = ({ action, commit, gitState, onExit }: TestingScree
     return () => {
       abortController.abort();
     };
-  }, [action, gitState, commit]);
+  }, [environment, plan, target]);
 
   useInput((_input, key) => {
     if (key.escape) {
@@ -78,8 +90,9 @@ export const TestingScreen = ({ action, commit, gitState, onExit }: TestingScree
   return (
     <Box flexDirection="column" width="100%" paddingX={2} paddingY={1}>
       <Text bold color={COLORS.TEXT}>
-        Testing {ACTION_LABELS[action]}
+        Executing browser plan
       </Text>
+      <Text color={COLORS.DIM}>{target.displayName}</Text>
 
       <Box
         marginTop={1}
