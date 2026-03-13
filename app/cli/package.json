@@ -1,5 +1,5 @@
 {
-  "name": "@browser-tester/my-slime",
+  "name": "@browser-tester/cli",
   "version": "0.0.1",
   "files": [
     "dist"
