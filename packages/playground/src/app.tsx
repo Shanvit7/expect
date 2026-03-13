@@ -21,6 +21,8 @@ export const App = () => {
   const [tasks, setTasks] = useState(TASKS);
   const [newTask, setNewTask] = useState("");
   const [counter, setCounter] = useState(0);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   const addTask = () => {
     if (!newTask.trim()) return;
@@ -33,6 +35,22 @@ export const App = () => {
 
   const removeTask = (id: number) => {
     setTasks((previous) => previous.filter((task) => task.id !== id));
+  };
+
+  const startEditing = (id: number, title: string) => {
+    setEditingId(id);
+    setEditingTitle(title);
+  };
+
+  const saveEdit = () => {
+    if (editingId === null) return;
+    setTasks((previous) =>
+      previous.map((task) =>
+        task.id === editingId ? { ...task, title: editingTitle.trim() || task.title } : task,
+      ),
+    );
+    setEditingId(null);
+    setEditingTitle("");
   };
 
   const duplicateTask = (id: number) => {
@@ -95,10 +113,26 @@ export const App = () => {
               {tasks.map((task) => (
                 <li key={task.id} className="flex items-center justify-between rounded-lg border px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm">{task.title}</span>
+                    {editingId === task.id ? (
+                      <Input
+                        className="h-7 text-sm"
+                        value={editingTitle}
+                        onChange={(event) => setEditingTitle(event.target.value)}
+                        onKeyDown={(event) => event.key === "Enter" && saveEdit()}
+                        onBlur={saveEdit}
+                        autoFocus
+                      />
+                    ) : (
+                      <span className="text-sm">{task.title}</span>
+                    )}
                     <Badge variant={STATUS_VARIANT[task.status]}>{task.status}</Badge>
                   </div>
                   <div className="flex gap-1">
+                    {editingId !== task.id && (
+                      <Button variant="ghost" size="sm" onClick={() => startEditing(task.id, task.title)}>
+                        Rename
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => duplicateTask(task.id)}>
                       Duplicate
                     </Button>
