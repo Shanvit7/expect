@@ -6,10 +6,6 @@ export const ASCII_ART = `   __            __  _
 
 export const SELECTED_INDICATOR = "➤";
 
-export const NUMBER_OPTION_GAP = "  ";
-
-export const CURRENT_BRANCH_INDEX = 1;
-
 export const MENU_OPTIONS = [
   {
     label: "Unstaged changes",
@@ -38,7 +34,6 @@ export const PROMPT_TEXT = "What would you like to test?";
 
 export const LOCAL_BRANCH_INDEX = 2;
 export const REMOTE_BRANCH_INDEX = 3;
-export const SOMETHING_ELSE_INDEX = 4;
 
 export const BRANCH_COUNT = 14;
 

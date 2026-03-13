@@ -1,39 +1,33 @@
 import { Text } from "ink";
-import { COLORS, NUMBER_OPTION_GAP, SELECTED_INDICATOR } from "./constants.js";
+import { COLORS, SELECTED_INDICATOR } from "./constants.js";
+import type { DiffStats } from "./utils/get-git-state.js";
 
 interface MenuItemProps {
-  index: number;
   label: string;
   detail: string;
   isSelected: boolean;
+  recommended?: boolean;
+  diffStats?: DiffStats;
 }
 
-export const MenuItem = ({ index, label, detail, isSelected }: MenuItemProps) => {
-  const number = `${index + 1}`;
-
-  if (isSelected && index === 0) {
-    return (
-      <Text color={COLORS.TEXT}>
-        <Text color={COLORS.SELECTION}>{SELECTED_INDICATOR} </Text>
-        <Text>{number}{NUMBER_OPTION_GAP}</Text>
-        <Text color={COLORS.SELECTION}>{label}</Text>
-        <Text color={COLORS.TEXT}> [ </Text>
-        <Text color={COLORS.GREEN}>+44</Text>
-        <Text color={COLORS.TEXT}> </Text>
-        <Text color={COLORS.RED}>-23</Text>
-        <Text color={COLORS.TEXT}> · 2 files ]</Text>
-      </Text>
-    );
-  }
-
+export const MenuItem = ({ label, detail, isSelected, recommended, diffStats }: MenuItemProps) => {
   return (
     <Text color={COLORS.TEXT}>
       <Text color={isSelected ? COLORS.SELECTION : COLORS.TEXT}>
         {isSelected ? `${SELECTED_INDICATOR} ` : "  "}
       </Text>
-      <Text>{number}{NUMBER_OPTION_GAP}</Text>
       <Text color={isSelected ? COLORS.SELECTION : COLORS.TEXT}>{label}</Text>
-      {isSelected && detail ? <Text color={COLORS.DIM}> {detail}</Text> : null}
+      {diffStats && (
+        <>
+          <Text color={COLORS.TEXT}> [ </Text>
+          <Text color={COLORS.GREEN}>+{diffStats.additions}</Text>
+          <Text color={COLORS.TEXT}> </Text>
+          <Text color={COLORS.RED}>-{diffStats.deletions}</Text>
+          <Text color={COLORS.TEXT}> · {diffStats.filesChanged} files ]</Text>
+        </>
+      )}
+      {!diffStats && isSelected && detail ? <Text color={COLORS.DIM}> {detail}</Text> : null}
+      {recommended && <Text color={COLORS.YELLOW}> recommended</Text>}
     </Text>
   );
 };

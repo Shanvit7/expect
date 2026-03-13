@@ -1,37 +1,69 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-import TextInput from "ink-text-input";
-import {
-  COLORS,
-  CURRENT_BRANCH_INDEX,
-  LOCAL_BRANCH_INDEX,
-  MENU_OPTIONS,
-  NUMBER_OPTION_GAP,
-  PROMPT_TEXT,
-  REMOTE_BRANCH_INDEX,
-  SOMETHING_ELSE_INDEX,
-  TYPEWRITER_SHADES,
-  TYPEWRITER_TICK_MS,
-} from "./constants.js";
-import { useTypewriter } from "./utils/use-typewriter.js";
+import { COLORS } from "./constants.js";
 import { MenuItem } from "./menu-item.js";
 import { LocalBranchScreen } from "./local-branch-screen.js";
-import { RemoteBranchScreen } from "./remote-branch-screen.js";
 import { ColoredLogo } from "./colored-logo.js";
+import { Spinner } from "./spinner.js";
+import {
+  getGitState,
+  getRecommendedScope,
+  type GitState,
+  type TestScope,
+  type DiffStats,
+} from "./utils/get-git-state.js";
 
-type Screen = "main" | "local-branch" | "remote-branch";
+type Screen = "main" | "switch-branch";
+
+interface ScopeMenuOption {
+  label: string;
+  detail: string;
+  diffStats?: DiffStats;
+}
+
+const hasSwitchBranchTool = (_scope: TestScope): boolean => true;
+
+const getHappyPathOption = (scope: TestScope, gitState: GitState): ScopeMenuOption => {
+  switch (scope) {
+    case "unstaged-changes":
+      return {
+        label: "Unstaged changes",
+        detail: "",
+        diffStats: gitState.diffStats ?? undefined,
+      };
+    case "select-commit":
+    case "entire-branch":
+      return {
+        label: "Entire branch",
+        detail: `(${gitState.currentBranch})`,
+        diffStats: gitState.branchDiffStats ?? undefined,
+      };
+  }
+};
+
+const buildMenuOptions = (scope: TestScope, gitState: GitState): ScopeMenuOption[] => [
+  getHappyPathOption(scope, gitState),
+  { label: "Select commit", detail: "" },
+];
 
 export const App = () => {
+  const [gitState, setGitState] = useState<GitState | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [screen, setScreen] = useState<Screen>("main");
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
-  const [selectedRemoteBranch, setSelectedRemoteBranch] = useState<string | null>(null);
-  const [somethingElseValue, setSomethingElseValue] = useState("");
-  const [includeUnstaged, setIncludeUnstaged] = useState(false);
 
-  const promptChars = useTypewriter(PROMPT_TEXT, TYPEWRITER_SHADES, TYPEWRITER_TICK_MS);
+  useEffect(() => {
+    const state = getGitState();
+    setGitState(state);
+  }, []);
+
+  const recommendedScope = gitState ? getRecommendedScope(gitState) : null;
+  const menuOptions =
+    gitState && recommendedScope ? buildMenuOptions(recommendedScope, gitState) : [];
+  const showSwitchBranch = Boolean(recommendedScope && hasSwitchBranchTool(recommendedScope));
 
   useInput((input, key) => {
+    if (!gitState || !recommendedScope) return;
+
     if (screen !== "main") {
       if (key.escape) {
         setScreen("main");
@@ -39,141 +71,58 @@ export const App = () => {
       return;
     }
 
-    if (key.downArrow) {
-      setSelectedIndex((previous) => Math.min(MENU_OPTIONS.length - 1, previous + 1));
+    if (key.downArrow || input === "j") {
+      setSelectedIndex((previous) => Math.min(menuOptions.length - 1, previous + 1));
     }
-    if (key.upArrow) {
+    if (key.upArrow || input === "k") {
       setSelectedIndex((previous) => Math.max(0, previous - 1));
     }
 
-    if (selectedIndex === SOMETHING_ELSE_INDEX) return;
-
-    if (input === "k") {
-      setSelectedIndex((previous) => Math.max(0, previous - 1));
-    }
-    if (input === "j") {
-      setSelectedIndex((previous) => Math.min(MENU_OPTIONS.length - 1, previous + 1));
-    }
-    const numberPressed = Number(input);
-    if (numberPressed >= 1 && numberPressed <= MENU_OPTIONS.length) {
-      setSelectedIndex(numberPressed - 1);
-    }
-    if (selectedIndex === CURRENT_BRANCH_INDEX && input === " ") {
-      setIncludeUnstaged((previous) => !previous);
-    }
-    if (key.return) {
-      if (selectedIndex === LOCAL_BRANCH_INDEX) {
-        setScreen("local-branch");
-      }
-      if (selectedIndex === REMOTE_BRANCH_INDEX) {
-        setScreen("remote-branch");
-      }
+    if (input === "b" && showSwitchBranch) {
+      setScreen("switch-branch");
     }
   });
 
-  const handleLocalBranchSelect = (branch: string) => {
-    setSelectedBranch(branch);
+  const handleBranchSwitch = (_branch: string) => {
     setScreen("main");
   };
 
-  const handleRemoteBranchSelect = (branch: string) => {
-    setSelectedRemoteBranch(branch);
-    setScreen("main");
-  };
-
-  if (screen === "local-branch") {
-    return <LocalBranchScreen onSelect={handleLocalBranchSelect} />;
+  if (!gitState) {
+    return (
+      <Box flexDirection="column" paddingX={2} paddingY={1}>
+        <Spinner message="Checking git state..." />
+      </Box>
+    );
   }
 
-  if (screen === "remote-branch") {
-    return <RemoteBranchScreen onSelect={handleRemoteBranchSelect} />;
+  if (screen === "switch-branch") {
+    return <LocalBranchScreen onSelect={handleBranchSwitch} />;
   }
 
   return (
-    <Box
-      flexDirection="column"
-      width="100%"
-      paddingX={2}
-      paddingY={1}
-    >
+    <Box flexDirection="column" width="100%" paddingX={2} paddingY={1}>
       <ColoredLogo />
 
-      <Box flexDirection="row" marginTop={2} alignItems="flex-end">
-        <Text color={COLORS.ORANGE}>{"(•‿•)"}</Text>
-        <Box flexDirection="column" marginLeft={1}>
-          <Box
-            borderStyle="round"
-            borderColor={COLORS.ORANGE}
-            paddingX={1}
-          >
-            <Text>
-              {promptChars.map((charState, index) => (
-                <Text key={index} color={charState.color}>{charState.char}</Text>
-              ))}
-            </Text>
-          </Box>
-          <Text color={COLORS.ORANGE}>{"──╯"}</Text>
-        </Box>
+      <Box marginTop={2}>
+        <Text color={COLORS.DIM}>
+          <Text color={COLORS.TEXT}>{gitState.currentBranch}</Text>
+          {gitState.hasUnstagedChanges && gitState.diffStats
+            ? ` · ${gitState.diffStats.filesChanged} files changed`
+            : " · no changes"}
+        </Text>
       </Box>
 
       <Box flexDirection="column" marginTop={2} gap={1}>
-        {MENU_OPTIONS.map((option, index) => {
-          let detail: string = option.detail;
-          if (index === LOCAL_BRANCH_INDEX && selectedBranch) {
-            detail = `(${selectedBranch})`;
-          }
-          if (index === REMOTE_BRANCH_INDEX && selectedRemoteBranch) {
-            detail = `(${selectedRemoteBranch})`;
-          }
-          return (
-            <Box key={index} flexDirection="column" gap={"separated" in option ? 0 : 1}>
-              {"separated" in option && option.separated && (
-                <Box
-                  borderStyle="single"
-                  borderTop
-                  borderBottom={false}
-                  borderLeft={false}
-                  borderRight={false}
-                  borderColor={COLORS.DIVIDER}
-                />
-              )}
-              {index === SOMETHING_ELSE_INDEX ? (
-                <Box flexDirection="row">
-                  <Text color={index === selectedIndex ? COLORS.SELECTION : COLORS.TEXT}>
-                    {index === selectedIndex ? `➤ ${index + 1}${NUMBER_OPTION_GAP}` : `  ${index + 1}${NUMBER_OPTION_GAP}`}
-                  </Text>
-                  <TextInput
-                    focus={index === selectedIndex}
-                    placeholder={option.label}
-                    value={somethingElseValue}
-                    onChange={setSomethingElseValue}
-                  />
-                </Box>
-              ) : (
-                <Box flexDirection="column">
-                  <MenuItem
-                    index={index}
-                    label={option.label}
-                    detail={detail}
-                    isSelected={index === selectedIndex}
-                  />
-                  {index === CURRENT_BRANCH_INDEX && index === selectedIndex && (
-                    <Text color={COLORS.DIM}>
-                      {"     "}
-                      <Text color={includeUnstaged ? COLORS.GREEN : COLORS.DIM}>
-                        {includeUnstaged ? "[" : "[ ]"}
-                      </Text>
-                      {includeUnstaged && <Text color={COLORS.WHITE}>{"x"}</Text>}
-                      {includeUnstaged && <Text color={COLORS.GREEN}>{"]"}</Text>}
-                      <Text> include unstaged changes </Text>
-                      <Text color={COLORS.DIM}>(space to toggle)</Text>
-                    </Text>
-                  )}
-                </Box>
-              )}
-            </Box>
-          );
-        })}
+        {menuOptions.map((option, index) => (
+          <MenuItem
+            key={option.label}
+            label={option.label}
+            detail={option.detail}
+            isSelected={index === selectedIndex}
+            recommended={index === 0}
+            diffStats={option.diffStats}
+          />
+        ))}
       </Box>
 
       <Box
@@ -187,7 +136,9 @@ export const App = () => {
       />
 
       <Text color={COLORS.DIM}>
-        ↑/↓ to navigate · Enter to select
+        {showSwitchBranch
+          ? "↑/↓ to navigate · Enter to select · [b] switch branch"
+          : "Enter to select"}
       </Text>
     </Box>
   );
