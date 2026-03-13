@@ -1,11 +1,6 @@
 import type { LanguageModelV3Prompt } from "@ai-sdk/provider";
 
-export interface ConvertedPrompt {
-  systemPrompt: string;
-  userPrompt: string;
-}
-
-export const convertPrompt = (prompt: LanguageModelV3Prompt): ConvertedPrompt => {
+export const convertPrompt = (prompt: LanguageModelV3Prompt): { systemPrompt: string; userPrompt: string } => {
   const systemParts: string[] = [];
   const userParts: string[] = [];
 

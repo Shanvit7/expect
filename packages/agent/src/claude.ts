@@ -59,11 +59,10 @@ export const createClaudeModel = (settings: AgentProviderSettings = {}): Languag
 
           for await (const event of query({ prompt: userPrompt, options: buildQueryOptions(settings, abortController, systemPrompt) })) {
             const eventSessionId = extractSessionId(event);
-            if (eventSessionId && !sessionId) {
+            if (eventSessionId) {
+              if (!sessionId) controller.enqueue({ type: "response-metadata", id: eventSessionId, timestamp: new Date(), modelId: "claude-opus-4-6" });
               sessionId = eventSessionId;
-              controller.enqueue({ type: "response-metadata", id: sessionId, timestamp: new Date(), modelId: "claude-opus-4-6" });
             }
-            if (eventSessionId) sessionId = eventSessionId;
 
             if (event.type === "assistant") blockCounter = emitAssistantParts(event.message.content, controller, blockCounter);
             if (event.type === "user" && Array.isArray(event.message.content)) emitToolResultParts(event.message.content, controller);
