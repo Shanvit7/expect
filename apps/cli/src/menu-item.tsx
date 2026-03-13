@@ -27,7 +27,7 @@ export const MenuItem = ({ label, detail, isSelected, recommended, diffStats }: 
         </>
       )}
       {!diffStats && isSelected && detail ? <Text color={COLORS.DIM}> {detail}</Text> : null}
-      {recommended && <Text color={COLORS.YELLOW}> recommended</Text>}
+      {recommended && <Text color={COLORS.DIM}> ★ recommended</Text>}
     </Text>
   );
 };

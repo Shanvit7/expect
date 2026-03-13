@@ -14,7 +14,7 @@ export const COLORS = {
   TEXT: "#cccccc",
   DIM: "#666666",
   GREEN: "#6abf69",
-  SELECTION: "#7dc4e8",
+  SELECTION: "#a0aeef",
   RED: "#f44747",
   BORDER: "#555555",
   DIVIDER: "#444444",

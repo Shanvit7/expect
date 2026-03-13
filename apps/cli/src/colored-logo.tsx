@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Box, Text } from "ink";
 import { COLORS } from "./constants.js";
 
-const RESOLVE_MS = 30;
-const SHIMMER_INTERVAL_MS = 40;
+const RESOLVE_MS = 15;
+const SHIMMER_INTERVAL_MS = 25;
 const THINKING_CHARS = ["◇", "◆", "◇", "◆"];
 
 type Result = "pass" | "fail" | "skip";
@@ -17,9 +17,9 @@ const GRID: Cell[] = [
 ];
 
 const THINK_DURATION_MS: Record<Result, number> = {
-  pass: 100,
-  fail: 220,
-  skip: 60,
+  pass: 60,
+  fail: 130,
+  skip: 35,
 };
 
 const RESULT_ICON: Record<Result, string> = {

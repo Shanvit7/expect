@@ -180,15 +180,6 @@ export const App = () => {
         <Text color={COLORS.TEXT}>AI-powered browser testing for your changes</Text>
       </Box>
 
-      <Box marginTop={2}>
-        <Text color={COLORS.DIM}>
-          <Text color={COLORS.TEXT}>{gitState.currentBranch}</Text>
-          {gitState.hasUnstagedChanges && gitState.diffStats
-            ? ` · ${gitState.diffStats.filesChanged} files changed`
-            : " · no changes"}
-        </Text>
-      </Box>
-
       <Box flexDirection="column" marginTop={2} gap={1}>
         {menuOptions.map((option, index) => (
           <MenuItem
@@ -213,9 +204,15 @@ export const App = () => {
       />
 
       <Box flexDirection="row" justifyContent="space-between" width="100%">
-        <Text color={COLORS.DIM}>↑/↓ to navigate · Enter to select · [b] switch branch</Text>
-        <Text color={reviewPlan ? COLORS.DIM : COLORS.SELECTION}>
-          {reviewPlan ? "○" : "◉"} Automatically begin testing after planning
+        <Text color={COLORS.DIM}>
+          ↑/↓ navigate · Enter select · [b] switch branch
+          <Text color={COLORS.TEXT}> {gitState.currentBranch}</Text>
+          {gitState.hasUnstagedChanges && gitState.diffStats
+            ? <Text color={COLORS.DIM}> · {gitState.diffStats.filesChanged} files changed</Text>
+            : <Text color={COLORS.DIM}> · no changes</Text>}
+        </Text>
+        <Text color={reviewPlan ? COLORS.DIM : COLORS.YELLOW}>
+          {reviewPlan ? "⏵⏵" : "⏵⏵"} Automatically begin testing after planning
           <Text color={COLORS.DIM}> (tab)</Text>
         </Text>
       </Box>
