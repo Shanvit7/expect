@@ -41,25 +41,5 @@ export const CONTENT_ROLES = new Set([
   "navigation",
 ]);
 
-export const STRUCTURAL_ROLES = new Set([
-  "generic",
-  "group",
-  "list",
-  "table",
-  "row",
-  "rowgroup",
-  "grid",
-  "menu",
-  "menubar",
-  "toolbar",
-  "tablist",
-  "tree",
-  "directory",
-  "document",
-  "application",
-  "presentation",
-  "none",
-]);
-
 export const ESTIMATED_CHARS_PER_TOKEN = 4;
 export const MAX_ELEMENT_TEXT_LENGTH = 100;

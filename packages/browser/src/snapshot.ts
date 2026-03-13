@@ -41,7 +41,8 @@ const appendCursorInteractiveElements = async (
 
     const ref = `${REF_PREFIX}${++refCount}`;
     refs[ref] = {
-      role: "generic" as AriaRole,
+      // HACK: "clickable" is a synthetic role not in Playwright's AriaRole union
+      role: "clickable" as AriaRole,
       name: element.text,
       selector: element.selector,
     };
@@ -77,7 +78,7 @@ export const snapshot = async (
       continue;
     }
 
-    if (Boolean(options.interactive) && !INTERACTIVE_ROLES.has(parsed.role)) continue;
+    if (options.interactive && !INTERACTIVE_ROLES.has(parsed.role)) continue;
 
     if (shouldAssignRef(parsed.role, parsed.name, options.interactive)) {
       const ref = `${REF_PREFIX}${++refCount}`;

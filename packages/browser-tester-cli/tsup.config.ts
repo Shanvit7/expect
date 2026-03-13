@@ -1,0 +1,38 @@
+import { defineConfig } from "tsup";
+
+export default defineConfig({
+  entry: { cli: "./src/cli.ts" },
+  format: ["esm"],
+  dts: false,
+  splitting: false,
+  target: "node18",
+  platform: "node",
+  treeshake: true,
+  noExternal: [/@browser-tester\//],
+  external: [
+    "playwright",
+    "commander",
+    "picocolors",
+    "ws",
+    "bun:sqlite",
+    "sqlite",
+    "events",
+    "stream",
+    "http",
+    "https",
+    "net",
+    "tls",
+    "crypto",
+    "url",
+    "zlib",
+    "buffer",
+    "util",
+    "os",
+    "path",
+    "fs",
+    "child_process",
+  ],
+  banner: {
+    js: "#!/usr/bin/env node",
+  },
+});

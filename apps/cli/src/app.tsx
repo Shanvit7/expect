@@ -171,7 +171,13 @@ export const App = () => {
   return (
     <Box flexDirection="column" width="100%" paddingX={2} paddingY={1}>
       <Text color={COLORS.DIM}>browser-tester v{VERSION}</Text>
-      <Box flexDirection="column" borderStyle="round" borderColor={COLORS.BORDER} paddingX={2} paddingY={1}>
+      <Box
+        flexDirection="column"
+        borderStyle="round"
+        borderColor={COLORS.BORDER}
+        paddingX={2}
+        paddingY={1}
+      >
         <ColoredLogo />
         <Box marginTop={1}>
           <Text color={COLORS.TEXT}>AI-powered browser testing for your changes</Text>

@@ -31,7 +31,7 @@ const extractDefaultBrowserCookies = async (
 
 const resolveVideoOptions = (
   video: boolean | VideoOptions | undefined,
-): { dir: string; size?: { width: number; height: number } } | undefined => {
+): VideoOptions | undefined => {
   if (!video) return undefined;
   if (video === true) return { dir: tmpdir() };
   return video;

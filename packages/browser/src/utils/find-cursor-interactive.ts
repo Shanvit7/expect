@@ -1,50 +1,18 @@
-import { MAX_ELEMENT_TEXT_LENGTH } from "../constants";
+import { INTERACTIVE_ROLES, MAX_ELEMENT_TEXT_LENGTH } from "../constants";
 import type { Page } from "playwright";
 
-export interface CursorInteractiveElement {
+interface CursorInteractiveElement {
   selector: string;
   text: string;
   reason: string;
 }
 
-const INTERACTIVE_ARIA_ROLES = new Set([
-  "button",
-  "link",
-  "textbox",
-  "checkbox",
-  "radio",
-  "combobox",
-  "listbox",
-  "menuitem",
-  "menuitemcheckbox",
-  "menuitemradio",
-  "option",
-  "searchbox",
-  "slider",
-  "spinbutton",
-  "switch",
-  "tab",
-  "treeitem",
-]);
-
-const INTERACTIVE_HTML_TAGS = new Set([
-  "a",
-  "button",
-  "input",
-  "select",
-  "textarea",
-  "details",
-  "summary",
-]);
+const INTERACTIVE_HTML_TAGS = ["a", "button", "input", "select", "textarea", "details", "summary"];
 
 export const findCursorInteractive = async (
   page: Page,
   rootSelector?: string,
 ): Promise<CursorInteractiveElement[]> => {
-  const maxTextLength = MAX_ELEMENT_TEXT_LENGTH;
-  const interactiveRoles = [...INTERACTIVE_ARIA_ROLES];
-  const interactiveTags = [...INTERACTIVE_HTML_TAGS];
-
   return page.evaluate(
     ({
       rootSel,
@@ -147,9 +115,9 @@ export const findCursorInteractive = async (
     },
     {
       rootSel: rootSelector || "body",
-      maxLen: maxTextLength,
-      roles: interactiveRoles,
-      tags: interactiveTags,
+      maxLen: MAX_ELEMENT_TEXT_LENGTH,
+      roles: [...INTERACTIVE_ROLES],
+      tags: INTERACTIVE_HTML_TAGS,
     },
   );
 };
