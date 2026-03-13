@@ -41,3 +41,9 @@ export const AES_HASH_PREFIX_LENGTH_BYTES = 32;
 export const GCM_NONCE_LENGTH_BYTES = 12;
 export const GCM_TAG_LENGTH_BYTES = 16;
 export const GCM_MIN_PAYLOAD_BYTES = 28;
+
+export const DPAPI_PREFIX_LENGTH_BYTES = 5;
+
+export const BINARY_COOKIE_MAGIC = "cook";
+export const UINT32_SIZE_BYTES = 4;
+export const DOUBLE_SIZE_BYTES = 8;

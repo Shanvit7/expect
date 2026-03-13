@@ -4,6 +4,7 @@ import path from "node:path";
 
 import {
   CHROMIUM_META_VERSION_HASH_PREFIX,
+  DPAPI_PREFIX_LENGTH_BYTES,
   MS_PER_SECOND,
   PBKDF2_ITERATIONS_DARWIN,
   PBKDF2_ITERATIONS_LINUX,
@@ -132,7 +133,7 @@ const getWindowsMasterKey = (browser: ChromiumBrowser, timeoutMs?: number): Buff
   try {
     const localState = JSON.parse(readFileSync(localStatePath, "utf-8"));
     const encryptedKey = Buffer.from(localState.os_crypt.encrypted_key, "base64");
-    const base64Key = encryptedKey.subarray(5).toString("base64");
+    const base64Key = encryptedKey.subarray(DPAPI_PREFIX_LENGTH_BYTES).toString("base64");
 
     const psCommand = `Add-Type -AssemblyName System.Security; $encrypted = [Convert]::FromBase64String('${base64Key}'); $decrypted = [System.Security.Cryptography.ProtectedData]::Unprotect($encrypted, $null, 'CurrentUser'); [Convert]::ToBase64String($decrypted)`;
     const result = execCommand(`powershell -Command "${psCommand}"`, timeoutMs);

@@ -6,6 +6,7 @@ import {
   BINARY_COOKIE_EXPIRATION_OFFSET,
   BINARY_COOKIE_FLAGS_OFFSET,
   BINARY_COOKIE_HTTP_ONLY_FLAG,
+  BINARY_COOKIE_MAGIC,
   BINARY_COOKIE_MIN_HEADER_BYTES,
   BINARY_COOKIE_MIN_PAGE_BYTES,
   BINARY_COOKIE_MIN_RECORD_BYTES,
@@ -15,8 +16,10 @@ import {
   BINARY_COOKIE_SECURE_FLAG,
   BINARY_COOKIE_URL_OFFSET,
   BINARY_COOKIE_VALUE_OFFSET,
+  DOUBLE_SIZE_BYTES,
   MAC_EPOCH_DELTA_SECONDS,
   MS_PER_SECOND,
+  UINT32_SIZE_BYTES,
 } from "./constants.js";
 import type { Cookie, ExtractResult } from "./types.js";
 import { hostMatchesAny } from "./utils/host-matching.js";
@@ -51,15 +54,15 @@ const resolveBinaryCookiesPath = (): string | null => {
 
 export const parseBinaryCookies = (buffer: Buffer): Cookie[] => {
   if (buffer.length < BINARY_COOKIE_MIN_HEADER_BYTES) return [];
-  if (buffer.subarray(0, 4).toString("utf8") !== "cook") return [];
+  if (buffer.subarray(0, UINT32_SIZE_BYTES).toString("utf8") !== BINARY_COOKIE_MAGIC) return [];
 
-  const pageCount = buffer.readUInt32BE(4);
-  let cursor = 8;
+  const pageCount = buffer.readUInt32BE(UINT32_SIZE_BYTES);
+  let cursor = BINARY_COOKIE_MIN_HEADER_BYTES;
   const pageSizes: number[] = [];
 
   for (let index = 0; index < pageCount; index += 1) {
     pageSizes.push(buffer.readUInt32BE(cursor));
-    cursor += 4;
+    cursor += UINT32_SIZE_BYTES;
   }
 
   const cookies: Cookie[] = [];
@@ -83,7 +86,7 @@ const decodePage = (page: Buffer): Cookie[] => {
 
   for (let index = 0; index < cookieCount; index += 1) {
     offsets.push(page.readUInt32LE(cursor));
-    cursor += 4;
+    cursor += UINT32_SIZE_BYTES;
   }
 
   const cookies: Cookie[] = [];
@@ -135,8 +138,8 @@ const decodeCookieRecord = (record: Buffer): Cookie | null => {
 };
 
 const readDoubleLE = (buffer: Buffer, offset: number): number => {
-  if (offset + 8 > buffer.length) return 0;
-  return buffer.subarray(offset, offset + 8).readDoubleLE(0);
+  if (offset + DOUBLE_SIZE_BYTES > buffer.length) return 0;
+  return buffer.subarray(offset, offset + DOUBLE_SIZE_BYTES).readDoubleLE(0);
 };
 
 const readCString = (buffer: Buffer, offset: number, end: number): string | null => {
