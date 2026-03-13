@@ -71,6 +71,7 @@ export const App = () => {
   const [gitState, setGitState] = useState<GitState | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [screen, setScreen] = useState<Screen>("main");
+  const [reviewPlan, setReviewPlan] = useState(false);
 
   useEffect(() => {
     const state = getGitState();
@@ -95,6 +96,10 @@ export const App = () => {
     }
     if (key.upArrow || input === "k") {
       setSelectedIndex((previous) => Math.max(0, previous - 1));
+    }
+
+    if (key.tab) {
+      setReviewPlan((previous) => !previous);
     }
 
     if (input === "b") {
@@ -145,6 +150,7 @@ export const App = () => {
   return (
     <Box flexDirection="column" width="100%" paddingX={2} paddingY={1}>
       <ColoredLogo />
+      <Text color={COLORS.DIM}>AI-powered browser testing for your changes</Text>
 
       <Box marginTop={2}>
         <Text color={COLORS.DIM}>
@@ -178,9 +184,15 @@ export const App = () => {
         borderColor={COLORS.DIVIDER}
       />
 
-      <Text color={COLORS.DIM}>
-        ↑/↓ to navigate · Enter to select · [b] switch branch
-      </Text>
+      <Box flexDirection="row" justifyContent="space-between" width="100%">
+        <Text color={COLORS.DIM}>
+          ↑/↓ to navigate · Enter to select · [b] switch branch
+        </Text>
+        <Text color={reviewPlan ? COLORS.DIM : COLORS.SELECTION}>
+          {reviewPlan ? "○" : "◉"} Automatically begin testing after planning
+          <Text color={COLORS.DIM}> (tab)</Text>
+        </Text>
+      </Box>
     </Box>
   );
 };
