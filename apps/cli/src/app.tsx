@@ -26,7 +26,7 @@ import { switchBranch } from "./utils/switch-branch.js";
 import type { Commit } from "./utils/fetch-commits.js";
 import { generateBrowserPlan, type TestAction } from "./utils/browser-agent.js";
 import { saveFlow } from "./utils/save-flow.js";
-import { BROWSER_FRAME_WIDTH } from "./constants.js";
+import { FRAME_CONTENT_PADDING } from "./constants.js";
 
 type Screen =
   | "main"
@@ -311,57 +311,86 @@ export const App = () => {
     );
   }
 
+  const dots = "● ● ●";
+  const titleLabel = "browser-tester";
+  const actionsLine = " Actions";
+
+  const getMenuItemVisualWidth = (option: ScopeMenuOption, index: number): number => {
+    let width = 2;
+    width += option.label.length;
+    if (option.diffStats) {
+      width += ` +${option.diffStats.additions} -${option.diffStats.deletions} (${option.diffStats.filesChanged} files)`.length;
+    } else if (option.detail) {
+      width += ` ${option.detail}`.length;
+    }
+    if (index === 0 && menuOptions.length > 1) {
+      width += " (recommended)".length;
+    }
+    if (menuOptions.length === 1 && index === selectedIndex) {
+      width += " (press return)".length;
+    }
+    return width;
+  };
+
+  const optionsLine = " Options";
+  const autoRunLine = `  auto-run after planning (⇥ tab): ${autoRunAfterPlanning ? "yes" : "no"}`;
+
+  const inner =
+    Math.max(
+      titleLabel.length + 4,
+      actionsLine.length,
+      optionsLine.length,
+      autoRunLine.length,
+      dots.length + 1,
+      ...menuOptions.map((option, index) => getMenuItemVisualWidth(option, index)),
+    ) + FRAME_CONTENT_PADDING;
+  const pad = (content: string) => " ".repeat(Math.max(0, inner - content.length));
+  const emptyRow = (
+    <Text color={COLORS.DIM}>
+      {"│"}
+      {" ".repeat(inner)}
+      {"│"}
+    </Text>
+  );
+
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      {(() => {
-        const inner = BROWSER_FRAME_WIDTH - 2;
-        const dots = "● ● ●";
-        const title = " browser-tester";
-        return (
-          <>
-            <Text color={COLORS.DIM}>
-              {"╭"}
-              {"─".repeat(inner)}
-              {"╮"}
-            </Text>
-            <Text color={COLORS.DIM}>
-              {"│ "}
-              <Text color="#ff5f57">{"● "}</Text>
-              <Text color="#febc2e">{"● "}</Text>
-              <Text color="#28c840">{"●"}</Text>
-              {" ".repeat(inner - dots.length - 1)}
-              {"│"}
-            </Text>
-            <Text color={COLORS.DIM}>
-              {"│"}
-              {" ".repeat(inner)}
-              {"│"}
-            </Text>
-            <Text color={COLORS.DIM}>
-              {"│"}
-              <Text bold color={COLORS.TEXT || undefined}>
-                {title}
-              </Text>
-              {" ".repeat(inner - title.length)}
-              {"│"}
-            </Text>
-            <Text color={COLORS.DIM}>
-              {"╰"}
-              {"─".repeat(inner)}
-              {"╯"}
-            </Text>
-          </>
-        );
-      })()}
-
-      <Box marginTop={2} flexDirection="column">
+      <Text color={COLORS.DIM}>
+        {"╭"}
+        {"─".repeat(Math.floor((inner - titleLabel.length - 2) / 2))}
+        {" "}
+        <Text bold color={COLORS.TEXT || undefined}>
+          {titleLabel}
+        </Text>
+        <Text color={COLORS.DIM}>
+          {" "}
+          {"─".repeat(Math.ceil((inner - titleLabel.length - 2) / 2))}
+        </Text>
+        {"╮"}
+      </Text>
+      <Text color={COLORS.DIM}>
+        {"│ "}
+        <Text color="#ff5f57">{"● "}</Text>
+        <Text color="#febc2e">{"● "}</Text>
+        <Text color="#28c840">{"●"}</Text>
+        {" ".repeat(inner - dots.length - 1)}
+        {"│"}
+      </Text>
+      {emptyRow}
+      <Text color={COLORS.DIM}>
+        {"│ "}
         <Text bold color={COLORS.TEXT || undefined}>
           Actions
         </Text>
-        <Box flexDirection="column">
-          {menuOptions.map((option, index) => (
+        {pad(" Actions")}
+        {"│"}
+      </Text>
+      {menuOptions.map((option, index) => {
+        const itemWidth = getMenuItemVisualWidth(option, index);
+        return (
+          <Box key={option.label}>
+            <Text color={COLORS.DIM}>{"│"}</Text>
             <MenuItem
-              key={option.label}
               label={option.label}
               detail={option.detail}
               isSelected={index === selectedIndex}
@@ -371,23 +400,42 @@ export const App = () => {
               }
               diffStats={option.diffStats}
             />
-          ))}
-        </Box>
-      </Box>
-
-      <Box marginTop={2} flexDirection="column">
+            <Text color={COLORS.DIM}>
+              {" ".repeat(Math.max(0, inner - itemWidth))}
+              {"│"}
+            </Text>
+          </Box>
+        );
+      })}
+      {emptyRow}
+      {emptyRow}
+      <Text color={COLORS.DIM}>
+        {"│ "}
         <Text bold color={COLORS.TEXT || undefined}>
           Options
         </Text>
+        {pad(optionsLine)}
+        {"│"}
+      </Text>
+      <Text color={COLORS.DIM}>
+        {"│  "}
         <Text color={COLORS.DIM}>
-          auto-run tests after planning (<Text color={COLORS.TEXT || undefined}>⇥ tab</Text>):{" "}
+          auto-run after planning (<Text color={COLORS.TEXT || undefined}>⇥ tab</Text>):{" "}
           <Text color={autoRunAfterPlanning ? COLORS.ORANGE : COLORS.DIM}>
             {autoRunAfterPlanning ? "yes" : "no"}
           </Text>
         </Text>
-      </Box>
+        {pad(autoRunLine)}
+        {"│"}
+      </Text>
+      {emptyRow}
+      <Text color={COLORS.DIM}>
+        {"╰"}
+        {"─".repeat(inner)}
+        {"╯"}
+      </Text>
 
-      <Box marginTop={2}>
+      <Box marginTop={1}>
         <Text backgroundColor={theme.primary} color="#000000" bold>
           {" "}
           {gitState.currentBranch}{" "}
