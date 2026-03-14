@@ -3,20 +3,68 @@ import { useStdoutDimensions } from "../hooks/use-stdout-dimensions.js";
 import stringWidth from "string-width";
 import { useThemeContext } from "./theme-context.js";
 import { STATUSBAR_BRANCH_PADDING, STATUSBAR_TRAILING_PADDING } from "../constants.js";
-import { visualPadEnd } from "../utils/visual-pad-end.js";
 import { useAppStore, type Screen } from "../store.js";
 
-const SCREEN_HINTS: Record<Screen, string> = {
-  main: "t theme · b branch · ↑↓ nav",
-  "switch-branch": "↑↓ nav · tab local/remote · / search · enter select · esc back",
-  "select-commit": "↑↓ nav · enter select · / search · esc back",
-  "saved-flow-picker": "↑↓ nav · enter select · esc back",
-  "flow-input": "enter submit · esc back",
-  planning: "esc cancel",
-  "review-plan": "↑↓ nav · tab fold · e edit · s save · a approve · esc back",
-  testing: "",
-  theme: "↑↓ nav · tab light/dark · enter select · esc cancel",
+interface KeyHint {
+  key: string;
+  label: string;
+}
+
+const SCREEN_HINTS: Record<Screen, KeyHint[]> = {
+  main: [
+    { key: "t", label: "theme" },
+    { key: "b", label: "branch" },
+    { key: "↑↓", label: "nav" },
+  ],
+  "switch-branch": [
+    { key: "↑↓", label: "nav" },
+    { key: "tab", label: "local/remote" },
+    { key: "/", label: "search" },
+    { key: "enter", label: "select" },
+    { key: "esc", label: "back" },
+  ],
+  "select-commit": [
+    { key: "↑↓", label: "nav" },
+    { key: "enter", label: "select" },
+    { key: "/", label: "search" },
+    { key: "esc", label: "back" },
+  ],
+  "saved-flow-picker": [
+    { key: "↑↓", label: "nav" },
+    { key: "enter", label: "select" },
+    { key: "esc", label: "back" },
+  ],
+  "flow-input": [
+    { key: "enter", label: "submit" },
+    { key: "esc", label: "back" },
+  ],
+  planning: [{ key: "esc", label: "cancel" }],
+  "review-plan": [
+    { key: "↑↓", label: "nav" },
+    { key: "tab", label: "fold" },
+    { key: "e", label: "edit" },
+    { key: "s", label: "save" },
+    { key: "a", label: "approve" },
+    { key: "esc", label: "back" },
+  ],
+  testing: [],
+  theme: [
+    { key: "↑↓", label: "nav" },
+    { key: "tab", label: "light/dark" },
+    { key: "enter", label: "select" },
+    { key: "esc", label: "cancel" },
+  ],
 };
+
+const MAIN_HINTS_WITH_REUSE: KeyHint[] = [
+  { key: "t", label: "theme" },
+  { key: "b", label: "branch" },
+  { key: "r", label: "reuse flow" },
+  { key: "↑↓", label: "nav" },
+];
+
+const hintsToString = (hints: KeyHint[]): string =>
+  hints.map((hint) => `${hint.key} ${hint.label}`).join("   ");
 
 export const Modeline = () => {
   const [columns] = useStdoutDimensions();
@@ -29,13 +77,15 @@ export const Modeline = () => {
 
   const hints =
     screen === "main" && savedFlowSummaries.length > 0
-      ? "t theme · b branch · r reuse flow · ↑↓ nav"
-      : (SCREEN_HINTS[screen] ?? "");
-  const remaining =
-    columns -
-    STATUSBAR_BRANCH_PADDING -
-    stringWidth(gitState.currentBranch) -
-    STATUSBAR_TRAILING_PADDING;
+      ? MAIN_HINTS_WITH_REUSE
+      : (SCREEN_HINTS[screen] ?? []);
+
+  const hintsString = hintsToString(hints);
+  const usedWidth =
+    STATUSBAR_BRANCH_PADDING +
+    stringWidth(gitState.currentBranch) +
+    (hints.length > 0 ? 1 + stringWidth(hintsString) : 0);
+  const trailingPad = Math.max(0, columns - usedWidth - STATUSBAR_TRAILING_PADDING);
 
   return (
     <Box>
@@ -43,8 +93,18 @@ export const Modeline = () => {
         {" "}
         {gitState.currentBranch}{" "}
       </Text>
-      <Text backgroundColor={theme.border} color={theme.text}>
-        {visualPadEnd(hints ? ` ${hints}` : "", remaining)}
+      <Text backgroundColor={theme.border}>
+        {hints.length > 0 ? " " : ""}
+        {hints.map((hint, index) => (
+          <Text key={hint.key + hint.label}>
+            {index > 0 ? "   " : ""}
+            <Text color={theme.text} bold>
+              {hint.key}
+            </Text>
+            <Text color={theme.textMuted}> {hint.label}</Text>
+          </Text>
+        ))}
+        {" ".repeat(trailingPad)}
       </Text>
     </Box>
   );
