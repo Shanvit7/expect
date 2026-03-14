@@ -37,3 +37,6 @@ export const BROWSER_FRAME_BODY_HEIGHT = 4;
 export const ALT_SCREEN_ON = "\u001b[?1049h\u001b[2J\u001b[H";
 export const ALT_SCREEN_OFF = "\u001b[?1049l";
 export const BROWSER_TOOL_PREFIX = "mcp__browser__";
+export const CLICK_SUPPORT_ENABLED =
+  process.env.SUPPORT_CLICK === "true" ||
+  process.env.SUPPORT_CLICK === "1";

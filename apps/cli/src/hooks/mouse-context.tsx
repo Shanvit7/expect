@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef } from "react";
+import { CLICK_SUPPORT_ENABLED } from "../constants.js";
 
 interface MousePosition {
   x: number;
@@ -15,7 +16,10 @@ interface MouseContextValue {
   subscribeClick: (handler: ClickHandler) => () => void;
 }
 
-const MouseContext = createContext<MouseContextValue | null>(null);
+const NOOP_UNSUBSCRIBE = () => {};
+const NOOP_CONTEXT: MouseContextValue = { subscribeClick: () => NOOP_UNSUBSCRIBE };
+
+const MouseContext = createContext<MouseContextValue>(NOOP_CONTEXT);
 
 const MOUSE_ENABLE = "\u001b[?1000h\u001b[?1006h";
 const MOUSE_DISABLE = "\u001b[?1000l\u001b[?1006l";
@@ -23,6 +27,8 @@ const MOUSE_DISABLE = "\u001b[?1000l\u001b[?1006l";
 const SGR_MOUSE_SEQUENCE = /\x1b\[<(\d+);(\d+);(\d+)([Mm])/g;
 
 export const MouseProvider = ({ children }: { children: React.ReactNode }) => {
+  if (!CLICK_SUPPORT_ENABLED) return <>{children}</>;
+
   const handlersRef = useRef(new Set<ClickHandler>());
 
   useEffect(() => {
@@ -68,11 +74,7 @@ export const MouseProvider = ({ children }: { children: React.ReactNode }) => {
   return <MouseContext.Provider value={{ subscribeClick }}>{children}</MouseContext.Provider>;
 };
 
-export const useMouse = (): MouseContextValue => {
-  const context = useContext(MouseContext);
-  if (!context) throw new Error("useMouse must be used within MouseProvider");
-  return context;
-};
+export const useMouse = (): MouseContextValue => useContext(MouseContext);
 
 // oxlint-disable-next-line no-control-regex
 const SGR_MOUSE_GARBAGE = /\u001b?\[?<?(\d+;)*\d+[Mm]?/g;

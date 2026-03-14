@@ -12,6 +12,9 @@ import { getOwnerStack, symbolicateStack, isSourceFile } from "bippy/source";
 import type { StackFrame } from "bippy/source";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const IS_CLICK_SUPPORT_ENABLED =
+  process.env.SUPPORT_CLICK === "true" ||
+  process.env.SUPPORT_CLICK === "1";
 const SGR_PREFIX = "\x1b[<";
 const CSI_PREFIX = "\x1b[";
 const MOUSE_ENABLE = "\x1b[?1003h\x1b[?1006h";
@@ -188,7 +191,7 @@ interface InkGrabProps {
 }
 
 export const InkGrab = ({ children }: InkGrabProps) => {
-  if (IS_PRODUCTION) return <>{children}</>;
+  if (IS_PRODUCTION || !IS_CLICK_SUPPORT_ENABLED) return <>{children}</>;
 
   const { stdout } = useStdout();
   const stdinContext = useStdin();
