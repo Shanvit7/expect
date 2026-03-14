@@ -34,6 +34,7 @@ interface FormatRunEventOptions {
 const TOOL_CALL_DISPLAY_MODE_COMPACT = "compact";
 const TOOL_CALL_DISPLAY_MODE_DETAILED = "detailed";
 const TOOL_CALL_DISPLAY_MODE_HIDDEN = "hidden";
+const TRACE_DISPLAY_SHORTCUT_KEY = "v";
 
 const getNextToolCallDisplayMode = (toolCallDisplayMode: string): string => {
   switch (toolCallDisplayMode) {
@@ -51,6 +52,11 @@ const isDetailedTraceDisplayMode = (traceDisplayMode: string): boolean =>
 
 const isHiddenTraceDisplayMode = (traceDisplayMode: string): boolean =>
   traceDisplayMode === TOOL_CALL_DISPLAY_MODE_HIDDEN;
+
+const formatTraceText = (value: string, traceDisplayMode: string): string =>
+  isDetailedTraceDisplayMode(traceDisplayMode)
+    ? value
+    : truncateText(value, TESTING_TOOL_TEXT_CHAR_LIMIT);
 
 const formatRunEvent = (
   event: BrowserRunEvent,
@@ -85,7 +91,7 @@ const formatRunEvent = (
       });
       if (!toolCallText) return null;
       return {
-        text: `• ${truncateText(toolCallText, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
+        text: `• ${formatTraceText(toolCallText, options.traceDisplayMode)}`,
         color: colors.DIM,
       };
     }
@@ -103,13 +109,13 @@ const formatRunEvent = (
     case "text":
       if (!isDetailedTraceDisplayMode(options.traceDisplayMode)) return null;
       return {
-        text: truncateText(event.text, TESTING_TOOL_TEXT_CHAR_LIMIT),
+        text: event.text,
         color: colors.CYAN,
       };
     case "thinking":
       if (!isDetailedTraceDisplayMode(options.traceDisplayMode)) return null;
       return {
-        text: `Thinking: ${truncateText(event.text, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
+        text: `Thinking: ${event.text}`,
         color: colors.PURPLE,
       };
     case "browser-log":
@@ -239,7 +245,7 @@ export const TestingScreen = () => {
   }, [environment, plan, target]);
 
   useInput((input, key) => {
-    if (input === "t") {
+    if (input === TRACE_DISPLAY_SHORTCUT_KEY) {
       setToolCallDisplayMode((previous) => getNextToolCallDisplayMode(previous));
       return;
     }
@@ -264,7 +270,8 @@ export const TestingScreen = () => {
           {currentStep ? `Current step: ${currentStep}` : "Waiting for first step..."}
         </Text>
         <Text color={COLORS.DIM}>
-          Trace: {toolCallDisplayMode}. Press t to cycle compact, detailed, hidden.
+          Trace: {toolCallDisplayMode}. Press {TRACE_DISPLAY_SHORTCUT_KEY} to cycle compact,
+          detailed, hidden.
         </Text>
       </Box>
 
@@ -312,7 +319,7 @@ export const TestingScreen = () => {
 
       <Box marginTop={1}>
         <Text color={COLORS.DIM}>
-          Esc to {running ? "cancel" : "go back"} t to cycle trace
+          Esc to {running ? "cancel" : "go back"} {TRACE_DISPLAY_SHORTCUT_KEY} to cycle trace
         </Text>
       </Box>
     </Box>

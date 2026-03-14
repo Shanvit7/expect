@@ -1,5 +1,6 @@
 import type { LanguageModelV3Content, LanguageModelV3StreamPart } from "@ai-sdk/provider";
 import { isRecord } from "@browser-tester/utils";
+import { serializeToolResult } from "./utils/serialize-tool-result.js";
 
 export const PROVIDER_ID = "browser-tester-agent";
 
@@ -61,7 +62,10 @@ export const convertToolResultBlocks = (content: unknown[]): LanguageModelV3Cont
       type: "tool-result" as const,
       toolCallId: stringField(block, "tool_use_id", "unknown"),
       toolName: stringField(block, "name", "unknown"),
-      result: block.type === "tool_error" ? String(block.error ?? "") : String(block.content ?? ""),
+      result:
+        block.type === "tool_error"
+          ? serializeToolResult(block.error)
+          : serializeToolResult(block.content),
       isError: block.type === "tool_error" || block.is_error === true,
     }));
 
@@ -117,7 +121,10 @@ export const emitToolResultParts = (
       type: "tool-result",
       toolCallId: stringField(block, "tool_use_id", "unknown"),
       toolName: stringField(block, "name", "unknown"),
-      result: block.type === "tool_error" ? String(block.error ?? "") : String(block.content ?? ""),
+      result:
+        block.type === "tool_error"
+          ? serializeToolResult(block.error)
+          : serializeToolResult(block.content),
       isError: block.type === "tool_error" || block.is_error === true,
     });
   }

@@ -303,4 +303,79 @@ describe("executeBrowserFlow", () => {
 
     rmSync(dirname(screenshotPath), { recursive: true, force: true });
   });
+
+  it("serializes object tool results instead of object Object", async () => {
+    const events: BrowserRunEvent[] = [];
+
+    for await (const event of executeBrowserFlow({
+      target: testTarget,
+      plan: testPlan,
+      model: createStreamModel(
+        [
+          { type: "stream-start", warnings: [] },
+          { type: "text-start", id: "t1" },
+          {
+            type: "text-delta",
+            id: "t1",
+            delta: "STEP_START|step-01|Open onboarding\n",
+          },
+          { type: "text-end", id: "t1" },
+          {
+            type: "tool-call",
+            toolCallId: "tool-1",
+            toolName: "mcp__browser__open",
+            input: '{"url":"http://localhost:3000/onboarding"}',
+            providerExecuted: true,
+          },
+          {
+            type: "tool-result",
+            toolCallId: "tool-1",
+            toolName: "mcp__browser__open",
+            result: {
+              ok: true,
+              url: "http://localhost:3000/onboarding",
+            },
+            isError: false,
+          },
+          { type: "text-start", id: "t2" },
+          {
+            type: "text-delta",
+            id: "t2",
+            delta:
+              "STEP_DONE|step-01|Opened onboarding successfully\nRUN_COMPLETED|passed|Verified object tool result serialization\n",
+          },
+          { type: "text-end", id: "t2" },
+          {
+            type: "finish",
+            finishReason: { unified: "stop", raw: undefined },
+            usage: {
+              inputTokens: {
+                total: undefined,
+                noCache: undefined,
+                cacheRead: undefined,
+                cacheWrite: undefined,
+              },
+              outputTokens: { total: undefined, text: undefined, reasoning: undefined },
+            },
+            providerMetadata: {},
+          },
+        ],
+        () => {},
+      ),
+    })) {
+      events.push(event);
+    }
+
+    expect(
+      events.find(
+        (event) =>
+          event.type === "tool-result" &&
+          event.toolName === "mcp__browser__open" &&
+          !event.isError,
+      ),
+    ).toMatchObject({
+      type: "tool-result",
+      result: '{"ok":true,"url":"http://localhost:3000/onboarding"}',
+    });
+  });
 });

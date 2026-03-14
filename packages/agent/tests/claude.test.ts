@@ -124,6 +124,27 @@ describe("createClaudeModel", () => {
       });
     });
 
+    it("serializes object tool_result content to JSON", async () => {
+      const { content } = await generateWith([
+        sdkUser([
+          {
+            type: "tool_result",
+            tool_use_id: "toolu_abc",
+            name: "browser_open",
+            content: { ok: true, url: "http://localhost:3000" },
+            is_error: false,
+          },
+        ]),
+      ]);
+      expect(content[0]).toMatchObject({
+        type: "tool-result",
+        toolCallId: "toolu_abc",
+        toolName: "browser_open",
+        result: '{"ok":true,"url":"http://localhost:3000"}',
+        isError: false,
+      });
+    });
+
     it("converts tool_error to tool-result with isError", async () => {
       const { content } = await generateWith([
         sdkUser([
@@ -276,6 +297,27 @@ describe("createClaudeModel", () => {
         type: "tool-result",
         toolCallId: "t1",
         result: "output",
+        isError: false,
+      });
+    });
+
+    it("emits serialized object tool-result", async () => {
+      const parts = await streamWith([
+        sdkUser([
+          {
+            type: "tool_result",
+            tool_use_id: "t1",
+            name: "Bash",
+            content: { files: ["a.ts", "b.ts"] },
+            is_error: false,
+          },
+        ]),
+      ]);
+      const toolResult = parts.find((part) => part.type === "tool-result");
+      expect(toolResult).toMatchObject({
+        type: "tool-result",
+        toolCallId: "t1",
+        result: '{"files":["a.ts","b.ts"]}',
         isError: false,
       });
     });

@@ -24,6 +24,7 @@ import {
 import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execution-stream.js";
 import type { ExecuteBrowserFlowOptions, PlanStep } from "./types.js";
 import { saveBrowserImageResult } from "./utils/save-browser-image-result.js";
+import { serializeToolResult } from "./utils/serialize-tool-result.js";
 
 const BROWSER_EXECUTION_TOOL_NAMES = [
   "open",
@@ -262,7 +263,7 @@ export const executeBrowserFlow = async function* (
 
     if (part.type === "tool-result") {
       const browserAction = parseBrowserToolName(part.toolName, browserMcpServerName);
-      let result = String(part.result);
+      let result = serializeToolResult(part.result);
       if (
         browserAction === "screenshot" ||
         browserAction === "take_screenshot" ||

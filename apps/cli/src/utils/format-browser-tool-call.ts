@@ -280,7 +280,9 @@ export const formatBrowserToolResult = (
   options: BrowserToolResultFormatOptions = {},
 ): string | null => {
   if (event.isError) {
-    return truncateText(event.result, TESTING_TOOL_TEXT_CHAR_LIMIT);
+    return options.includeAllResults === true
+      ? event.result
+      : truncateText(event.result, TESTING_TOOL_TEXT_CHAR_LIMIT);
   }
 
   switch (event.toolName) {
@@ -291,8 +293,6 @@ export const formatBrowserToolResult = (
     case `${BROWSER_TOOL_PREFIX}close`:
       return event.result;
     default:
-      return options.includeAllResults === true
-        ? truncateText(event.result.replace(/\s+/g, " ").trim(), TESTING_TOOL_TEXT_CHAR_LIMIT)
-        : null;
+      return options.includeAllResults === true ? event.result : null;
   }
 };
