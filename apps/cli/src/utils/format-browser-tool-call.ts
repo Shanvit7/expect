@@ -11,6 +11,10 @@ interface BrowserToolCallFormatOptions {
   includeRelevantInputs?: boolean;
 }
 
+interface BrowserToolResultFormatOptions {
+  includeAllResults?: boolean;
+}
+
 const parseToolInput = (input: string): Record<string, unknown> | null => {
   try {
     const parsedValue = JSON.parse(input);
@@ -273,6 +277,7 @@ export const formatBrowserToolCall = (
 
 export const formatBrowserToolResult = (
   event: Extract<BrowserRunEvent, { type: "tool-result" }>,
+  options: BrowserToolResultFormatOptions = {},
 ): string | null => {
   if (event.isError) {
     return truncateText(event.result, TESTING_TOOL_TEXT_CHAR_LIMIT);
@@ -286,6 +291,8 @@ export const formatBrowserToolResult = (
     case `${BROWSER_TOOL_PREFIX}close`:
       return event.result;
     default:
-      return null;
+      return options.includeAllResults === true
+        ? truncateText(event.result.replace(/\s+/g, " ").trim(), TESTING_TOOL_TEXT_CHAR_LIMIT)
+        : null;
   }
 };

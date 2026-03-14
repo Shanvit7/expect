@@ -7,7 +7,11 @@ import {
 import { tmpdir } from "node:os";
 import type { Browser as BrowserKey, Cookie } from "@browser-tester/cookies";
 import { chromium } from "playwright";
-import { HEADLESS_CHROMIUM_ARGS } from "./constants";
+import {
+  DEFAULT_VIDEO_HEIGHT_PX,
+  DEFAULT_VIDEO_WIDTH_PX,
+  HEADLESS_CHROMIUM_ARGS,
+} from "./constants";
 import { injectCookies } from "./inject-cookies";
 import type { CreatePageOptions, CreatePageResult, VideoOptions } from "./types";
 
@@ -33,8 +37,19 @@ const resolveVideoOptions = (
   video: boolean | VideoOptions | undefined,
 ): VideoOptions | undefined => {
   if (!video) return undefined;
-  if (video === true) return { dir: tmpdir() };
-  return video;
+  if (video === true) {
+    return {
+      dir: tmpdir(),
+      size: { width: DEFAULT_VIDEO_WIDTH_PX, height: DEFAULT_VIDEO_HEIGHT_PX },
+    };
+  }
+  return {
+    ...video,
+    size: video.size ?? {
+      width: DEFAULT_VIDEO_WIDTH_PX,
+      height: DEFAULT_VIDEO_HEIGHT_PX,
+    },
+  };
 };
 
 const navigatePage = async (

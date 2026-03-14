@@ -1,5 +1,6 @@
 import type { BrowserProfile, Cookie } from "@browser-tester/cookies";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_VIDEO_HEIGHT_PX, DEFAULT_VIDEO_WIDTH_PX } from "../src/constants";
 
 const {
   detectBrowserProfilesMock,
@@ -129,5 +130,74 @@ describe("createPage cookie reuse", () => {
       browsers: ["helium"],
     });
     expect(injectCookiesMock).toHaveBeenCalledWith(expect.anything(), fallbackCookies);
+  });
+});
+
+describe("createPage video recording", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    gotoMock.mockResolvedValue(undefined);
+    newPageMock.mockResolvedValue({ goto: gotoMock });
+    newContextMock.mockResolvedValue({ newPage: newPageMock });
+    closeMock.mockResolvedValue(undefined);
+    launchMock.mockResolvedValue({
+      newContext: newContextMock,
+      close: closeMock,
+    });
+  });
+
+  it("uses the default HD recording size when video is enabled", async () => {
+    await createPage("https://example.com", { video: true });
+
+    expect(newContextMock).toHaveBeenCalledWith({
+      recordVideo: {
+        dir: expect.any(String),
+        size: {
+          width: DEFAULT_VIDEO_WIDTH_PX,
+          height: DEFAULT_VIDEO_HEIGHT_PX,
+        },
+      },
+    });
+  });
+
+  it("preserves an explicit recording size", async () => {
+    await createPage("https://example.com", {
+      video: {
+        dir: "/tmp/videos",
+        size: {
+          width: 1920,
+          height: 1080,
+        },
+      },
+    });
+
+    expect(newContextMock).toHaveBeenCalledWith({
+      recordVideo: {
+        dir: "/tmp/videos",
+        size: {
+          width: 1920,
+          height: 1080,
+        },
+      },
+    });
+  });
+
+  it("fills in the default recording size when only a directory is provided", async () => {
+    await createPage("https://example.com", {
+      video: {
+        dir: "/tmp/videos",
+      },
+    });
+
+    expect(newContextMock).toHaveBeenCalledWith({
+      recordVideo: {
+        dir: "/tmp/videos",
+        size: {
+          width: DEFAULT_VIDEO_WIDTH_PX,
+          height: DEFAULT_VIDEO_HEIGHT_PX,
+        },
+      },
+    });
   });
 });

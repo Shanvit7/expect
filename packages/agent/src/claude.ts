@@ -20,6 +20,7 @@ import {
   extractSessionId,
 } from "./provider-shared.js";
 import type { AgentProviderSettings } from "./types.js";
+import { buildClaudeProcessEnv } from "./utils/build-claude-process-env.js";
 
 const DEFAULT_CLAUDE_MAX_TURNS = 200;
 
@@ -141,6 +142,7 @@ const buildQueryOptions = (
   const resolvedModel = settings.model ?? "claude-opus-4-6";
   const supportsEffort = !resolvedModel.toLowerCase().includes("sonnet");
   const explicitExecutablePath = resolveClaudeExecutablePath();
+  const env = buildClaudeProcessEnv(settings.env);
   const queryOptions = {
     model: resolvedModel,
     maxTurns: settings.maxTurns ?? DEFAULT_CLAUDE_MAX_TURNS,
@@ -152,7 +154,7 @@ const buildQueryOptions = (
     ...(settings.effort && supportsEffort ? { effort: settings.effort } : {}),
     ...(systemPrompt ? { appendSystemPrompt: systemPrompt } : {}),
     ...(settings.sessionId ? { resume: settings.sessionId } : {}),
-    ...(settings.env ? { env: settings.env } : {}),
+    env,
     ...(settings.mcpServers ? { mcpServers: settings.mcpServers } : {}),
     ...(explicitExecutablePath ? { pathToClaudeCodeExecutable: explicitExecutablePath } : {}),
     ...(settings.tools !== undefined ? { tools: settings.tools } : {}),

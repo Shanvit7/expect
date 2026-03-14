@@ -8,12 +8,16 @@ import type {
 } from "@ai-sdk/provider";
 
 let pendingEvents: Record<string, unknown>[] = [];
+let lastQueryOptions: unknown;
 
 vi.mock("@anthropic-ai/claude-agent-sdk", () => ({
-  query: () =>
-    (async function* () {
+  query: ({ options }: { options?: unknown }) => {
+    lastQueryOptions = options;
+
+    return (async function* () {
       for (const event of pendingEvents) yield event;
-    })(),
+    })();
+  },
 }));
 
 import { createClaudeModel } from "../src/claude.js";
@@ -31,6 +35,7 @@ const defaultOptions: LanguageModelV3CallOptions = {
 
 const generateWith = (events: Record<string, unknown>[]) => {
   pendingEvents = events;
+  lastQueryOptions = undefined;
   return createClaudeModel().doGenerate(defaultOptions);
 };
 
@@ -38,6 +43,7 @@ const streamWith = async (
   events: Record<string, unknown>[],
 ): Promise<LanguageModelV3StreamPart[]> => {
   pendingEvents = events;
+  lastQueryOptions = undefined;
   const { stream } = await createClaudeModel().doStream(defaultOptions);
   const parts: LanguageModelV3StreamPart[] = [];
   const reader = stream.getReader();
@@ -140,6 +146,64 @@ describe("createClaudeModel", () => {
       const result = await generateWith([sdkAssistant([{ type: "text", text: "Hi" }])]);
       expect(result.finishReason.unified).toBe("stop");
       expect(result.usage).toBeDefined();
+    });
+
+    it("sanitizes blocked Claude subprocess environment variables", async () => {
+      const originalClaudeCode = process.env.CLAUDECODE;
+      const originalNodeOptions = process.env.NODE_OPTIONS;
+      const originalInspectorOptions = process.env.VSCODE_INSPECTOR_OPTIONS;
+      const originalSafeValue = process.env.BROWSER_TESTER_SAFE_ENV;
+
+      process.env.CLAUDECODE = "1";
+      process.env.NODE_OPTIONS = "--inspect";
+      process.env.VSCODE_INSPECTOR_OPTIONS = '{"autoAttachMode":"always"}';
+      process.env.BROWSER_TESTER_SAFE_ENV = "safe";
+
+      try {
+        pendingEvents = [sdkAssistant([{ type: "text", text: "Hi" }])];
+        lastQueryOptions = undefined;
+
+        await createClaudeModel({
+          env: {
+            CUSTOM_ENV: "custom",
+            CLAUDECODE: "1",
+            NODE_OPTIONS: "--inspect-brk",
+          },
+        }).doGenerate(defaultOptions);
+
+        expect(lastQueryOptions).toMatchObject({
+          env: expect.objectContaining({
+            BROWSER_TESTER_SAFE_ENV: "safe",
+            CUSTOM_ENV: "custom",
+          }),
+        });
+
+        if (!lastQueryOptions || typeof lastQueryOptions !== "object") {
+          throw new Error("Expected query options to be captured");
+        }
+
+        const queryEnv = "env" in lastQueryOptions ? lastQueryOptions.env : undefined;
+
+        if (!queryEnv || typeof queryEnv !== "object") {
+          throw new Error("Expected query env to be captured");
+        }
+
+        expect("CLAUDECODE" in queryEnv).toBe(false);
+        expect("NODE_OPTIONS" in queryEnv).toBe(false);
+        expect("VSCODE_INSPECTOR_OPTIONS" in queryEnv).toBe(false);
+      } finally {
+        if (originalClaudeCode === undefined) delete process.env.CLAUDECODE;
+        else process.env.CLAUDECODE = originalClaudeCode;
+
+        if (originalNodeOptions === undefined) delete process.env.NODE_OPTIONS;
+        else process.env.NODE_OPTIONS = originalNodeOptions;
+
+        if (originalInspectorOptions === undefined) delete process.env.VSCODE_INSPECTOR_OPTIONS;
+        else process.env.VSCODE_INSPECTOR_OPTIONS = originalInspectorOptions;
+
+        if (originalSafeValue === undefined) delete process.env.BROWSER_TESTER_SAFE_ENV;
+        else process.env.BROWSER_TESTER_SAFE_ENV = originalSafeValue;
+      }
     });
 
     it("skips system and result events", async () => {

@@ -27,7 +27,7 @@ interface TestingLine {
 }
 
 interface FormatRunEventOptions {
-  toolCallDisplayMode: string;
+  traceDisplayMode: string;
 }
 
 const TOOL_CALL_DISPLAY_MODE_COMPACT = "compact";
@@ -44,6 +44,12 @@ const getNextToolCallDisplayMode = (toolCallDisplayMode: string): string => {
       return TOOL_CALL_DISPLAY_MODE_COMPACT;
   }
 };
+
+const isDetailedTraceDisplayMode = (traceDisplayMode: string): boolean =>
+  traceDisplayMode === TOOL_CALL_DISPLAY_MODE_DETAILED;
+
+const isHiddenTraceDisplayMode = (traceDisplayMode: string): boolean =>
+  traceDisplayMode === TOOL_CALL_DISPLAY_MODE_HIDDEN;
 
 const formatRunEvent = (
   event: BrowserRunEvent,
@@ -72,9 +78,9 @@ const formatRunEvent = (
         color: colors.RED,
       };
     case "tool-call": {
-      if (options.toolCallDisplayMode === TOOL_CALL_DISPLAY_MODE_HIDDEN) return null;
+      if (isHiddenTraceDisplayMode(options.traceDisplayMode)) return null;
       const toolCallText = formatBrowserToolCall(event.toolName, event.input, {
-        includeRelevantInputs: options.toolCallDisplayMode === TOOL_CALL_DISPLAY_MODE_DETAILED,
+        includeRelevantInputs: isDetailedTraceDisplayMode(options.traceDisplayMode),
       });
       if (!toolCallText) return null;
       return {
@@ -83,16 +89,29 @@ const formatRunEvent = (
       };
     }
     case "tool-result": {
-      const toolResultText = formatBrowserToolResult(event);
+      if (isHiddenTraceDisplayMode(options.traceDisplayMode)) return null;
+      const toolResultText = formatBrowserToolResult(event, {
+        includeAllResults: isDetailedTraceDisplayMode(options.traceDisplayMode),
+      });
       if (!toolResultText) return null;
       return {
         text: toolResultText,
         color: event.isError ? colors.RED : colors.DIM,
       };
     }
-    case "browser-log":
     case "text":
+      if (!isDetailedTraceDisplayMode(options.traceDisplayMode)) return null;
+      return {
+        text: truncateText(event.text, TESTING_TOOL_TEXT_CHAR_LIMIT),
+        color: colors.CYAN,
+      };
     case "thinking":
+      if (!isDetailedTraceDisplayMode(options.traceDisplayMode)) return null;
+      return {
+        text: `Thinking: ${truncateText(event.text, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
+        color: colors.PURPLE,
+      };
+    case "browser-log":
       return null;
     case "error":
       return {
@@ -131,7 +150,7 @@ export const TestingScreen = () => {
   const lines = useMemo(
     () => [
       ...events
-        .map((event) => formatRunEvent(event, COLORS, { toolCallDisplayMode }))
+        .map((event) => formatRunEvent(event, COLORS, { traceDisplayMode: toolCallDisplayMode }))
         .filter((line): line is TestingLine => line !== null),
       ...statusLines,
     ],
@@ -244,7 +263,7 @@ export const TestingScreen = () => {
           {currentStep ? `Current step: ${currentStep}` : "Waiting for first step..."}
         </Text>
         <Text color={COLORS.DIM}>
-          Tool calls: {toolCallDisplayMode}. Press t to cycle compact, detailed, hidden.
+          Trace: {toolCallDisplayMode}. Press t to cycle compact, detailed, hidden.
         </Text>
       </Box>
 
@@ -296,7 +315,7 @@ export const TestingScreen = () => {
 
       <Box marginTop={1}>
         <Text color={COLORS.DIM}>
-          Esc to {running ? "cancel" : "go back"} t to cycle tool calls
+          Esc to {running ? "cancel" : "go back"} t to cycle trace
         </Text>
       </Box>
     </Box>
