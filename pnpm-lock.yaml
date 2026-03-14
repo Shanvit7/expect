@@ -62,9 +62,6 @@ importers:
       string-width:
         specifier: ^8.2.0
         version: 8.2.0
-      term-mouse:
-        specifier: ^0.2.2
-        version: 0.2.2
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -2806,9 +2803,6 @@ packages:
     resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
     engines: {node: '>=6'}
 
-  term-mouse@0.2.2:
-    resolution: {integrity: sha512-gtQom/4CSGQLC1xsEdes7JVItp1bmcKx8S5m+fgeN07jWw2j3r4TWHQyjO6eNYvHxbPf/upYxiEPESNF2J96Dw==}
-
   term-size@2.2.1:
     resolution: {integrity: sha512-wK0Ri4fOGjv/XPy8SBHZChl8CM7uMc5VML7SqiQ0zG7+J5Vr+RMQDoHa2CNT6KHUnTGIXH34UDMkPzAUyapBZg==}
     engines: {node: '>=8'}
@@ -5411,8 +5405,6 @@ snapshots:
   tailwindcss@4.2.1: {}
 
   tapable@2.3.0: {}
-
-  term-mouse@0.2.2: {}
 
   term-size@2.2.1: {}
 

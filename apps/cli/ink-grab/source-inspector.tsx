@@ -4,6 +4,7 @@ import type { DOMElement } from "ink";
 import type { ElementInfo } from "element-source";
 import { resolveElementInfo } from "element-source";
 import { hitTest } from "./hit-test.js";
+import { createMouseTracking } from "./mouse-tracking.js";
 import { copyToClipboard } from "./copy-to-clipboard.js";
 import { SourcePanel } from "./source-panel.js";
 import { COPIED_FLASH_DURATION_MS } from "./constants.js";
@@ -36,37 +37,22 @@ export const SourceInspector = ({ children }: SourceInspectorProps) => {
     if (mode !== "picking") return;
 
     let cancelled = false;
-    interface MouseInstance {
-      start: () => void;
-      stop: () => void;
-      on: (event: string, handler: (event: { x: number; y: number }) => void) => void;
-      removeListener: (event: string, handler: (event: { x: number; y: number }) => void) => void;
-    }
-    let mouseInstance: MouseInstance | null = null;
+    const mouse = createMouseTracking();
 
-    const handleClick = (event: { x: number; y: number }) => {
-      if (!rootRef.current) return;
-      const element = hitTest(rootRef.current, event.x - 1, event.y - 1);
+    mouse.on("click", (_press, release) => {
+      if (cancelled || !rootRef.current) return;
+      const element = hitTest(rootRef.current, release.x - 1, release.y - 1);
       if (!element) return;
       void resolveElementInfo(element).then((info) => {
         if (!cancelled) setElementInfo(info);
       });
-    };
-
-    void import("term-mouse").then((mod) => {
-      if (cancelled) return;
-      const createMouse = (mod.default ?? mod) as () => MouseInstance;
-      mouseInstance = createMouse();
-      mouseInstance.start();
-      mouseInstance.on("click", handleClick);
     });
+
+    mouse.start();
 
     return () => {
       cancelled = true;
-      if (mouseInstance) {
-        mouseInstance.stop();
-        mouseInstance.removeListener("click", handleClick);
-      }
+      mouse.stop();
     };
   }, [mode]);
 
