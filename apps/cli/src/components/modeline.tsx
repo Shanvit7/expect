@@ -65,15 +65,9 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
       return [
         { key: "↑↓", label: "nav" },
         { key: "tab", label: "fold" },
-        {
-          key: "esc",
-          label: "cancel",
-          color: COLORS.RED,
-          cta: true,
-          onClick: goBack,
-        },
+        { key: "s", label: "save" },
+        { key: "esc", label: "cancel", onClick: goBack },
         { key: "e", label: "edit", cta: true },
-        { key: "s", label: "save", color: COLORS.GREEN, cta: true },
         {
           key: "a",
           label: "approve",
