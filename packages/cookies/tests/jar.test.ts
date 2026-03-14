@@ -38,9 +38,9 @@ describe("matchCookies", () => {
   });
 
   it("matches path prefix", () => {
-    expect(
-      matchCookies([cookie({ path: "/api" })], "https://example.com/api/users"),
-    ).toHaveLength(1);
+    expect(matchCookies([cookie({ path: "/api" })], "https://example.com/api/users")).toHaveLength(
+      1,
+    );
   });
 
   it("rejects secure cookie on http", () => {

@@ -81,13 +81,12 @@ export const ThemePickerScreen = () => {
 
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      <Text bold color={COLORS.TEXT || undefined}>
+      <Text bold color={COLORS.TEXT}>
         Select theme
       </Text>
       <Text color={COLORS.DIM}>
-        {filteredThemeNames.length} themes{" "}
-        <Text color={COLORS.TEXT || undefined}>[{filterLabel}]</Text> (
-        <Text color={COLORS.TEXT || undefined}>{"\u21E5"} tab</Text> to filter)
+        {filteredThemeNames.length} themes <Text color={COLORS.TEXT}>[{filterLabel}]</Text> (
+        <Text color={COLORS.TEXT}>{"\u21E5"} tab</Text> to filter)
       </Text>
 
       <Box

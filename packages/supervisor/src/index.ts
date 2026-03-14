@@ -3,9 +3,12 @@ export { GIT_TIMEOUT_MS } from "./constants.js";
 export type { BrowserRunEvent } from "./events.js";
 export { executeBrowserFlow } from "./execute-browser-flow.js";
 export {
+  checkoutBranch,
   getBranchCommits,
   getBranchDiffStats,
+  getCommitSummary,
   getCurrentBranchName,
+  getLocalBranches,
   getMainBranchName,
   getUnstagedDiffStats,
 } from "./git.js";

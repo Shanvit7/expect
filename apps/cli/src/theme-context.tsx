@@ -13,7 +13,6 @@ export interface Colors {
   YELLOW: string;
   PURPLE: string;
   CYAN: string;
-  AMBER: string;
 }
 
 const colorsFromTheme = (theme: ThemeDefinition): Colors => ({
@@ -28,7 +27,6 @@ const colorsFromTheme = (theme: ThemeDefinition): Colors => ({
   YELLOW: theme.warning,
   PURPLE: theme.secondary,
   CYAN: theme.info,
-  AMBER: theme.warning,
 });
 
 interface ThemeContextValue {

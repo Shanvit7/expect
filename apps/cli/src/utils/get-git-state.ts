@@ -7,8 +7,6 @@ import {
   getUnstagedDiffStats,
 } from "@browser-tester/supervisor";
 
-const MAIN_BRANCH_NAMES = ["main", "master"];
-
 export interface GitState {
   currentBranch: string;
   isOnMain: boolean;
@@ -23,18 +21,16 @@ export type TestScope = "unstaged-changes" | "select-commit" | "entire-branch" |
 export const getGitState = (): GitState => {
   const cwd = process.cwd();
   const currentBranch = getCurrentBranchName(cwd);
-  const isOnMain = MAIN_BRANCH_NAMES.includes(currentBranch);
+  const mainBranch = getMainBranchName(cwd);
+  const isOnMain = mainBranch === currentBranch;
   const diffStats = getUnstagedDiffStats(cwd);
   const hasUnstagedChanges = diffStats !== null;
 
   let branchDiffStats: DiffStats | null = null;
   let hasBranchCommits = false;
-  if (!isOnMain) {
-    const mainBranch = getMainBranchName(cwd);
-    if (mainBranch) {
-      hasBranchCommits = getBranchCommits(cwd, mainBranch).length > 0;
-      branchDiffStats = getBranchDiffStats(cwd, mainBranch);
-    }
+  if (!isOnMain && mainBranch) {
+    hasBranchCommits = getBranchCommits(cwd, mainBranch).length > 0;
+    branchDiffStats = getBranchDiffStats(cwd, mainBranch);
   }
 
   return {

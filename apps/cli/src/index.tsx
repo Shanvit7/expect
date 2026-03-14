@@ -5,8 +5,8 @@ import { VERSION } from "./constants.js";
 import { ThemeProvider } from "./theme-context.js";
 import { loadThemeName } from "./utils/load-theme.js";
 import { isRunningInAgent } from "./utils/is-running-in-agent.js";
+import { getCommitSummary } from "@browser-tester/supervisor";
 import { autoDetectAndTest, runTest } from "./utils/run-test.js";
-import { fetchCommits } from "./utils/fetch-commits.js";
 import { useAppStore } from "./store.js";
 
 const program = new Command()
@@ -53,11 +53,7 @@ program
     if (isRunningInAgent() || !process.stdin.isTTY) {
       return runTest("select-commit", hash);
     }
-    const initialCommit = hash
-      ? fetchCommits().find(
-          (candidate) => candidate.shortHash === hash || candidate.hash.startsWith(hash),
-        )
-      : undefined;
+    const initialCommit = hash ? (getCommitSummary(process.cwd(), hash) ?? undefined) : undefined;
     useAppStore.setState({
       testAction: "select-commit",
       selectedCommit: initialCommit ?? null,

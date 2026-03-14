@@ -102,4 +102,3 @@ export interface ExecuteBrowserFlowOptions {
   videoOutputPath?: string;
   signal?: AbortSignal;
 }
-

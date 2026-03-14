@@ -1,20 +1,18 @@
 import {
-  executeBrowserFlow,
   planBrowserFlow,
   resolveTestTarget,
   type BrowserEnvironmentHints,
   type BrowserFlowPlan,
-  type BrowserRunEvent,
+  type CommitSummary,
   type TestTarget,
+  type TestTargetSelection,
 } from "@browser-tester/supervisor";
-import type { Commit } from "./fetch-commits.js";
-import type { TestTargetSelection } from "@browser-tester/supervisor";
 
 export type TestAction = "test-unstaged" | "test-branch" | "select-commit";
 
 interface GenerateBrowserPlanOptions {
   action: TestAction;
-  commit?: Commit;
+  commit?: CommitSummary;
   userInstruction: string;
 }
 
@@ -22,13 +20,6 @@ interface GenerateBrowserPlanResult {
   target: TestTarget;
   plan: BrowserFlowPlan;
   environment: BrowserEnvironmentHints;
-}
-
-interface ExecuteApprovedPlanOptions {
-  target: TestTarget;
-  plan: BrowserFlowPlan;
-  environment: BrowserEnvironmentHints;
-  signal?: AbortSignal;
 }
 
 const parseBooleanEnvironmentValue = (value: string | undefined): boolean | undefined => {
@@ -47,7 +38,7 @@ const getBrowserEnvironment = (): BrowserEnvironmentHints => ({
   cookies: parseBooleanEnvironmentValue(process.env.BROWSER_TESTER_COOKIES),
 });
 
-const createSelection = (action: TestAction, commit?: Commit): TestTargetSelection => {
+const createSelection = (action: TestAction, commit?: CommitSummary): TestTargetSelection => {
   if (action === "select-commit") {
     return {
       action,
@@ -78,12 +69,4 @@ export const generateBrowserPlan = async (
     plan,
     environment,
   };
-};
-
-export const executeApprovedPlan = async function* (
-  options: ExecuteApprovedPlanOptions,
-): AsyncGenerator<BrowserRunEvent> {
-  for await (const event of executeBrowserFlow(options)) {
-    yield event;
-  }
 };

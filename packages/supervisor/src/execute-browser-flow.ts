@@ -19,16 +19,18 @@ import {
   parseMarkerLine,
   parseTextDelta,
 } from "./parse-execution-stream.js";
-import type {
-  ExecutionStreamContext,
-  ExecutionStreamState,
-} from "./parse-execution-stream.js";
+import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execution-stream.js";
 import type { ExecuteBrowserFlowOptions, PlanStep } from "./types.js";
 
 const createExecutionModel = (
   options: Pick<
     ExecuteBrowserFlowOptions,
-    "model" | "provider" | "providerSettings" | "target" | "browserMcpServerName" | "videoOutputPath"
+    | "model"
+    | "provider"
+    | "providerSettings"
+    | "target"
+    | "browserMcpServerName"
+    | "videoOutputPath"
   >,
 ): LanguageModelV3 => {
   if (options.model) return options.model;

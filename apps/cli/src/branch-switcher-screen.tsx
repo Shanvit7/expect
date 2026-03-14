@@ -8,20 +8,17 @@ import {
   COMMIT_SELECTOR_WIDTH,
 } from "./constants.js";
 import { useColors } from "./theme-context.js";
-import { fetchLocalBranches } from "./utils/fetch-local-branches.js";
+import { getLocalBranches } from "@browser-tester/supervisor";
 import { fetchRemoteBranches, type RemoteBranch } from "./utils/fetch-remote-branches.js";
 import { Spinner } from "./spinner.js";
 import { truncateText } from "./utils/truncate-text.js";
-import { PR_FILTERS, type PrFilter } from "./pr-filter.js";
 import { useAppStore } from "./store.js";
 
-type Tab = "local" | "remote";
+type PrFilter = "all" | "open" | "draft" | "merged" | "no-pr";
 
-const PR_STATUS_LABELS: Record<string, string> = {
-  open: "open",
-  draft: "draft",
-  merged: "merged",
-};
+const PR_FILTERS: PrFilter[] = ["all", "open", "draft", "merged", "no-pr"];
+
+type Tab = "local" | "remote";
 
 export const BranchSwitcherScreen = () => {
   const { stdout } = useStdout();
@@ -33,7 +30,7 @@ export const BranchSwitcherScreen = () => {
   const [activeFilter, setActiveFilter] = useState<PrFilter>("all");
   const [isSearching, setIsSearching] = useState(false);
 
-  const [localBranches] = useState(() => fetchLocalBranches());
+  const [localBranches] = useState(() => getLocalBranches(process.cwd()));
   const [remoteBranches, setRemoteBranches] = useState<RemoteBranch[]>([]);
   const [isLoadingRemote, setIsLoadingRemote] = useState(true);
   const [hasFetchedRemote, setHasFetchedRemote] = useState(false);
@@ -232,7 +229,7 @@ export const BranchSwitcherScreen = () => {
                           }
                         >
                           {truncateText(
-                            `#${remoteBranch.prNumber} ${PR_STATUS_LABELS[remoteBranch.prStatus] ?? ""}`,
+                            `#${remoteBranch.prNumber} ${remoteBranch.prStatus}`,
                             prColumnWidth,
                           )}
                         </Text>
@@ -259,7 +256,6 @@ export const BranchSwitcherScreen = () => {
           <Text color={COLORS.DIM}>/{searchQuery}</Text>
         </Box>
       ) : null}
-
     </Box>
   );
 };

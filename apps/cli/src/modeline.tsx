@@ -1,8 +1,7 @@
 import { Box, Text, useStdout } from "ink";
 import { useThemeContext } from "./theme-context.js";
 import { STATUSBAR_BRANCH_PADDING, STATUSBAR_TRAILING_PADDING } from "./constants.js";
-import { useAppStore } from "./store.js";
-import type { Screen } from "./store.js";
+import { useAppStore, type Screen } from "./store.js";
 
 const SCREEN_HINTS: Record<Screen, string> = {
   main: "t theme · b branch · ↑↓ nav",
@@ -25,12 +24,16 @@ export const Modeline = () => {
 
   const hints = SCREEN_HINTS[screen] ?? "";
   const remaining =
-    stdout.columns - STATUSBAR_BRANCH_PADDING - gitState.currentBranch.length - STATUSBAR_TRAILING_PADDING;
+    stdout.columns -
+    STATUSBAR_BRANCH_PADDING -
+    gitState.currentBranch.length -
+    STATUSBAR_TRAILING_PADDING;
 
   return (
     <Box>
       <Text backgroundColor={theme.primary} color="#000000" bold>
-        {" "}{gitState.currentBranch}{" "}
+        {" "}
+        {gitState.currentBranch}{" "}
       </Text>
       <Text backgroundColor={theme.border} color={theme.text}>
         {(hints ? ` ${hints}` : "").padEnd(remaining)}

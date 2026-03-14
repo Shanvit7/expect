@@ -169,7 +169,7 @@ export const MainMenu = () => {
         {"╭"}
         {"─".repeat(Math.floor((inner - titleLabel.length - FRAME_TITLE_DECORATION_WIDTH) / 2))}
         {"·"}{" "}
-        <Text bold color={COLORS.TEXT || undefined}>
+        <Text bold color={COLORS.TEXT}>
           {titleLabel}
         </Text>
         <Text color={COLORS.DIM}>
@@ -190,7 +190,7 @@ export const MainMenu = () => {
       {emptyRow}
       <Text color={COLORS.DIM}>
         {"│ "}
-        <Text bold color={COLORS.TEXT || undefined}>
+        <Text bold color={COLORS.TEXT}>
           Actions
         </Text>
         {pad(" Actions")}
@@ -222,7 +222,7 @@ export const MainMenu = () => {
       {emptyRow}
       <Text color={COLORS.DIM}>
         {"│ "}
-        <Text bold color={COLORS.TEXT || undefined}>
+        <Text bold color={COLORS.TEXT}>
           Options
         </Text>
         {pad(optionsLine)}
@@ -231,7 +231,7 @@ export const MainMenu = () => {
       <Text color={COLORS.DIM}>
         {"│  "}
         <Text color={autoRunAfterPlanning ? COLORS.TEXT : COLORS.DIM} bold={autoRunAfterPlanning}>
-          auto-run after planning (<Text color={COLORS.TEXT || undefined}>⇥ tab</Text>):{" "}
+          auto-run after planning (<Text color={COLORS.TEXT}>⇥ tab</Text>):{" "}
           <Text
             color={autoRunAfterPlanning ? COLORS.GREEN : COLORS.DIM}
             bold={autoRunAfterPlanning}
@@ -248,7 +248,6 @@ export const MainMenu = () => {
         {"─".repeat(inner)}
         {"╯"}
       </Text>
-
     </Box>
   );
 };

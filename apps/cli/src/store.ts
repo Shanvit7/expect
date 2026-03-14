@@ -1,13 +1,13 @@
 import { create } from "zustand";
-import type {
-  BrowserEnvironmentHints,
-  BrowserFlowPlan,
-  TestTarget,
+import {
+  checkoutBranch,
+  type BrowserEnvironmentHints,
+  type BrowserFlowPlan,
+  type CommitSummary,
+  type TestTarget,
 } from "@browser-tester/supervisor";
-import type { Commit } from "./utils/fetch-commits.js";
 import type { TestAction } from "./utils/browser-agent.js";
 import { getGitState, type GitState } from "./utils/get-git-state.js";
-import { switchBranch as gitSwitchBranch } from "./utils/switch-branch.js";
 
 export type Screen =
   | "main"
@@ -23,7 +23,7 @@ interface AppStore {
   screen: Screen;
   gitState: GitState | null;
   testAction: TestAction | null;
-  selectedCommit: Commit | null;
+  selectedCommit: CommitSummary | null;
   flowInstruction: string;
   autoRunAfterPlanning: boolean;
   generatedPlan: BrowserFlowPlan | null;
@@ -35,7 +35,7 @@ interface AppStore {
   goBack: () => void;
   navigateTo: (screen: Screen) => void;
   selectAction: (action: TestAction) => void;
-  selectCommit: (commit: Commit) => void;
+  selectCommit: (commit: CommitSummary) => void;
   submitFlowInstruction: (instruction: string) => void;
   toggleAutoRun: () => void;
   completePlanning: (result: {
@@ -140,7 +140,7 @@ export const useAppStore = create<AppStore>((set) => ({
     }),
 
   switchBranch: (branch) => {
-    const success = gitSwitchBranch(branch);
+    const success = checkoutBranch(process.cwd(), branch);
     if (success) {
       set({ gitState: getGitState(), screen: "main" });
     } else {

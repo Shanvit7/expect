@@ -1,12 +1,8 @@
 export const VERSION = "0.0.1";
 
-export const SEARCH_PLACEHOLDER = "Search ...";
-
 export const GH_TIMEOUT_MS = 15000;
-export const SWITCH_BRANCH_TIMEOUT_MS = 10000;
 export const COMMIT_LIMIT = 50;
 export const PR_LIMIT = 100;
-export const COLUMN_PADDING = 2;
 export const VISIBLE_COMMIT_COUNT = 15;
 export const SPINNER_INTERVAL_MS = 80;
 export const TESTING_VISIBLE_LOG_COUNT = 18;
@@ -28,3 +24,4 @@ export const COMMIT_DATE_COLUMN_WIDTH = 14;
 export const BRANCH_NAME_COLUMN_WIDTH = 32;
 export const BRANCH_AUTHOR_COLUMN_WIDTH = 16;
 export const BRANCH_VISIBLE_COUNT = 15;
+export const COPIED_FLASH_DURATION_MS = 1500;

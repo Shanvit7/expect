@@ -119,13 +119,13 @@ const { cookies, warnings } = await extractAllProfileCookies(profiles);
 
 All helpers take a plain `Cookie[]` as input.
 
-| Function                            | Returns              | Description                                            |
-| ----------------------------------- | -------------------- | ------------------------------------------------------ |
-| `matchCookies(cookies, url)`        | `Cookie[]`           | Cookies matching domain, path, secure flag, and expiry |
-| `matchCookieHeader(cookies, url)`   | `string`             | `matchCookies` + format as `"name=value; ..."` header  |
-| `toCookieHeader(cookies)`           | `string`             | Format all cookies as a header string (no matching)    |
-| `toPlaywrightCookies(cookies)`      | `PlaywrightCookie[]` | Playwright format (sameSite defaults to `"Lax"`)       |
-| `toPuppeteerCookies(cookies)`       | `PuppeteerCookie[]`  | Puppeteer format                                       |
+| Function                          | Returns              | Description                                            |
+| --------------------------------- | -------------------- | ------------------------------------------------------ |
+| `matchCookies(cookies, url)`      | `Cookie[]`           | Cookies matching domain, path, secure flag, and expiry |
+| `matchCookieHeader(cookies, url)` | `string`             | `matchCookies` + format as `"name=value; ..."` header  |
+| `toCookieHeader(cookies)`         | `string`             | Format all cookies as a header string (no matching)    |
+| `toPlaywrightCookies(cookies)`    | `PlaywrightCookie[]` | Playwright format (sameSite defaults to `"Lax"`)       |
+| `toPuppeteerCookies(cookies)`     | `PuppeteerCookie[]`  | Puppeteer format                                       |
 
 ### `detectDefaultBrowser()`
 

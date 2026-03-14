@@ -1,8 +1,11 @@
-import type { BrowserRunEvent } from "@browser-tester/supervisor";
+import {
+  executeBrowserFlow,
+  getCommitSummary,
+  type BrowserRunEvent,
+} from "@browser-tester/supervisor";
 import { VERSION } from "../constants.js";
-import { fetchCommits } from "./fetch-commits.js";
 import { getGitState, getRecommendedScope } from "./get-git-state.js";
-import { executeApprovedPlan, generateBrowserPlan, type TestAction } from "./browser-agent.js";
+import { generateBrowserPlan, type TestAction } from "./browser-agent.js";
 
 const ACTION_LABELS: Record<TestAction, string> = {
   "test-unstaged": "unstaged changes",
@@ -49,10 +52,7 @@ export const runTest = async (action: TestAction, commitHash?: string): Promise<
   let commit;
   if (action === "select-commit") {
     if (commitHash) {
-      const commits = fetchCommits();
-      commit = commits.find(
-        (candidate) => candidate.shortHash === commitHash || candidate.hash.startsWith(commitHash),
-      );
+      commit = getCommitSummary(process.cwd(), commitHash) ?? undefined;
       if (!commit) {
         console.error(`Commit "${commitHash}" not found in recent history.`);
         process.exit(1);
@@ -73,7 +73,7 @@ export const runTest = async (action: TestAction, commitHash?: string): Promise<
 
     console.error(`Plan: ${plan.title} (${plan.steps.length} steps)\n`);
 
-    for await (const event of executeApprovedPlan({ target, plan, environment })) {
+    for await (const event of executeBrowserFlow({ target, plan, environment })) {
       const line = formatRunEvent(event);
       if (line) {
         process.stdout.write(line + "\n");

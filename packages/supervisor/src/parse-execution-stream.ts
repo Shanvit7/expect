@@ -110,9 +110,7 @@ export const parseBrowserToolName = (
   return toolName.slice(prefix.length);
 };
 
-export const extractStreamSessionId = (
-  part: LanguageModelV3StreamPart,
-): string | undefined => {
+export const extractStreamSessionId = (part: LanguageModelV3StreamPart): string | undefined => {
   if (part.type !== "finish") return undefined;
   const providerMetadata = part.providerMetadata?.[PROVIDER_METADATA_KEY];
   if (!providerMetadata || typeof providerMetadata !== "object") return undefined;

@@ -3,14 +3,12 @@ import type { AgentProviderSettings } from "@browser-tester/agent";
 import { createClaudeModel, createCodexModel, createCursorModel } from "@browser-tester/agent";
 import type { AgentProvider } from "./types.js";
 
-const MODEL_FACTORIES: Record<
-  AgentProvider,
-  (settings: AgentProviderSettings) => LanguageModelV3
-> = {
-  claude: createClaudeModel,
-  codex: createCodexModel,
-  cursor: createCursorModel,
-};
+const MODEL_FACTORIES: Record<AgentProvider, (settings: AgentProviderSettings) => LanguageModelV3> =
+  {
+    claude: createClaudeModel,
+    codex: createCodexModel,
+    cursor: createCursorModel,
+  };
 
 export const createAgentModel = (
   provider: AgentProvider,

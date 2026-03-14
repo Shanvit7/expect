@@ -1,23 +1,54 @@
 import { useCallback, useMemo, useState } from "react";
 import { Box, Text, useInput, useStdout } from "ink";
 import TextInput from "ink-text-input";
+import { execSync } from "child_process";
+import { GIT_TIMEOUT_MS, type CommitSummary } from "@browser-tester/supervisor";
 import {
   COMMIT_HASH_COLUMN_WIDTH,
   COMMIT_AUTHOR_COLUMN_WIDTH,
   COMMIT_DATE_COLUMN_WIDTH,
+  COMMIT_LIMIT,
   COMMIT_SELECTOR_WIDTH,
   VISIBLE_COMMIT_COUNT,
 } from "./constants.js";
 import { useColors } from "./theme-context.js";
-import { fetchCommits } from "./utils/fetch-commits.js";
 import { truncateText } from "./utils/truncate-text.js";
 import { useAppStore } from "./store.js";
+
+interface CommitWithMeta extends CommitSummary {
+  author: string;
+  relativeDate: string;
+}
+
+const FIELD_SEPARATOR = "---FIELD---";
+
+const fetchCommitsWithMeta = (limit: number = COMMIT_LIMIT): CommitWithMeta[] => {
+  try {
+    const format = ["%H", "%h", "%s", "%an", "%cr"].join(FIELD_SEPARATOR);
+    const output = execSync(`git log --format="${format}" -n ${limit}`, {
+      encoding: "utf-8",
+      timeout: GIT_TIMEOUT_MS,
+    }).trim();
+
+    if (!output) return [];
+
+    return output
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => {
+        const [hash, shortHash, subject, author, relativeDate] = line.split(FIELD_SEPARATOR);
+        return { hash, shortHash, subject, author, relativeDate };
+      });
+  } catch {
+    return [];
+  }
+};
 
 export const CommitPickerScreen = () => {
   const { stdout } = useStdout();
   const selectCommit = useAppStore((state) => state.selectCommit);
   const COLORS = useColors();
-  const [commits] = useState(() => fetchCommits());
+  const [commits] = useState(() => fetchCommitsWithMeta());
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
@@ -106,9 +137,7 @@ export const CommitPickerScreen = () => {
               <Text color={isSelected ? COLORS.ORANGE : COLORS.DIM}>
                 {isSelected ? "❯ " : "  "}
               </Text>
-              <Text color={COLORS.PURPLE}>
-                {commit.shortHash.padEnd(COMMIT_HASH_COLUMN_WIDTH)}
-              </Text>
+              <Text color={COLORS.PURPLE}>{commit.shortHash.padEnd(COMMIT_HASH_COLUMN_WIDTH)}</Text>
               <Text color={isSelected ? COLORS.TEXT : COLORS.DIM} bold={isSelected}>
                 {truncateText(commit.subject, subjectColumnWidth - 1).padEnd(subjectColumnWidth)}
               </Text>
@@ -123,9 +152,7 @@ export const CommitPickerScreen = () => {
             </Text>
           );
         })}
-        {filteredCommits.length === 0 && (
-          <Text color={COLORS.DIM}>No matching commits</Text>
-        )}
+        {filteredCommits.length === 0 && <Text color={COLORS.DIM}>No matching commits</Text>}
       </Box>
 
       {isSearching ? (
@@ -138,7 +165,6 @@ export const CommitPickerScreen = () => {
           <Text color={COLORS.DIM}>/{searchQuery}</Text>
         </Box>
       ) : null}
-
     </Box>
   );
 };

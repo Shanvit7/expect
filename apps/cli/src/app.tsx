@@ -11,6 +11,7 @@ import { TestingScreen } from "./testing-screen.js";
 import { ThemePickerScreen } from "./theme-picker-screen.js";
 import { MainMenu } from "./main-menu.js";
 import { Modeline } from "./modeline.js";
+import { SourceInspector } from "./source-inspector.js";
 import { generateBrowserPlan } from "./utils/browser-agent.js";
 import { useAppStore } from "./store.js";
 
@@ -115,11 +116,13 @@ export const App = () => {
   };
 
   return (
-    <Box flexDirection="column" width="100%">
-      <Box flexGrow={1}>{renderScreen()}</Box>
-      <Box paddingX={1}>
-        <Modeline />
+    <SourceInspector>
+      <Box flexDirection="column" width="100%">
+        <Box flexGrow={1}>{renderScreen()}</Box>
+        <Box paddingX={1}>
+          <Modeline />
+        </Box>
       </Box>
-    </Box>
+    </SourceInspector>
   );
 };
