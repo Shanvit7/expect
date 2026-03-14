@@ -144,7 +144,8 @@ export const Modeline = () => {
               {action.color ? (
                 <Text backgroundColor={action.color} color="#000000">
                   {" "}
-                  <Text bold>{action.label}</Text> │ {action.key}{" "}
+                  <Text bold>{action.label}</Text> │{" "}
+                  <Text bold>{action.key}</Text>{" "}
                 </Text>
               ) : (
                 <Text>
@@ -158,10 +159,16 @@ export const Modeline = () => {
           );
 
           return action.onClick ? (
-            <Clickable key={action.key + action.label} onClick={action.onClick} fullWidth={false}>
+            <Clickable
+              key={action.key + action.label}
+              onClick={action.onClick}
+              fullWidth={false}
+            >
               {pill}
             </Clickable>
-          ) : pill;
+          ) : (
+            pill
+          );
         })}
         <Text>{" ".repeat(gap)}</Text>
         {keybinds.length > 0 ? (

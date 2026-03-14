@@ -33,7 +33,8 @@ export const ThemePickerScreen = () => {
   const COLORS = useColors();
   const [previousTheme] = useState(themeName);
   const currentVariant = THEMES[themeName]?.variant ?? "dark";
-  const [variantFilter, setVariantFilter] = useState<VariantFilter>(currentVariant);
+  const [variantFilter, setVariantFilter] =
+    useState<VariantFilter>(currentVariant);
 
   const filteredThemeNames = filterThemes(variantFilter);
 
@@ -58,7 +59,7 @@ export const ThemePickerScreen = () => {
 
   const visibleThemes = filteredThemeNames.slice(
     scrollOffset,
-    scrollOffset + THEME_PICKER_VISIBLE_COUNT,
+    scrollOffset + THEME_PICKER_VISIBLE_COUNT
   );
 
   useInput((input, key) => {
@@ -89,7 +90,11 @@ export const ThemePickerScreen = () => {
       <Box marginTop={1}>
         <Clickable
           fullWidth={false}
-          onClick={() => setVariantFilter((previous) => (previous === "light" ? "dark" : "light"))}
+          onClick={() =>
+            setVariantFilter((previous) =>
+              previous === "light" ? "dark" : "light"
+            )
+          }
         >
           <Text color={COLORS.TEXT}>[{filterLabel}]</Text>
         </Clickable>
@@ -117,8 +122,8 @@ export const ThemePickerScreen = () => {
                   <Text color={COLORS.PRIMARY}>{figures.pointer} </Text>
                   <ThemeSwatch theme={theme} />
                   <Text> </Text>
-                  <Text backgroundColor={COLORS.PRIMARY} color="#000000" bold>
-                    {" "}{theme.name}{" "}
+                  <Text color={COLORS.PRIMARY} bold>
+                    {theme.name}
                   </Text>
                 </Text>
               ) : (

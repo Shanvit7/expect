@@ -14,7 +14,10 @@ import { stripMouseSequences } from "../hooks/mouse-context.js";
 import { Clickable } from "./ui/clickable.js";
 import { SearchBar } from "./ui/search-bar.js";
 import { getLocalBranches } from "@browser-tester/supervisor";
-import { fetchRemoteBranches, type RemoteBranch } from "../utils/fetch-remote-branches.js";
+import {
+  fetchRemoteBranches,
+  type RemoteBranch,
+} from "../utils/fetch-remote-branches.js";
 import { Spinner } from "./ui/spinner.js";
 import { truncateText } from "../utils/truncate-text.js";
 import { visualPadEnd } from "../utils/visual-pad-end.js";
@@ -54,7 +57,9 @@ export const BranchSwitcherScreen = () => {
   const filteredLocalBranches = (() => {
     if (!searchQuery) return localBranches;
     const lowercaseQuery = searchQuery.toLowerCase();
-    return localBranches.filter((branch) => branch.toLowerCase().includes(lowercaseQuery));
+    return localBranches.filter((branch) =>
+      branch.toLowerCase().includes(lowercaseQuery)
+    );
   })();
 
   const filteredRemoteBranches = (() => {
@@ -65,18 +70,25 @@ export const BranchSwitcherScreen = () => {
     });
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
-      result = result.filter((branch) => branch.name.toLowerCase().includes(lowercaseQuery));
+      result = result.filter((branch) =>
+        branch.name.toLowerCase().includes(lowercaseQuery)
+      );
     }
     return result;
   })();
 
-  const currentList = activeTab === "local" ? filteredLocalBranches : filteredRemoteBranches;
+  const currentList =
+    activeTab === "local" ? filteredLocalBranches : filteredRemoteBranches;
 
-  const { highlightedIndex, setHighlightedIndex, scrollOffset, handleNavigation } =
-    useScrollableList({
-      itemCount: currentList.length,
-      visibleCount: BRANCH_VISIBLE_COUNT,
-    });
+  const {
+    highlightedIndex,
+    setHighlightedIndex,
+    scrollOffset,
+    handleNavigation,
+  } = useScrollableList({
+    itemCount: currentList.length,
+    visibleCount: BRANCH_VISIBLE_COUNT,
+  });
 
   const prColumnWidth =
     columns -
@@ -85,24 +97,28 @@ export const BranchSwitcherScreen = () => {
     BRANCH_AUTHOR_COLUMN_WIDTH -
     TABLE_COLUMN_GAP;
 
-  const visibleItems = currentList.slice(scrollOffset, scrollOffset + BRANCH_VISIBLE_COUNT);
+  const visibleItems = currentList.slice(
+    scrollOffset,
+    scrollOffset + BRANCH_VISIBLE_COUNT
+  );
 
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearchQuery(stripMouseSequences(value));
       setHighlightedIndex(0);
     },
-    [setHighlightedIndex],
+    [setHighlightedIndex]
   );
 
   const cycleFilter = useCallback(
     (direction: 1 | -1) => {
       const currentIndex = PR_FILTERS.indexOf(activeFilter);
-      const nextIndex = (currentIndex + direction + PR_FILTERS.length) % PR_FILTERS.length;
+      const nextIndex =
+        (currentIndex + direction + PR_FILTERS.length) % PR_FILTERS.length;
       setActiveFilter(PR_FILTERS[nextIndex]);
       setHighlightedIndex(0);
     },
-    [activeFilter, setHighlightedIndex],
+    [activeFilter, setHighlightedIndex]
   );
 
   useInput((input, key) => {
@@ -144,7 +160,13 @@ export const BranchSwitcherScreen = () => {
   const isCurrentTabLoading = activeTab === "remote" && isLoadingRemote;
 
   return (
-    <Box flexDirection="column" width="100%" paddingX={1} paddingTop={2} paddingBottom={1}>
+    <Box
+      flexDirection="column"
+      width="100%"
+      paddingX={1}
+      paddingTop={2}
+      paddingBottom={1}
+    >
       <ScreenHeading title="Switch branch" />
       <Box marginTop={1}>
         <Clickable
@@ -179,7 +201,8 @@ export const BranchSwitcherScreen = () => {
           </Text>
         </Clickable>
         <Text color={COLORS.DIM}>
-          {"  "}({currentList.length}){searchQuery ? ` matching "${searchQuery}"` : ""}
+          {"  "}({currentList.length})
+          {searchQuery ? ` matching "${searchQuery}"` : ""}
         </Text>
       </Box>
 
@@ -223,7 +246,12 @@ export const BranchSwitcherScreen = () => {
         </Box>
       ) : (
         <>
-          <Box marginTop={1} flexDirection="column" height={BRANCH_VISIBLE_COUNT} overflow="hidden">
+          <Box
+            marginTop={1}
+            flexDirection="column"
+            height={BRANCH_VISIBLE_COUNT}
+            overflow="hidden"
+          >
             {visibleItems.map((item, index) => {
               const actualIndex = index + scrollOffset;
               const isSelected = actualIndex === highlightedIndex;
@@ -242,23 +270,23 @@ export const BranchSwitcherScreen = () => {
                     {isSelected ? `${figures.pointer} ` : "  "}
                   </Text>
                   <Text
-                    color={isSelected ? "#000000" : COLORS.DIM}
-                    backgroundColor={isSelected ? COLORS.PRIMARY : undefined}
+                    color={isSelected ? COLORS.PRIMARY : COLORS.DIM}
                     bold={isSelected}
                   >
-                    {isSelected ? " " : ""}
                     {visualPadEnd(
-                      truncateText(branchName, BRANCH_NAME_COLUMN_WIDTH - (isSelected ? 3 : 1)),
-                      BRANCH_NAME_COLUMN_WIDTH - (isSelected ? 2 : 0),
+                      truncateText(branchName, BRANCH_NAME_COLUMN_WIDTH - 1),
+                      BRANCH_NAME_COLUMN_WIDTH
                     )}
-                    {isSelected ? " " : ""}
                   </Text>
                   {remoteBranch && (
                     <>
                       <Text color={COLORS.CYAN}>
                         {visualPadEnd(
-                          truncateText(remoteBranch.author || "—", BRANCH_AUTHOR_COLUMN_WIDTH - 1),
-                          BRANCH_AUTHOR_COLUMN_WIDTH,
+                          truncateText(
+                            remoteBranch.author || "—",
+                            BRANCH_AUTHOR_COLUMN_WIDTH - 1
+                          ),
+                          BRANCH_AUTHOR_COLUMN_WIDTH
                         )}
                       </Text>
                       {remoteBranch.prNumber && remoteBranch.prStatus ? (
@@ -267,13 +295,13 @@ export const BranchSwitcherScreen = () => {
                             remoteBranch.prStatus === "open"
                               ? COLORS.GREEN
                               : remoteBranch.prStatus === "merged"
-                                ? COLORS.PURPLE
-                                : COLORS.DIM
+                              ? COLORS.PURPLE
+                              : COLORS.DIM
                           }
                         >
                           {truncateText(
                             `#${remoteBranch.prNumber} ${remoteBranch.prStatus}`,
-                            prColumnWidth,
+                            prColumnWidth
                           )}
                         </Text>
                       ) : (
@@ -284,12 +312,18 @@ export const BranchSwitcherScreen = () => {
                 </Clickable>
               );
             })}
-            {currentList.length === 0 && <Text color={COLORS.DIM}>No matching branches</Text>}
+            {currentList.length === 0 && (
+              <Text color={COLORS.DIM}>No matching branches</Text>
+            )}
           </Box>
         </>
       )}
 
-      <SearchBar isSearching={isSearching} query={searchQuery} onChange={handleSearchChange} />
+      <SearchBar
+        isSearching={isSearching}
+        query={searchQuery}
+        onChange={handleSearchChange}
+      />
     </Box>
   );
 };

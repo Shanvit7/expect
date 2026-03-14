@@ -240,11 +240,8 @@ export const MainMenu = () => {
           {selectedIndex === autoRunIndex ? (
             <Text>
               <Text color={COLORS.PRIMARY}>{figures.pointer} </Text>
-              <Text backgroundColor={COLORS.PRIMARY} color="#000000" bold>
-                {" "}
-                auto-run after planning: {autoRunAfterPlanning
-                  ? "yes"
-                  : "no"}{" "}
+              <Text color={COLORS.PRIMARY} bold>
+                auto-run after planning: {autoRunAfterPlanning ? "yes" : "no"}
               </Text>
             </Text>
           ) : (

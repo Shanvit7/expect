@@ -171,11 +171,10 @@ export const CommitPickerScreen = () => {
               </Text>
               {isSelected ? (
                 <>
-                  <Text backgroundColor={COLORS.PRIMARY} color="#000000" bold>
-                    {" "}
-                    {truncatedSubject}{" "}
+                  <Text color={COLORS.PRIMARY} bold>
+                    {truncatedSubject}
                   </Text>
-                  <Text>{"".padEnd(Math.max(0, subjectGap))}</Text>
+                  <Text>{"".padEnd(Math.max(0, subjectGap + 2))}</Text>
                 </>
               ) : (
                 <Text color={COLORS.DIM}>

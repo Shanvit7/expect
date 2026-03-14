@@ -26,17 +26,16 @@ export const MenuItem = ({
     return (
       <Text>
         <Text color={COLORS.PRIMARY}>{figures.pointer} </Text>
-        <Text backgroundColor={COLORS.PRIMARY} color="#000000" bold>
-          {" "}
+        <Text color={COLORS.PRIMARY} bold>
           {label}
           {diffStats ? (
-            <Text backgroundColor={COLORS.PRIMARY} color="#000000">
+            <Text color={COLORS.PRIMARY}>
               {" "}
               +{diffStats.additions} -{diffStats.deletions}
             </Text>
           ) : null}
           {recommended ? " (recommended)" : ""}
-          {hint ? ` (${hint})` : ""}{" "}
+          {hint ? ` (${hint})` : ""}
         </Text>
       </Text>
     );
