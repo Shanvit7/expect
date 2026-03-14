@@ -16,9 +16,6 @@ export const FLOW_DESCRIPTION_CHAR_LIMIT = 120;
 export const SAVED_FLOW_FORMAT_VERSION = 2;
 export const THEME_PICKER_VISIBLE_COUNT = 20;
 export const SAVED_FLOW_PICKER_VISIBLE_COUNT = 12;
-export const FRAME_CONTENT_PADDING = 6;
-export const MENU_ITEM_PREFIX_WIDTH = 2;
-export const FRAME_TITLE_DECORATION_WIDTH = 4;
 export const TESTING_SELECT_TRUNCATION_LIMIT = 24;
 export const COMMIT_SELECTOR_WIDTH = 2;
 export const COMMIT_HASH_COLUMN_WIDTH = 10;
@@ -27,17 +24,12 @@ export const COMMIT_DATE_COLUMN_WIDTH = 14;
 export const BRANCH_NAME_COLUMN_WIDTH = 32;
 export const BRANCH_AUTHOR_COLUMN_WIDTH = 16;
 export const BRANCH_VISIBLE_COUNT = 15;
-export const STEP_ID_COLUMN_WIDTH = 5;
-export const STEP_ROUTE_COLUMN_WIDTH = 24;
 export const TABLE_COLUMN_GAP = 2;
 export const SECTION_INDENT = 4;
 export const LAYOUT_ORIGIN_OFFSET = 1;
-export const FRAME_DOTS_TRAILING_GAP = 1;
-export const BROWSER_FRAME_BODY_HEIGHT = 4;
 export const ALT_SCREEN_ON = "\u001b[?1049h\u001b[2J\u001b[H";
 export const ALT_SCREEN_OFF = "\u001b[?1049l";
 export const BROWSER_TOOL_PREFIX = "mcp__browser__";
 export { detectMouseSupport } from "./utils/detect-mouse-support.js";
 export const CLICK_SUPPORT_ENABLED =
-  process.env.SUPPORT_CLICK === "true" ||
-  process.env.SUPPORT_CLICK === "1";
+  process.env.SUPPORT_CLICK === "true" || process.env.SUPPORT_CLICK === "1";

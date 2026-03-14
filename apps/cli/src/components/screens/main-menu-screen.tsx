@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import figures from "figures";
-import stringWidth from "string-width";
 import { useColors } from "../theme-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { MenuItem } from "../ui/menu-item.js";
@@ -11,11 +10,6 @@ import {
   type GitState,
   type TestScope,
 } from "../../utils/get-git-state.js";
-import {
-  BROWSER_FRAME_BODY_HEIGHT,
-  FRAME_CONTENT_PADDING,
-  FRAME_DOTS_TRAILING_GAP,
-} from "../../constants.js";
 import { useAppStore } from "../../store.js";
 
 type MenuAction = "test-unstaged" | "test-branch" | "select-commit";
@@ -142,72 +136,18 @@ export const MainMenu = () => {
     }
   });
 
-  const dots = `${figures.circleFilled} ${figures.circleFilled} ${figures.circleFilled}`;
-  const titleLabel = "browser-tester";
-
-  const inner =
-    Math.max(
-      titleLabel.length + 4,
-      stringWidth(dots) + FRAME_DOTS_TRAILING_GAP
-    ) + FRAME_CONTENT_PADDING;
-
-  const emptyRow = " ".repeat(inner);
-  const topRows = Math.floor((BROWSER_FRAME_BODY_HEIGHT - 1) / 2);
-  const bottomRows = BROWSER_FRAME_BODY_HEIGHT - 1 - topRows;
-  const labelPadLeft = Math.floor((inner - stringWidth(titleLabel)) / 2);
-  const labelPadRight = inner - stringWidth(titleLabel) - labelPadLeft;
-
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      <Text color={COLORS.BORDER}>
-        {"╭"}
-        {"─".repeat(inner)}
-        {"╮"}
-      </Text>
-      <Text color={COLORS.BORDER}>
-        {"│ "}
-        <Text color="#ff5f57">{`${figures.circleFilled} `}</Text>
-        <Text color="#febc2e">{`${figures.circleFilled} `}</Text>
-        <Text color="#28c840">{figures.circleFilled}</Text>
-        {" ".repeat(inner - stringWidth(dots) - FRAME_DOTS_TRAILING_GAP)}
-        {"│"}
-      </Text>
-      {Array.from({ length: topRows }).map((_, index) => (
-        <Text key={`top-${index}`} color={COLORS.BORDER}>
-          {"│"}
-          {emptyRow}
-          {"│"}
-        </Text>
-      ))}
-      <Text color={COLORS.BORDER}>
-        {"│"}
-        {" ".repeat(labelPadLeft)}
+      <Box flexDirection="column" marginBottom={1}>
         <Text bold color={COLORS.TEXT}>
-          {titleLabel}
+          browser-tester
         </Text>
-        <Text color={COLORS.BORDER}>
-          {" ".repeat(labelPadRight)}
-          {"│"}
+        <Text color={COLORS.DIM}>
+          AI-powered browser testing for your changes
         </Text>
-      </Text>
-      {Array.from({ length: bottomRows }).map((_, index) => (
-        <Text key={`bot-${index}`} color={COLORS.BORDER}>
-          {"│"}
-          {emptyRow}
-          {"│"}
-        </Text>
-      ))}
-      <Text color={COLORS.BORDER}>
-        {"╰"}
-        {"─".repeat(inner)}
-        {"╯"}
-      </Text>
+      </Box>
 
-      <Box marginTop={1} flexDirection="column">
-        <Text bold color={COLORS.TEXT}>
-          {" "}
-          Actions
-        </Text>
+      <Box flexDirection="column">
         {menuOptions.map((option, index) => {
           return (
             <Clickable
@@ -232,10 +172,6 @@ export const MainMenu = () => {
       </Box>
 
       <Box marginTop={1} marginBottom={1} flexDirection="column">
-        <Text bold color={COLORS.TEXT}>
-          {" "}
-          Options
-        </Text>
         <Clickable onClick={toggleAutoRun}>
           {selectedIndex === autoRunIndex ? (
             <Text>

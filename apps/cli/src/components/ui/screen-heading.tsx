@@ -1,4 +1,4 @@
-import { Box, Text } from "ink";
+import { Text } from "ink";
 import { useThemeContext } from "../theme-context.js";
 import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions.js";
 import stringWidth from "string-width";
@@ -12,27 +12,20 @@ export const ScreenHeading = ({ title, subtitle }: ScreenHeadingProps) => {
   const [columns] = useStdoutDimensions();
   const { theme } = useThemeContext();
 
-  const leftContent = ` ${title} `;
-  const rightContent = subtitle ? `${subtitle} ` : "";
-  const leftWidth = stringWidth(leftContent);
-  const rightWidth = stringWidth(rightContent);
-  const availableWidth = columns - 2;
-  const gapWidth = Math.max(0, availableWidth - leftWidth - rightWidth);
-  const emptyRow = " ".repeat(availableWidth);
+  const subtitleContent = subtitle ? `  ${subtitle}` : "";
+  const textWidth = stringWidth(title) + stringWidth(subtitleContent);
+  const lineWidth = Math.max(0, columns - textWidth - 3);
 
   return (
-    <Box flexDirection="column">
-      <Text backgroundColor={theme.border}>{emptyRow}</Text>
-      <Box>
-        <Text backgroundColor={theme.border} color={theme.text} bold>
-          {leftContent}
-        </Text>
-        <Text backgroundColor={theme.border}>{" ".repeat(gapWidth)}</Text>
-        <Text backgroundColor={theme.border} color={theme.text}>
-          {rightContent}
-        </Text>
-      </Box>
-      <Text backgroundColor={theme.border}>{emptyRow}</Text>
-    </Box>
+    <Text>
+      <Text bold color={theme.text}>
+        {title}
+      </Text>
+      {subtitle ? <Text color={theme.textMuted}>{subtitleContent}</Text> : null}
+      <Text color={theme.border}>
+        {" "}
+        {" ─".repeat(Math.ceil(lineWidth / 2)).slice(0, lineWidth)}
+      </Text>
+    </Text>
   );
 };

@@ -1,5 +1,4 @@
 import { Box, Text } from "ink";
-import figures from "figures";
 import { useColors } from "../theme-context.js";
 import { Clickable } from "./clickable.js";
 import type { ReactNode } from "react";
@@ -22,18 +21,19 @@ export const Collapsible = ({
   children,
 }: CollapsibleProps) => {
   const COLORS = useColors();
-  const indicatorColor = selected ? COLORS.PRIMARY : COLORS.DIM;
   const contentColor = selected ? COLORS.TEXT : COLORS.DIM;
-  const arrow = open ? figures.triangleDown : figures.triangleRight;
+  const arrow = open ? "▾" : "▸";
   const countSuffix = count !== undefined ? ` (${count})` : "";
 
   return (
     <Box flexDirection="column">
       <Clickable onClick={onToggle}>
         <Text>
-          <Text color={indicatorColor}>{selected ? "❯ " : "  "}</Text>
+          <Text color={selected ? COLORS.PRIMARY : COLORS.DIM}>
+            {selected ? "❯ " : "  "}
+          </Text>
           <Text color={contentColor}>{arrow} </Text>
-          <Text bold color={contentColor}>
+          <Text bold={selected} color={contentColor}>
             {label}
             {countSuffix}
           </Text>
