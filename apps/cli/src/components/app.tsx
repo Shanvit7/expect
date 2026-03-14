@@ -23,6 +23,7 @@ const usePlanningEffect = () => {
   const testAction = useAppStore((state) => state.testAction);
   const flowInstruction = useAppStore((state) => state.flowInstruction);
   const selectedCommit = useAppStore((state) => state.selectedCommit);
+  const environmentOverrides = useAppStore((state) => state.environmentOverrides);
   const completePlanning = useAppStore((state) => state.completePlanning);
   const failPlanning = useAppStore((state) => state.failPlanning);
 
@@ -35,6 +36,7 @@ const usePlanningEffect = () => {
       action: testAction,
       commit: selectedCommit ?? undefined,
       userInstruction: flowInstruction,
+      environmentOverrides,
     })
       .then((result) => {
         if (!isCancelled) completePlanning(result);
@@ -50,6 +52,7 @@ const usePlanningEffect = () => {
     };
   }, [
     completePlanning,
+    environmentOverrides,
     failPlanning,
     flowInstruction,
     gitState,

@@ -7,6 +7,7 @@ import {
   type TestTarget,
   type TestTargetSelection,
 } from "@browser-tester/supervisor";
+import type { EnvironmentOverrides } from "./test-run-config.js";
 
 export type TestAction = "test-unstaged" | "test-branch" | "select-commit";
 
@@ -14,9 +15,10 @@ interface GenerateBrowserPlanOptions {
   action: TestAction;
   commit?: CommitSummary;
   userInstruction: string;
+  environmentOverrides?: EnvironmentOverrides;
 }
 
-interface GenerateBrowserPlanResult {
+export interface GenerateBrowserPlanResult {
   target: TestTarget;
   plan: BrowserFlowPlan;
   environment: BrowserEnvironmentHints;
@@ -32,13 +34,15 @@ const parseBooleanEnvironmentValue = (value: string | undefined): boolean | unde
   return undefined;
 };
 
-export const getBrowserEnvironment = (): BrowserEnvironmentHints => ({
-  baseUrl: process.env.BROWSER_TESTER_BASE_URL,
-  headed: parseBooleanEnvironmentValue(process.env.BROWSER_TESTER_HEADED),
-  cookies: parseBooleanEnvironmentValue(process.env.BROWSER_TESTER_COOKIES),
+export const getBrowserEnvironment = (
+  overrides?: EnvironmentOverrides,
+): BrowserEnvironmentHints => ({
+  baseUrl: overrides?.baseUrl ?? process.env.BROWSER_TESTER_BASE_URL,
+  headed: overrides?.headed ?? parseBooleanEnvironmentValue(process.env.BROWSER_TESTER_HEADED),
+  cookies: overrides?.cookies ?? parseBooleanEnvironmentValue(process.env.BROWSER_TESTER_COOKIES),
 });
 
-const createSelection = (action: TestAction, commit?: CommitSummary): TestTargetSelection => {
+const createTargetSelection = (action: TestAction, commit?: CommitSummary): TestTargetSelection => {
   if (action === "select-commit") {
     return {
       action,
@@ -58,14 +62,14 @@ export const resolveBrowserTarget = (options: {
 }): TestTarget =>
   resolveTestTarget({
     cwd: options.cwd,
-    selection: createSelection(options.action, options.commit),
+    selection: createTargetSelection(options.action, options.commit),
   });
 
 export const generateBrowserPlan = async (
   options: GenerateBrowserPlanOptions,
 ): Promise<GenerateBrowserPlanResult> => {
   const target = resolveBrowserTarget(options);
-  const environment = getBrowserEnvironment();
+  const environment = getBrowserEnvironment(options.environmentOverrides);
   const plan = await planBrowserFlow({
     target,
     userInstruction: options.userInstruction,

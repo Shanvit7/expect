@@ -14,6 +14,7 @@ import {
 import { getGitState, type GitState } from "./utils/get-git-state.js";
 import { listSavedFlows, type SavedFlowSummary } from "./utils/list-saved-flows.js";
 import type { LoadedSavedFlow } from "./utils/load-saved-flow.js";
+import type { EnvironmentOverrides } from "./utils/test-run-config.js";
 
 export type Screen =
   | "main"
@@ -37,6 +38,7 @@ interface AppStore {
   generatedPlan: BrowserFlowPlan | null;
   resolvedTarget: TestTarget | null;
   browserEnvironment: BrowserEnvironmentHints | null;
+  environmentOverrides: EnvironmentOverrides | undefined;
   planningError: string | null;
   planOrigin: "generated" | "saved" | null;
   savedFlowSummaries: SavedFlowSummary[];
@@ -76,6 +78,7 @@ export const useAppStore = create<AppStore>((set) => ({
   generatedPlan: null,
   resolvedTarget: null,
   browserEnvironment: null,
+  environmentOverrides: undefined,
   planningError: null,
   planOrigin: null,
   savedFlowSummaries: [],
@@ -143,7 +146,7 @@ export const useAppStore = create<AppStore>((set) => ({
           generatedPlan: state.pendingSavedFlow.plan,
           resolvedTarget: resolveBrowserTarget({ action: "select-commit", commit }),
           browserEnvironment: {
-            ...getBrowserEnvironment(),
+            ...getBrowserEnvironment(state.environmentOverrides),
             ...state.pendingSavedFlow.environment,
           },
           pendingSavedFlow: null,
@@ -197,7 +200,7 @@ export const useAppStore = create<AppStore>((set) => ({
         generatedPlan: savedFlow.plan,
         resolvedTarget: resolveBrowserTarget({ action: state.testAction }),
         browserEnvironment: {
-          ...getBrowserEnvironment(),
+          ...getBrowserEnvironment(state.environmentOverrides),
           ...savedFlow.environment,
         },
         pendingSavedFlow: null,
@@ -245,6 +248,7 @@ export const useAppStore = create<AppStore>((set) => ({
       generatedPlan: null,
       resolvedTarget: null,
       browserEnvironment: null,
+      environmentOverrides: undefined,
       planningError: null,
       planOrigin: null,
       pendingSavedFlow: null,

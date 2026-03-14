@@ -2,11 +2,20 @@ import {
   executeBrowserFlow,
   getCommitSummary,
   type BrowserRunEvent,
+  type CommitSummary,
 } from "@browser-tester/supervisor";
 import figures from "figures";
 import { VERSION } from "../constants.js";
 import { getGitState, getRecommendedScope } from "./get-git-state.js";
-import { generateBrowserPlan, type TestAction } from "./browser-agent.js";
+import {
+  generateBrowserPlan,
+  getBrowserEnvironment,
+  resolveBrowserTarget,
+  type GenerateBrowserPlanResult,
+  type TestAction,
+} from "./browser-agent.js";
+import type { TestRunConfig } from "./test-run-config.js";
+import { loadSavedFlowBySlug } from "./load-saved-flow.js";
 
 const ACTION_LABELS: Record<TestAction, string> = {
   "test-unstaged": "unstaged changes",
@@ -47,17 +56,49 @@ const formatRunEvent = (event: BrowserRunEvent): string | null => {
 const formatErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
-export const runTest = async (action: TestAction, commitHash?: string): Promise<void> => {
+const resolvePlan = async (
+  config: TestRunConfig,
+  selectedCommit?: CommitSummary,
+): Promise<GenerateBrowserPlanResult> => {
+  const { action, environmentOverrides } = config;
+
+  if (config.flowSlug) {
+    const savedFlow = await loadSavedFlowBySlug(config.flowSlug);
+    if (!savedFlow) {
+      console.error(`Saved flow "${config.flowSlug}" not found.`);
+      process.exit(1);
+    }
+    const target = resolveBrowserTarget({ action, commit: selectedCommit });
+    const environment = {
+      ...getBrowserEnvironment(environmentOverrides),
+      ...savedFlow.environment,
+    };
+    console.error(`Using saved flow: ${savedFlow.title} (${savedFlow.plan.steps.length} steps)\n`);
+    return { target, plan: savedFlow.plan, environment };
+  }
+
+  const userInstruction = config.message ?? DEFAULT_INSTRUCTIONS[action];
+  console.error("Planning browser flow...");
+  const result = await generateBrowserPlan({
+    action,
+    commit: selectedCommit,
+    userInstruction,
+    environmentOverrides,
+  });
+  console.error(`Plan: ${result.plan.title} (${result.plan.steps.length} steps)\n`);
+  return result;
+};
+
+export const runTest = async (config: TestRunConfig): Promise<void> => {
+  const { action } = config;
   const gitState = getGitState();
 
-  let commit;
-  if (action === "select-commit") {
-    if (commitHash) {
-      commit = getCommitSummary(process.cwd(), commitHash) ?? undefined;
-      if (!commit) {
-        console.error(`Commit "${commitHash}" not found in recent history.`);
-        process.exit(1);
-      }
+  let resolvedCommit;
+  if (action === "select-commit" && config.commitHash) {
+    resolvedCommit = getCommitSummary(process.cwd(), config.commitHash) ?? undefined;
+    if (!resolvedCommit) {
+      console.error(`Commit "${config.commitHash}" not found in recent history.`);
+      process.exit(1);
     }
   }
 
@@ -65,14 +106,7 @@ export const runTest = async (action: TestAction, commitHash?: string): Promise<
   console.error(`Testing ${ACTION_LABELS[action]} on ${gitState.currentBranch}\n`);
 
   try {
-    console.error("Planning browser flow...");
-    const { target, plan, environment } = await generateBrowserPlan({
-      action,
-      commit,
-      userInstruction: DEFAULT_INSTRUCTIONS[action],
-    });
-
-    console.error(`Plan: ${plan.title} (${plan.steps.length} steps)\n`);
+    const { target, plan, environment } = await resolvePlan(config, resolvedCommit);
 
     for await (const event of executeBrowserFlow({ target, plan, environment })) {
       const line = formatRunEvent(event);
@@ -86,9 +120,9 @@ export const runTest = async (action: TestAction, commitHash?: string): Promise<
   }
 };
 
-export const autoDetectAndTest = async (): Promise<void> => {
+export const autoDetectAndTest = async (config?: Partial<TestRunConfig>): Promise<void> => {
   const gitState = getGitState();
   const scope = getRecommendedScope(gitState);
   const action: TestAction = scope === "unstaged-changes" ? "test-unstaged" : "test-branch";
-  await runTest(action);
+  await runTest({ action, ...config });
 };

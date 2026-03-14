@@ -7,12 +7,28 @@ import { loadThemeName } from "./utils/load-theme.js";
 import { isRunningInAgent } from "./utils/is-running-in-agent.js";
 import { getCommitSummary } from "@browser-tester/supervisor";
 import { autoDetectAndTest, runTest } from "./utils/run-test.js";
-import { useAppStore } from "./store.js";
+import { useAppStore, type Screen } from "./store.js";
+import { resolveTestRunConfig, type TestRunConfig } from "./utils/test-run-config.js";
+import {
+  getBrowserEnvironment,
+  resolveBrowserTarget,
+  type TestAction,
+} from "./utils/browser-agent.js";
+import { loadSavedFlowBySlug } from "./utils/load-saved-flow.js";
 
 const program = new Command()
   .name("testie")
   .description("AI-powered browser testing for your changes")
-  .version(VERSION, "-v, --version");
+  .version(VERSION, "-v, --version")
+  .option("-m, --message <instruction>", "flow instruction for the browser agent")
+  .option("-f, --flow <slug>", "reuse a saved flow by slug")
+  .option("-y, --yes", "auto-run after planning (skip plan review)")
+  .option("--base-url <url>", "browser base URL (overrides BROWSER_TESTER_BASE_URL)")
+  .option("--headed", "run browser in headed mode")
+  .option("--cookies", "enable cookie sync")
+  .option("--no-cookies", "disable cookie sync");
+
+const isHeadless = () => isRunningInAgent() || !process.stdin.isTTY;
 
 const renderApp = () => {
   const initialTheme = loadThemeName() ?? undefined;
@@ -25,48 +41,80 @@ const renderApp = () => {
   );
 };
 
+const resolveInitialScreen = (
+  config: TestRunConfig,
+  hasCommit: boolean,
+  hasSavedFlow: boolean,
+): Screen => {
+  if (hasSavedFlow) return config.autoRun ? "testing" : "review-plan";
+  if (config.message) return "planning";
+  if (config.action === "select-commit" && !hasCommit) return "select-commit";
+  return "flow-input";
+};
+
+const seedStoreFromConfig = async (config: TestRunConfig): Promise<void> => {
+  const resolvedCommit =
+    config.action === "select-commit" && config.commitHash
+      ? (getCommitSummary(process.cwd(), config.commitHash) ?? null)
+      : null;
+
+  const savedFlow = config.flowSlug ? await loadSavedFlowBySlug(config.flowSlug) : null;
+
+  const screen = resolveInitialScreen(config, Boolean(resolvedCommit), Boolean(savedFlow));
+
+  useAppStore.setState({
+    screen,
+    testAction: config.action,
+    selectedCommit: resolvedCommit,
+    autoRunAfterPlanning: config.autoRun ?? false,
+    environmentOverrides: config.environmentOverrides,
+    ...(config.message && { flowInstruction: config.message }),
+    ...(savedFlow && {
+      generatedPlan: savedFlow.plan,
+      resolvedTarget: resolveBrowserTarget({
+        action: config.action,
+        commit: resolvedCommit ?? undefined,
+      }),
+      browserEnvironment: {
+        ...getBrowserEnvironment(config.environmentOverrides),
+        ...savedFlow.environment,
+      },
+      planOrigin: "saved" as const,
+    }),
+    ...(!savedFlow && config.message && { planOrigin: "generated" as const }),
+  });
+};
+
+const createCommandAction =
+  (action: TestAction) =>
+  async (commitHash?: string): Promise<void> => {
+    const config = resolveTestRunConfig(action, program.opts(), commitHash);
+    if (isHeadless()) return runTest(config);
+    await seedStoreFromConfig(config);
+    renderApp();
+  };
+
 program
   .command("unstaged")
   .description("Test unstaged changes")
-  .action(() => {
-    if (isRunningInAgent() || !process.stdin.isTTY) {
-      return runTest("test-unstaged");
-    }
-    useAppStore.setState({ testAction: "test-unstaged", screen: "flow-input" });
-    renderApp();
-  });
+  .action(createCommandAction("test-unstaged"));
 
 program
   .command("branch")
   .description("Test entire branch diff against main")
-  .action(() => {
-    if (isRunningInAgent() || !process.stdin.isTTY) {
-      return runTest("test-branch");
-    }
-    useAppStore.setState({ testAction: "test-branch", screen: "flow-input" });
-    renderApp();
-  });
+  .action(createCommandAction("test-branch"));
 
 program
   .command("commit")
   .description("Test a specific commit")
   .argument("[hash]", "commit hash")
-  .action((hash: string | undefined) => {
-    if (isRunningInAgent() || !process.stdin.isTTY) {
-      return runTest("select-commit", hash);
-    }
-    const initialCommit = hash ? (getCommitSummary(process.cwd(), hash) ?? undefined) : undefined;
-    useAppStore.setState({
-      testAction: "select-commit",
-      selectedCommit: initialCommit ?? null,
-      screen: initialCommit ? "flow-input" : "select-commit",
-    });
-    renderApp();
-  });
+  .action(createCommandAction("select-commit"));
 
-program.action(() => {
-  if (isRunningInAgent() || !process.stdin.isTTY) {
-    return autoDetectAndTest();
+program.action(async () => {
+  const config = resolveTestRunConfig("test-unstaged", program.opts());
+  if (isHeadless()) return autoDetectAndTest(config);
+  if (config.message || config.flowSlug || config.autoRun || config.environmentOverrides) {
+    await seedStoreFromConfig(config);
   }
   renderApp();
 });
