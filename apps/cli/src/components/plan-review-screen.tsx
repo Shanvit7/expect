@@ -14,6 +14,7 @@ export const PlanReviewScreen = () => {
   const updatePlan = useAppStore((state) => state.updatePlan);
   const updateEnvironment = useAppStore((state) => state.updateEnvironment);
   const approvePlan = useAppStore((state) => state.approvePlan);
+  const loadSavedFlows = useAppStore((state) => state.loadSavedFlows);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState("");
@@ -76,6 +77,7 @@ export const PlanReviewScreen = () => {
       })
         .then((result) => {
           setSaveMessage(`Saved ${result.flowPath} and updated ${result.directoryPath}`);
+          void loadSavedFlows();
         })
         .catch((caughtError) => {
           setSaveError(caughtError instanceof Error ? caughtError.message : "Failed to save flow.");

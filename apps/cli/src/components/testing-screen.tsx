@@ -7,7 +7,10 @@ import { useColors, type Colors } from "./theme-context.js";
 import { Spinner } from "./ui/spinner.js";
 import { useAppStore } from "../store.js";
 import { truncateText } from "../utils/truncate-text.js";
-import { formatBrowserToolCall, shouldShowToolResult } from "../utils/format-browser-tool-call.js";
+import {
+  formatBrowserToolCall,
+  formatBrowserToolResult,
+} from "../utils/format-browser-tool-call.js";
 
 interface TestingLine {
   text: string;
@@ -44,12 +47,14 @@ const formatRunEvent = (event: BrowserRunEvent, colors: Colors): TestingLine | n
         color: colors.DIM,
       };
     }
-    case "tool-result":
-      if (!shouldShowToolResult(event)) return null;
+    case "tool-result": {
+      const toolResultText = formatBrowserToolResult(event);
+      if (!toolResultText) return null;
       return {
-        text: truncateText(event.result, TESTING_TOOL_TEXT_CHAR_LIMIT),
+        text: toolResultText,
         color: event.isError ? colors.RED : colors.DIM,
       };
+    }
     case "browser-log":
     case "text":
     case "thinking":

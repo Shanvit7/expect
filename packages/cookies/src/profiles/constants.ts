@@ -187,7 +187,7 @@ export const PROFILE_BROWSER_CONFIGS: ProfileDetectionConfig[] = [
   },
   {
     info: { name: "Helium", executablePath: "/Applications/Helium.app/Contents/MacOS/Helium" },
-    darwinUserDataPath: "Helium",
+    darwinUserDataPath: "net.imput.helium",
     linuxUserDataPath: "helium",
     win32UserDataPath: "Helium\\User Data",
     win32ExecutablePaths: ["Helium\\Application\\helium.exe"],

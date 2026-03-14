@@ -10,6 +10,7 @@ const SCREEN_HINTS: Record<Screen, string> = {
   main: "t theme · b branch · ↑↓ nav",
   "switch-branch": "↑↓ nav · tab local/remote · / search · enter select · esc back",
   "select-commit": "↑↓ nav · enter select · / search · esc back",
+  "saved-flow-picker": "↑↓ nav · enter select · esc back",
   "flow-input": "enter submit · esc back",
   planning: "esc cancel",
   "review-plan": "enter approve · esc back",
@@ -22,10 +23,14 @@ export const Modeline = () => {
   const { theme } = useThemeContext();
   const gitState = useAppStore((state) => state.gitState);
   const screen = useAppStore((state) => state.screen);
+  const savedFlowSummaries = useAppStore((state) => state.savedFlowSummaries);
 
   if (!gitState) return null;
 
-  const hints = SCREEN_HINTS[screen] ?? "";
+  const hints =
+    screen === "main" && savedFlowSummaries.length > 0
+      ? "t theme · b branch · r reuse flow · ↑↓ nav"
+      : SCREEN_HINTS[screen] ?? "";
   const remaining =
     columns -
     STATUSBAR_BRANCH_PADDING -

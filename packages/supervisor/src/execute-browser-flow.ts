@@ -21,6 +21,7 @@ import {
 } from "./parse-execution-stream.js";
 import type { ExecutionStreamContext, ExecutionStreamState } from "./parse-execution-stream.js";
 import type { ExecuteBrowserFlowOptions, PlanStep } from "./types.js";
+import { saveBrowserImageResult } from "./utils/save-browser-image-result.js";
 
 const createExecutionModel = (
   options: Pick<
@@ -150,6 +151,7 @@ export const executeBrowserFlow = async function* (
   const reader = streamResult.stream.getReader();
   let streamState: ExecutionStreamState = { bufferedText: "" };
   let completedEventEmitted = false;
+  let screenshotOutputDirectoryPath: string | undefined;
   const streamContext: ExecutionStreamContext = {
     browserMcpServerName,
     stepsById: buildStepMap(options.plan.steps),
@@ -209,8 +211,24 @@ export const executeBrowserFlow = async function* (
     }
 
     if (part.type === "tool-result") {
-      const result = String(part.result);
       const browserAction = parseBrowserToolName(part.toolName, browserMcpServerName);
+      let result = String(part.result);
+      if (
+        browserAction === "screenshot" ||
+        browserAction === "take_screenshot" ||
+        browserAction === "annotated_screenshot"
+      ) {
+        const savedBrowserImageResult = saveBrowserImageResult({
+          browserAction,
+          outputDirectoryPath: screenshotOutputDirectoryPath,
+          result,
+        });
+
+        if (savedBrowserImageResult) {
+          screenshotOutputDirectoryPath = savedBrowserImageResult.outputDirectoryPath;
+          result = savedBrowserImageResult.resultText;
+        }
+      }
 
       yield {
         type: "tool-result",

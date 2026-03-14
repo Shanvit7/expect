@@ -6,6 +6,7 @@ import { CommitPickerScreen } from "./commit-picker-screen.js";
 import { FlowInputScreen } from "./flow-input-screen.js";
 import { PlanningScreen } from "./planning-screen.js";
 import { PlanReviewScreen } from "./plan-review-screen.js";
+import { SavedFlowPickerScreen } from "./saved-flow-picker-screen.js";
 import { Spinner } from "./ui/spinner.js";
 import { TestingScreen } from "./testing-screen.js";
 import { ThemePickerScreen } from "./theme-picker-screen.js";
@@ -61,6 +62,7 @@ export const App = () => {
   const screen = useAppStore((state) => state.screen);
   const gitState = useAppStore((state) => state.gitState);
   const loadGitState = useAppStore((state) => state.loadGitState);
+  const loadSavedFlows = useAppStore((state) => state.loadSavedFlows);
   const goBack = useAppStore((state) => state.goBack);
   const planningError = useAppStore((state) => state.planningError);
   const COLORS = useColors();
@@ -68,6 +70,10 @@ export const App = () => {
   useEffect(() => {
     loadGitState();
   }, [loadGitState]);
+
+  useEffect(() => {
+    void loadSavedFlows();
+  }, [loadSavedFlows]);
 
   usePlanningEffect();
 
@@ -97,6 +103,8 @@ export const App = () => {
         return <BranchSwitcherScreen />;
       case "flow-input":
         return <FlowInputScreen />;
+      case "saved-flow-picker":
+        return <SavedFlowPickerScreen />;
       case "planning":
         return (
           <Box flexDirection="column" width="100%">

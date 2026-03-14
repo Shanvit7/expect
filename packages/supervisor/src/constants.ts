@@ -15,3 +15,5 @@ export const PLANNER_MAX_STEP_COUNT = 8;
 export const PLANNER_MAX_TURNS = 1;
 export const STEP_ID_PAD_LENGTH = 2;
 export const DEFAULT_BROWSER_MCP_SERVER_NAME = "browser";
+export const SCREENSHOT_OUTPUT_DIRECTORY_PATH = "/tmp";
+export const SCREENSHOT_DIRECTORY_PREFIX = "browser-tester-screenshot-";

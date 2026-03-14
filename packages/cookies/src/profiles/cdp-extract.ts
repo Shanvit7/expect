@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process";
-import { existsSync, mkdtempSync, rmSync, unlinkSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type {
@@ -12,6 +12,7 @@ import type {
 import { copyDir, formatError, sleep } from "@browser-tester/utils";
 import { browserDisplayNameToKey } from "../utils/browser-name-map.js";
 import { normalizeSameSite } from "../utils/normalize-same-site.js";
+import { stripLeadingDot } from "../utils/strip-leading-dot.js";
 import { getCookiesFromBrowser } from "./cdp-client.js";
 import {
   BROWSER_KILL_DELAY_MS,
@@ -25,11 +26,13 @@ import {
 const startHeadlessBrowser = (
   executablePath: string,
   userDataDir: string,
+  profileDirectoryName: string,
   port: number,
 ): ChildProcess => {
   const args = [
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${userDataDir}`,
+    `--profile-directory=${profileDirectoryName}`,
     ...HEADLESS_CHROME_ARGS,
   ];
 
@@ -42,23 +45,12 @@ const startHeadlessBrowser = (
   return childProcess;
 };
 
-const SINGLETON_LOCK_FILES = ["SingletonLock", "SingletonSocket", "SingletonCookie"];
-
-const removeSingletonLocks = (profileDir: string): void => {
-  for (const lockFile of SINGLETON_LOCK_FILES) {
-    const lockPath = path.join(profileDir, lockFile);
-    if (existsSync(lockPath)) {
-      unlinkSync(lockPath);
-    }
-  }
-};
-
 const toProfileCookie = (rawCookie: CdpRawCookie, profile: BrowserProfile): Cookie => ({
   name: rawCookie.name,
   value: rawCookie.value,
-  domain: rawCookie.domain,
+  domain: stripLeadingDot(rawCookie.domain),
   path: rawCookie.path,
-  expires: rawCookie.expires > 0 ? rawCookie.expires : undefined,
+  expires: rawCookie.expires > 0 ? Math.floor(rawCookie.expires) : undefined,
   secure: rawCookie.secure,
   httpOnly: rawCookie.httpOnly,
   sameSite: normalizeSameSite(rawCookie.sameSite),
@@ -72,15 +64,25 @@ export const extractChromiumProfileCookies = async (
   const port = options.port ?? CDP_LOCAL_PORT;
   const warnings: string[] = [];
 
-  const tempDir = mkdtempSync(path.join(tmpdir(), "cookies-cdp-"));
+  const tempUserDataDirPath = mkdtempSync(path.join(tmpdir(), "cookies-cdp-"));
+  const profileDirectoryName = path.basename(profile.profilePath);
   let browser: ChildProcess | null = null;
 
   try {
-    const profileCopyPath = path.join(tempDir, "profile");
-    copyDir(profile.profilePath, profileCopyPath);
-    removeSingletonLocks(profileCopyPath);
+    const tempProfilePath = path.join(tempUserDataDirPath, profileDirectoryName);
+    copyDir(profile.profilePath, tempProfilePath);
 
-    browser = startHeadlessBrowser(profile.browser.executablePath, profileCopyPath, port);
+    const localStatePath = path.join(path.dirname(profile.profilePath), "Local State");
+    if (existsSync(localStatePath)) {
+      copyFileSync(localStatePath, path.join(tempUserDataDirPath, "Local State"));
+    }
+
+    browser = startHeadlessBrowser(
+      profile.browser.executablePath,
+      tempUserDataDirPath,
+      profileDirectoryName,
+      port,
+    );
     await sleep(BROWSER_STARTUP_DELAY_MS);
 
     const rawCookies = await getCookiesFromBrowser(port);
@@ -108,7 +110,7 @@ export const extractChromiumProfileCookies = async (
     }
 
     try {
-      rmSync(tempDir, {
+      rmSync(tempUserDataDirPath, {
         recursive: true,
         force: true,
         maxRetries: TEMP_DIR_CLEANUP_RETRIES,

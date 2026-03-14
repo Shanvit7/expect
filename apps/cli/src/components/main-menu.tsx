@@ -64,7 +64,9 @@ export const MainMenu = () => {
   const COLORS = useColors();
   const gitState = useAppStore((state) => state.gitState);
   const autoRunAfterPlanning = useAppStore((state) => state.autoRunAfterPlanning);
+  const savedFlowSummaries = useAppStore((state) => state.savedFlowSummaries);
   const selectAction = useAppStore((state) => state.selectAction);
+  const beginSavedFlowReuse = useAppStore((state) => state.beginSavedFlowReuse);
   const navigateTo = useAppStore((state) => state.navigateTo);
   const toggleAutoRun = useAppStore((state) => state.toggleAutoRun);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -73,6 +75,11 @@ export const MainMenu = () => {
 
   const recommendedScope = getRecommendedScope(gitState);
   const menuOptions = buildMenuOptions(recommendedScope, gitState);
+  const selectedOption = menuOptions[selectedIndex] ?? null;
+  const canReuseSavedFlow =
+    savedFlowSummaries.length > 0 &&
+    Boolean(selectedOption) &&
+    selectedOption.action !== "select-branch";
 
   useInput((input, key) => {
     if (key.downArrow || input === "j" || (key.ctrl && input === "n")) {
@@ -92,6 +99,16 @@ export const MainMenu = () => {
 
     if (input === "t") {
       navigateTo("theme");
+    }
+
+    if (input === "r" && canReuseSavedFlow && selectedOption) {
+      if (selectedOption.action === "test-unstaged" || selectedOption.action === "test-branch") {
+        beginSavedFlowReuse(selectedOption.action);
+      }
+
+      if (selectedOption.action === "select-commit") {
+        beginSavedFlowReuse("select-commit");
+      }
     }
 
     if (key.return && menuOptions.length > 0) {

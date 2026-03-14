@@ -29,10 +29,13 @@ export interface PuppeteerCookie {
 const ensureDotPrefix = (domain: string): string =>
   domain.startsWith(".") ? domain : `.${domain}`;
 
+const resolveCookieDomain = (cookie: Cookie): string =>
+  cookie.name.startsWith("__Host-") ? cookie.domain.replace(/^\./, "") : ensureDotPrefix(cookie.domain);
+
 const toBaseCookie = (cookie: Cookie) => ({
   name: cookie.name,
   value: cookie.value,
-  domain: ensureDotPrefix(cookie.domain),
+  domain: resolveCookieDomain(cookie),
   path: cookie.path,
   expires: cookie.expires ?? SESSION_EXPIRES,
   secure: cookie.secure,

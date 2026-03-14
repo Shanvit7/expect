@@ -51,6 +51,7 @@ const fetchCommitsWithMeta = (limit: number = COMMIT_LIMIT): CommitWithMeta[] =>
 export const CommitPickerScreen = () => {
   const [columns] = useStdoutDimensions();
   const selectCommit = useAppStore((state) => state.selectCommit);
+  const pendingSavedFlow = useAppStore((state) => state.pendingSavedFlow);
   const COLORS = useColors();
   const [commits] = useState(() => fetchCommitsWithMeta());
   const [searchQuery, setSearchQuery] = useState("");
@@ -112,12 +113,13 @@ export const CommitPickerScreen = () => {
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <Text bold color={COLORS.TEXT}>
-        Recent commits
+        {pendingSavedFlow ? "Select a commit for the saved flow" : "Recent commits"}
       </Text>
       <Text color={COLORS.DIM}>
         {filteredCommits.length} commits
         {searchQuery ? ` matching "${searchQuery}"` : ""}
       </Text>
+      {pendingSavedFlow ? <Text color={COLORS.DIM}>{pendingSavedFlow.title}</Text> : null}
 
       <Box marginTop={1} flexDirection="column">
         <Text color={COLORS.DIM}>

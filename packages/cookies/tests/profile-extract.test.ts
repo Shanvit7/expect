@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { BrowserProfile, CdpRawCookie, Cookie } from "../src/types.js";
 import { browserDisplayNameToKey } from "../src/utils/browser-name-map.js";
 import { normalizeSameSite } from "../src/utils/normalize-same-site.js";
+import { stripLeadingDot } from "../src/utils/strip-leading-dot.js";
 
 const RAW_COOKIE: CdpRawCookie = {
   domain: ".example.com",
@@ -21,9 +22,9 @@ const RAW_COOKIE: CdpRawCookie = {
 const toCookie = (raw: CdpRawCookie): Cookie => ({
   name: raw.name,
   value: raw.value,
-  domain: raw.domain,
+  domain: stripLeadingDot(raw.domain),
   path: raw.path,
-  expires: raw.expires > 0 ? raw.expires : undefined,
+  expires: raw.expires > 0 ? Math.floor(raw.expires) : undefined,
   secure: raw.secure,
   httpOnly: raw.httpOnly,
   sameSite: normalizeSameSite(raw.sameSite),
@@ -36,7 +37,7 @@ describe("CDP cookie to Cookie mapping", () => {
 
     expect(cookie.name).toBe("session");
     expect(cookie.value).toBe("abc123");
-    expect(cookie.domain).toBe(".example.com");
+    expect(cookie.domain).toBe("example.com");
     expect(cookie.path).toBe("/");
     expect(cookie.expires).toBe(1735689600);
     expect(cookie.secure).toBe(true);
@@ -62,6 +63,11 @@ describe("CDP cookie to Cookie mapping", () => {
   it("sets expires to undefined for negative expiry", () => {
     const cookie = toCookie({ ...RAW_COOKIE, expires: -1 });
     expect(cookie.expires).toBeUndefined();
+  });
+
+  it("rounds down fractional expiry values", () => {
+    const cookie = toCookie({ ...RAW_COOKIE, expires: 1735689600.75 });
+    expect(cookie.expires).toBe(1735689600);
   });
 
   it("normalizes sameSite values", () => {
@@ -93,9 +99,9 @@ describe("browser field mapping via browserDisplayNameToKey", () => {
   ): Cookie => ({
     name: rawCookie.name,
     value: rawCookie.value,
-    domain: rawCookie.domain,
+    domain: stripLeadingDot(rawCookie.domain),
     path: rawCookie.path,
-    expires: rawCookie.expires > 0 ? rawCookie.expires : undefined,
+    expires: rawCookie.expires > 0 ? Math.floor(rawCookie.expires) : undefined,
     secure: rawCookie.secure,
     httpOnly: rawCookie.httpOnly,
     sameSite: normalizeSameSite(rawCookie.sameSite),

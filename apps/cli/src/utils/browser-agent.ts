@@ -32,7 +32,7 @@ const parseBooleanEnvironmentValue = (value: string | undefined): boolean | unde
   return undefined;
 };
 
-const getBrowserEnvironment = (): BrowserEnvironmentHints => ({
+export const getBrowserEnvironment = (): BrowserEnvironmentHints => ({
   baseUrl: process.env.BROWSER_TESTER_BASE_URL,
   headed: parseBooleanEnvironmentValue(process.env.BROWSER_TESTER_HEADED),
   cookies: parseBooleanEnvironmentValue(process.env.BROWSER_TESTER_COOKIES),
@@ -51,12 +51,20 @@ const createSelection = (action: TestAction, commit?: CommitSummary): TestTarget
   return { action };
 };
 
+export const resolveBrowserTarget = (options: {
+  action: TestAction;
+  commit?: CommitSummary;
+  cwd?: string;
+}): TestTarget =>
+  resolveTestTarget({
+    cwd: options.cwd,
+    selection: createSelection(options.action, options.commit),
+  });
+
 export const generateBrowserPlan = async (
   options: GenerateBrowserPlanOptions,
 ): Promise<GenerateBrowserPlanResult> => {
-  const target = resolveTestTarget({
-    selection: createSelection(options.action, options.commit),
-  });
+  const target = resolveBrowserTarget(options);
   const environment = getBrowserEnvironment();
   const plan = await planBrowserFlow({
     target,

@@ -49,6 +49,11 @@ describe("PROFILE_BROWSER_CONFIGS", () => {
     expect(PROFILE_BROWSER_CONFIGS.length).toBe(18);
   });
 
+  it("uses the correct darwin user data dir for Helium", () => {
+    const heliumConfig = PROFILE_BROWSER_CONFIGS.find((config) => config.info.name === "Helium");
+    expect(heliumConfig?.darwinUserDataPath).toBe("net.imput.helium");
+  });
+
   for (const config of PROFILE_BROWSER_CONFIGS) {
     describe(config.info.name, () => {
       it("has a non-empty executable path", () => {

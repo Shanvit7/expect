@@ -1,5 +1,5 @@
 import type { BrowserRunEvent } from "@browser-tester/supervisor";
-import { TESTING_SELECT_TRUNCATION_LIMIT } from "../constants.js";
+import { TESTING_SELECT_TRUNCATION_LIMIT, TESTING_TOOL_TEXT_CHAR_LIMIT } from "../constants.js";
 import { truncateText } from "./truncate-text.js";
 
 const BROWSER_TOOL_PREFIX = "mcp__browser__";
@@ -112,9 +112,21 @@ export const formatBrowserToolCall = (toolName: string, input: string): string |
   }
 };
 
-export const shouldShowToolResult = (
+export const formatBrowserToolResult = (
   event: Extract<BrowserRunEvent, { type: "tool-result" }>,
-): boolean =>
-  event.isError ||
-  event.toolName === `${BROWSER_TOOL_PREFIX}save_video` ||
-  event.toolName === `${BROWSER_TOOL_PREFIX}close`;
+): string | null => {
+  if (event.isError) {
+    return truncateText(event.result, TESTING_TOOL_TEXT_CHAR_LIMIT);
+  }
+
+  switch (event.toolName) {
+    case `${BROWSER_TOOL_PREFIX}screenshot`:
+    case `${BROWSER_TOOL_PREFIX}take_screenshot`:
+    case `${BROWSER_TOOL_PREFIX}annotated_screenshot`:
+    case `${BROWSER_TOOL_PREFIX}save_video`:
+    case `${BROWSER_TOOL_PREFIX}close`:
+      return event.result;
+    default:
+      return null;
+  }
+};

@@ -9,8 +9,10 @@ import {
   FLOW_DESCRIPTION_CHAR_LIMIT,
   FLOW_DIRECTORY_INDEX_FILE_NAME,
   FLOW_DIRECTORY_NAME,
+  SAVED_FLOW_FORMAT_VERSION,
 } from "../constants.js";
 import { slugify } from "./slugify.js";
+import { formatSavedFlowFrontmatter, parseSavedFlowFile } from "./saved-flow-file.js";
 import { truncateText } from "./truncate-text.js";
 
 interface SaveFlowOptions {
@@ -30,9 +32,6 @@ interface SavedFlowMetadata {
   description: string;
   slug: string;
 }
-
-const FLOW_FRONTMATTER_PATTERN = /^---\n([\s\S]*?)\n---/;
-const FRONTMATTER_LINE_PATTERN = /^([a-z]+):\s*(.+)$/gm;
 
 const normalizeWhitespace = (value: string): string => value.trim().replace(/\s+/g, " ");
 
@@ -70,11 +69,16 @@ const formatFlowFileContent = (
     .join("\n\n");
 
   return [
-    "---",
-    `title: ${JSON.stringify(plan.title)}`,
-    `description: ${JSON.stringify(description)}`,
-    `slug: ${JSON.stringify(slug)}`,
-    "---",
+    formatSavedFlowFrontmatter({
+      format_version: SAVED_FLOW_FORMAT_VERSION,
+      title: plan.title,
+      description,
+      slug,
+      saved_target_scope: target.scope,
+      saved_target_display_name: target.displayName,
+      plan,
+      environment,
+    }),
     "",
     `# ${plan.title}`,
     "",
@@ -117,33 +121,14 @@ const formatFlowFileContent = (
 };
 
 const parseSavedFlowMetadata = (content: string): SavedFlowMetadata | null => {
-  const frontmatterMatch = content.match(FLOW_FRONTMATTER_PATTERN);
-  if (!frontmatterMatch) return null;
+  const savedFlowFileData = parseSavedFlowFile(content);
+  if (!savedFlowFileData) return null;
 
-  const frontmatter = frontmatterMatch[1];
-  const metadata = new Map<string, string>();
-
-  for (const match of frontmatter.matchAll(FRONTMATTER_LINE_PATTERN)) {
-    const key = match[1];
-    const rawValue = match[2];
-
-    try {
-      const parsedValue = JSON.parse(rawValue);
-      if (typeof parsedValue === "string") {
-        metadata.set(key, parsedValue);
-      }
-    } catch {
-      return null;
-    }
-  }
-
-  const title = metadata.get("title");
-  const description = metadata.get("description");
-  const slug = metadata.get("slug");
-
-  if (!title || !description || !slug) return null;
-
-  return { title, description, slug };
+  return {
+    title: savedFlowFileData.title,
+    description: savedFlowFileData.description,
+    slug: savedFlowFileData.slug,
+  };
 };
 
 const formatDirectoryContent = (entries: SavedFlowMetadata[]): string =>

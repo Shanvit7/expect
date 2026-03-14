@@ -1,3 +1,5 @@
+import { existsSync, rmSync } from "node:fs";
+import { dirname } from "node:path";
 import { describe, expect, it } from "vitest";
 import type {
   LanguageModelV3,
@@ -8,7 +10,8 @@ import type { BrowserRunEvent } from "../src/events.js";
 import { executeBrowserFlow } from "../src/execute-browser-flow.js";
 import type { BrowserFlowPlan, TestTarget } from "../src/types.js";
 
-const createExecutionModel = (
+const createStreamModel = (
+  parts: LanguageModelV3StreamPart[],
   callback: (options: LanguageModelV3CallOptions) => void,
 ): LanguageModelV3 => ({
   specificationVersion: "v3",
@@ -20,7 +23,25 @@ const createExecutionModel = (
   },
   async doStream(options) {
     callback(options);
-    const parts: LanguageModelV3StreamPart[] = [
+    return {
+      stream: new ReadableStream<LanguageModelV3StreamPart>({
+        start(controller) {
+          for (const part of parts) controller.enqueue(part);
+          controller.close();
+        },
+      }),
+      request: {
+        body: "",
+      },
+    };
+  },
+});
+
+const createExecutionModel = (
+  callback: (options: LanguageModelV3CallOptions) => void,
+): LanguageModelV3 =>
+  createStreamModel(
+    [
       { type: "stream-start", warnings: [] },
       { type: "text-start", id: "t1" },
       {
@@ -69,21 +90,9 @@ const createExecutionModel = (
           },
         },
       },
-    ];
-
-    return {
-      stream: new ReadableStream<LanguageModelV3StreamPart>({
-        start(controller) {
-          for (const part of parts) controller.enqueue(part);
-          controller.close();
-        },
-      }),
-      request: {
-        body: "",
-      },
-    };
-  },
-});
+    ],
+    callback,
+  );
 
 const testTarget: TestTarget = {
   scope: "unstaged",
@@ -164,5 +173,96 @@ describe("executeBrowserFlow", () => {
       status: "passed",
       videoPath: videoOutputPath,
     });
+  });
+
+  it("stores browser screenshots in /tmp and emits the saved path", async () => {
+    const screenshotBase64 = Buffer.from("fake screenshot").toString("base64");
+    const screenshotResult = JSON.stringify({
+      content: [
+        {
+          type: "image",
+          data: screenshotBase64,
+          mimeType: "image/png",
+        },
+      ],
+    });
+    const events: BrowserRunEvent[] = [];
+
+    for await (const event of executeBrowserFlow({
+      target: testTarget,
+      plan: testPlan,
+      model: createStreamModel(
+        [
+          { type: "stream-start", warnings: [] },
+          { type: "text-start", id: "t1" },
+          {
+            type: "text-delta",
+            id: "t1",
+            delta: "STEP_START|step-01|Open onboarding\n",
+          },
+          { type: "text-end", id: "t1" },
+          {
+            type: "tool-call",
+            toolCallId: "tool-1",
+            toolName: "mcp__browser__screenshot",
+            input: '{"fullPage":true}',
+            providerExecuted: true,
+          },
+          {
+            type: "tool-result",
+            toolCallId: "tool-1",
+            toolName: "mcp__browser__screenshot",
+            result: screenshotResult,
+            isError: false,
+          },
+          { type: "text-start", id: "t2" },
+          {
+            type: "text-delta",
+            id: "t2",
+            delta:
+              "STEP_DONE|step-01|Captured the UI\nRUN_COMPLETED|passed|Verified screenshot output\n",
+          },
+          { type: "text-end", id: "t2" },
+          {
+            type: "finish",
+            finishReason: { unified: "stop", raw: undefined },
+            usage: {
+              inputTokens: {
+                total: undefined,
+                noCache: undefined,
+                cacheRead: undefined,
+                cacheWrite: undefined,
+              },
+              outputTokens: { total: undefined, text: undefined, reasoning: undefined },
+            },
+            providerMetadata: {},
+          },
+        ],
+        () => {},
+      ),
+    })) {
+      events.push(event);
+    }
+
+    const screenshotToolResultEvent = events.find(
+      (event) =>
+        event.type === "tool-result" &&
+        event.toolName === "mcp__browser__screenshot" &&
+        !event.isError,
+    );
+
+    expect(screenshotToolResultEvent).toBeDefined();
+
+    if (!screenshotToolResultEvent || screenshotToolResultEvent.type !== "tool-result") {
+      throw new Error("Expected screenshot tool result event");
+    }
+
+    expect(screenshotToolResultEvent.result.startsWith("Screenshot saved to /tmp/")).toBe(true);
+
+    const screenshotPath = screenshotToolResultEvent.result.replace("Screenshot saved to ", "");
+
+    expect(existsSync(screenshotPath)).toBe(true);
+
+    rmSync(dirname(screenshotPath), { recursive: true, force: true });
   });
 });
