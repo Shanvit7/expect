@@ -21,25 +21,32 @@ export const MenuItem = ({
   diffStats,
 }: MenuItemProps) => {
   const COLORS = useColors();
+
+  if (isSelected) {
+    return (
+      <Text>
+        <Text color={COLORS.ORANGE}>{figures.pointer} </Text>
+        <Text backgroundColor={COLORS.ORANGE} color="#000000" bold>
+        {" "}{label}
+        {diffStats ? (
+          <Text backgroundColor={COLORS.ORANGE} color="#000000">
+            {" "}
+            +{diffStats.additions} -{diffStats.deletions}
+          </Text>
+        ) : null}
+        {recommended ? " (recommended)" : ""}
+        {hint ? ` (${hint})` : ""}
+        {" "}
+        </Text>
+      </Text>
+    );
+  }
+
   return (
     <Text>
-      <Text color={isSelected ? COLORS.ORANGE : COLORS.DIM}>
-        {isSelected ? `${figures.pointer} ` : "  "}
-      </Text>
-      <Text color={isSelected ? undefined : COLORS.DIM} bold={isSelected}>
-        {label}
-      </Text>
-      {isSelected && diffStats ? (
-        <Text>
-          {" "}
-          <Text color={COLORS.GREEN}>+{diffStats.additions}</Text>{" "}
-          <Text color={COLORS.RED}>-{diffStats.deletions}</Text>
-        </Text>
-      ) : detail ? (
-        <Text color={COLORS.DIM}> {detail}</Text>
-      ) : null}
-      {isSelected && recommended && <Text> (recommended)</Text>}
-      {hint && <Text color={COLORS.DIM}> ({hint})</Text>}
+      <Text color={COLORS.DIM}>{"  "}</Text>
+      <Text color={COLORS.DIM}>{label}</Text>
+      {detail ? <Text color={COLORS.DIM}> {detail}</Text> : null}
     </Text>
   );
 };

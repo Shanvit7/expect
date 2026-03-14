@@ -15,7 +15,7 @@ export interface ThemeDefinition {
   borderSubtle: string;
 }
 
-export const DEFAULT_DARK_THEME_NAME = "monokai-dark";
+export const DEFAULT_DARK_THEME_NAME = "carbonfox-dark";
 
 export const THEMES: Record<string, ThemeDefinition> = {
   "doric-almond": {
