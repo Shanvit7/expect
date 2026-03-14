@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 import { MouseProvider } from "./hooks/mouse-context.js";
-import { useColors } from "./theme-context.js";
+import { useColors } from "./components/theme-context.js";
 import { BranchSwitcherScreen } from "./components/screens/branch-switcher-screen.js";
 import { CommitPickerScreen } from "./components/screens/commit-picker-screen.js";
 import { FlowInputScreen } from "./components/screens/flow-input-screen.js";

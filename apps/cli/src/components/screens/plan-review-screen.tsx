@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { Input } from "../ui/input.js";
-import { useColors } from "../../theme-context.js";
+import { useColors } from "../theme-context.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { Collapsible } from "../ui/collapsible.js";

@@ -9,7 +9,7 @@ import {
   COMMIT_SELECTOR_WIDTH,
   TABLE_COLUMN_GAP,
 } from "../../constants.js";
-import { useColors } from "../../theme-context.js";
+import { useColors } from "../theme-context.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { SearchBar } from "../ui/search-bar.js";

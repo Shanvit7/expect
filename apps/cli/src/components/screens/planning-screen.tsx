@@ -1,7 +1,7 @@
 import { Box, Text } from "ink";
 import { Spinner } from "../ui/spinner.js";
 import { ScreenHeading } from "../ui/screen-heading.js";
-import { useColors } from "../../theme-context.js";
+import { useColors } from "../theme-context.js";
 import { useAppStore } from "../../store.js";
 import type { TestAction } from "../../utils/browser-agent.js";
 

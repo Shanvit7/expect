@@ -1,5 +1,5 @@
 import { Box, Text } from "ink";
-import { useThemeContext } from "../../theme-context.js";
+import { useThemeContext } from "../theme-context.js";
 import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions.js";
 import stringWidth from "string-width";
 

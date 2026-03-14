@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import figures from "figures";
 import stringWidth from "string-width";
-import { useColors } from "../../theme-context.js";
+import { useColors } from "../theme-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { MenuItem } from "../ui/menu-item.js";
 import type { DiffStats } from "@browser-tester/supervisor";

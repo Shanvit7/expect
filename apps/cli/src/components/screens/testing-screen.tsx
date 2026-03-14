@@ -7,7 +7,7 @@ import {
   TESTING_TOOL_TEXT_CHAR_LIMIT,
   TESTING_VISIBLE_LOG_COUNT,
 } from "../../constants.js";
-import { useColors, type Colors } from "../../theme-context.js";
+import { useColors, type Colors } from "../theme-context.js";
 import { Spinner } from "../ui/spinner.js";
 import { useAppStore } from "../../store.js";
 import { ScreenHeading } from "../ui/screen-heading.js";
