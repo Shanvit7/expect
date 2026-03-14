@@ -104,7 +104,7 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
 const getHintText = (segments: HintSegment[]): string =>
   segments.length > 0
     ? ` ${segments
-        .map((segment) => `${segment.key} ${segment.label}`)
+        .map((segment) => `${segment.label} ${segment.key}`)
         .join(HINT_SEPARATOR)}`
     : "";
 
@@ -122,7 +122,11 @@ export const Modeline = () => {
 
   const keybindText = getHintText(keybinds);
   const actionPills = actions
-    .map((action) => ` ${action.key} ${action.label} `)
+    .map((action) =>
+      action.color
+        ? ` ${action.label} │ ${action.key} `
+        : `${action.label} ${action.key}`
+    )
     .join("   ");
   const actionWidth = actions.length > 0 ? stringWidth(actionPills) : 0;
   const rightWidth = stringWidth(keybindText);
@@ -136,16 +140,16 @@ export const Modeline = () => {
           <Text key={action.key + action.label}>
             {index > 0 ? "   " : ""}
             {action.color ? (
-              <Text backgroundColor={action.color} color="#000000" bold>
+              <Text backgroundColor={action.color} color="#000000">
                 {" "}
-                {action.key} {action.label}{" "}
+                <Text bold>{action.label}</Text> │ {action.key}{" "}
               </Text>
             ) : (
               <Text>
+                <Text color={theme.textMuted}>{action.label} </Text>
                 <Text color={theme.primary} bold>
                   {action.key}
                 </Text>
-                <Text color={theme.textMuted}> {action.label}</Text>
               </Text>
             )}
           </Text>

@@ -27,10 +27,10 @@ const HintContent = ({
   mutedColor: string;
 }) => (
   <>
+    <Text color={segment.color ?? mutedColor}>{segment.label} </Text>
     <Text color={segment.color ?? color} bold>
       {segment.key}
     </Text>
-    <Text color={segment.color ?? mutedColor}> {segment.label}</Text>
   </>
 );
 
@@ -54,7 +54,9 @@ export const HintBar = ({ segments, color, mutedColor }: HintBarProps) => (
             mutedColor={mutedColor}
           />
         )}
-        {index < segments.length - 1 && <Text color={mutedColor}>{HINT_SEPARATOR}</Text>}
+        {index < segments.length - 1 && (
+          <Text color={mutedColor}>{HINT_SEPARATOR}</Text>
+        )}
       </Box>
     ))}
   </Box>

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import figures from "figures";
 import stringWidth from "string-width";
@@ -100,20 +100,16 @@ export const MainMenu = () => {
   const totalItems = menuOptions.length + 1;
   const autoRunIndex = menuOptions.length;
 
+  useEffect(() => {
+    setMainMenuOnAction(selectedIndex < autoRunIndex);
+  }, [selectedIndex, autoRunIndex, setMainMenuOnAction]);
+
   useInput((input, key) => {
     if (key.downArrow || input === "j" || (key.ctrl && input === "n")) {
-      setSelectedIndex((previous) => {
-        const next = Math.min(totalItems - 1, previous + 1);
-        setMainMenuOnAction(next < autoRunIndex);
-        return next;
-      });
+      setSelectedIndex((previous) => Math.min(totalItems - 1, previous + 1));
     }
     if (key.upArrow || input === "k" || (key.ctrl && input === "p")) {
-      setSelectedIndex((previous) => {
-        const next = Math.max(0, previous - 1);
-        setMainMenuOnAction(next < autoRunIndex);
-        return next;
-      });
+      setSelectedIndex((previous) => Math.max(0, previous - 1));
     }
 
     if (key.tab) {
