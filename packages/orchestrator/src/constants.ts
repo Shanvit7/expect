@@ -1,4 +1,7 @@
+export const DEFAULT_AGENT_PROVIDER = "claude";
 export const BROWSER_TEST_MODEL = "claude-sonnet-4-6";
+export const VIDEO_DIRECTORY_PREFIX = "browser-tester-run-";
+export const VIDEO_FILE_NAME = "browser-flow.webm";
 export const GIT_TIMEOUT_MS = 5000;
 export const RECENT_COMMIT_LIMIT = 10;
 export const CHANGED_FILE_LIMIT = 40;

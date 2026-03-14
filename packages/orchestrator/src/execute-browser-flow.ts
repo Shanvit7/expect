@@ -1,41 +1,51 @@
-import { accessSync, mkdtempSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { LanguageModelV3, LanguageModelV3StreamPart } from "@ai-sdk/provider";
-import { createClaudeModel } from "@browser-tester/agent";
-import { BROWSER_TEST_MODEL, DEFAULT_BROWSER_MCP_SERVER_NAME } from "./constants.js";
+import type { LanguageModelV3 } from "@ai-sdk/provider";
+import {
+  BROWSER_TEST_MODEL,
+  DEFAULT_AGENT_PROVIDER,
+  DEFAULT_BROWSER_MCP_SERVER_NAME,
+  VIDEO_DIRECTORY_PREFIX,
+  VIDEO_FILE_NAME,
+} from "./constants.js";
 import { buildBrowserMcpSettings } from "./browser-mcp-config.js";
+import { createAgentModel } from "./create-agent-model.js";
+import type { BrowserRunEvent } from "./events.js";
+import {
+  buildStepMap,
+  extractStreamSessionId,
+  parseBrowserToolName,
+  parseMarkerLine,
+  parseTextDelta,
+} from "./parse-execution-stream.js";
 import type {
-  BrowserRunEvent,
-  ExecuteBrowserFlowOptions,
   ExecutionStreamContext,
-  ExecutionStreamParseResult,
   ExecutionStreamState,
-  PlanStep,
-} from "./types.js";
-
-const PROVIDER_METADATA_KEY = "browser-tester-agent";
-const VIDEO_DIRECTORY_PREFIX = "browser-tester-run-";
-const VIDEO_FILE_NAME = "browser-flow.webm";
+} from "./parse-execution-stream.js";
+import type { ExecuteBrowserFlowOptions, PlanStep } from "./types.js";
 
 const createExecutionModel = (
   options: Pick<
     ExecuteBrowserFlowOptions,
-    "model" | "providerSettings" | "target" | "browserMcpServerName" | "videoOutputPath"
+    "model" | "provider" | "providerSettings" | "target" | "browserMcpServerName" | "videoOutputPath"
   >,
-): LanguageModelV3 =>
-  options.model ??
-  createClaudeModel(
-    buildBrowserMcpSettings({
-      providerSettings: {
-        cwd: options.target.cwd,
-        model: BROWSER_TEST_MODEL,
-        ...(options.providerSettings ?? {}),
-      },
-      browserMcpServerName: options.browserMcpServerName,
-      videoOutputPath: options.videoOutputPath,
-    }),
-  );
+): LanguageModelV3 => {
+  if (options.model) return options.model;
+
+  const provider = options.provider ?? DEFAULT_AGENT_PROVIDER;
+  const settings = buildBrowserMcpSettings({
+    providerSettings: {
+      cwd: options.target.cwd,
+      ...(provider === "claude" ? { model: BROWSER_TEST_MODEL } : {}),
+      ...(options.providerSettings ?? {}),
+    },
+    browserMcpServerName: options.browserMcpServerName,
+    videoOutputPath: options.videoOutputPath,
+  });
+
+  return createAgentModel(provider, settings);
+};
 
 const formatPlanSteps = (steps: PlanStep[]): string =>
   steps
@@ -100,118 +110,9 @@ const buildExecutionPrompt = (options: ExecuteBrowserFlowOptions): string => {
   ].join("\n");
 };
 
-const createTimestamp = (): number => Date.now();
-
 const createVideoOutputPath = (): string => {
   const videoDirectory = mkdtempSync(join(tmpdir(), VIDEO_DIRECTORY_PREFIX));
   return join(videoDirectory, VIDEO_FILE_NAME);
-};
-
-const resolveVideoPath = (videoOutputPath: string | undefined): string | undefined => {
-  if (!videoOutputPath) return undefined;
-
-  try {
-    accessSync(videoOutputPath);
-    return videoOutputPath;
-  } catch {
-    return videoOutputPath;
-  }
-};
-
-const buildStepMap = (steps: PlanStep[]): Map<string, PlanStep> =>
-  new Map(steps.map((step) => [step.id, step]));
-
-const parseMarkerLine = (
-  line: string,
-  context: ExecutionStreamContext,
-): BrowserRunEvent | BrowserRunEvent[] | null => {
-  const [marker, stepId = "", rawMessage = ""] = line.split("|");
-
-  if (marker === "STEP_START") {
-    const step = context.stepsById.get(stepId);
-    return {
-      type: "step-started",
-      timestamp: createTimestamp(),
-      stepId,
-      title: rawMessage || step?.title || stepId,
-    };
-  }
-
-  if (marker === "STEP_DONE") {
-    return {
-      type: "step-completed",
-      timestamp: createTimestamp(),
-      stepId,
-      summary: rawMessage,
-    };
-  }
-
-  if (marker === "ASSERTION_FAILED") {
-    return {
-      type: "assertion-failed",
-      timestamp: createTimestamp(),
-      stepId,
-      message: rawMessage,
-    };
-  }
-
-  if (marker === "RUN_COMPLETED") {
-    const status = stepId === "failed" ? "failed" : "passed";
-    return {
-      type: "run-completed",
-      timestamp: createTimestamp(),
-      status,
-      summary: rawMessage,
-    };
-  }
-
-  if (!line.trim()) return null;
-
-  return {
-    type: "text",
-    timestamp: createTimestamp(),
-    text: line,
-  };
-};
-
-const parseTextDelta = (
-  delta: string,
-  state: ExecutionStreamState,
-  context: ExecutionStreamContext,
-): ExecutionStreamParseResult => {
-  const combinedText = `${state.bufferedText}${delta}`;
-  const lines = combinedText.split("\n");
-  const bufferedText = lines.pop() ?? "";
-  const events: BrowserRunEvent[] = [];
-
-  for (const line of lines) {
-    const markerEvent = parseMarkerLine(line.trim(), context);
-    if (!markerEvent) continue;
-    if (Array.isArray(markerEvent)) events.push(...markerEvent);
-    else events.push(markerEvent);
-  }
-
-  return {
-    events,
-    nextState: {
-      ...state,
-      bufferedText,
-    },
-  };
-};
-
-const parseToolName = (toolName: string, browserMcpServerName: string): string | null => {
-  const prefix = `mcp__${browserMcpServerName}__`;
-  if (!toolName.startsWith(prefix)) return null;
-  return toolName.slice(prefix.length);
-};
-
-const extractSessionId = (part: LanguageModelV3StreamPart): string | undefined => {
-  if (part.type !== "finish") return undefined;
-  const providerMetadata = part.providerMetadata?.[PROVIDER_METADATA_KEY];
-  if (!providerMetadata || typeof providerMetadata !== "object") return undefined;
-  const sessionId = Reflect.get(providerMetadata, "sessionId");
-  return typeof sessionId === "string" ? sessionId : undefined;
 };
 
 export const executeBrowserFlow = async function* (
@@ -221,6 +122,7 @@ export const executeBrowserFlow = async function* (
   const videoOutputPath = options.videoOutputPath ?? createVideoOutputPath();
   const model = createExecutionModel({
     model: options.model,
+    provider: options.provider,
     providerSettings: options.providerSettings,
     target: options.target,
     browserMcpServerName,
@@ -234,7 +136,7 @@ export const executeBrowserFlow = async function* (
 
   yield {
     type: "run-started",
-    timestamp: createTimestamp(),
+    timestamp: Date.now(),
     planTitle: options.plan.title,
   };
 
@@ -266,7 +168,7 @@ export const executeBrowserFlow = async function* (
           yield {
             ...event,
             sessionId: streamState.sessionId,
-            videoPath: resolveVideoPath(videoOutputPath),
+            videoPath: videoOutputPath,
           };
         } else {
           yield event;
@@ -278,7 +180,7 @@ export const executeBrowserFlow = async function* (
     if (part.type === "reasoning-delta") {
       yield {
         type: "thinking",
-        timestamp: createTimestamp(),
+        timestamp: Date.now(),
         text: part.delta,
       };
       continue;
@@ -287,16 +189,16 @@ export const executeBrowserFlow = async function* (
     if (part.type === "tool-call") {
       yield {
         type: "tool-call",
-        timestamp: createTimestamp(),
+        timestamp: Date.now(),
         toolName: part.toolName,
         input: part.input,
       };
 
-      const browserAction = parseToolName(part.toolName, browserMcpServerName);
+      const browserAction = parseBrowserToolName(part.toolName, browserMcpServerName);
       if (browserAction) {
         yield {
           type: "browser-log",
-          timestamp: createTimestamp(),
+          timestamp: Date.now(),
           action: browserAction,
           message: `Called ${browserAction}`,
         };
@@ -306,11 +208,11 @@ export const executeBrowserFlow = async function* (
 
     if (part.type === "tool-result") {
       const result = String(part.result);
-      const browserAction = parseToolName(part.toolName, browserMcpServerName);
+      const browserAction = parseBrowserToolName(part.toolName, browserMcpServerName);
 
       yield {
         type: "tool-result",
-        timestamp: createTimestamp(),
+        timestamp: Date.now(),
         toolName: part.toolName,
         result,
         isError: Boolean(part.isError),
@@ -319,7 +221,7 @@ export const executeBrowserFlow = async function* (
       if (browserAction) {
         yield {
           type: "browser-log",
-          timestamp: createTimestamp(),
+          timestamp: Date.now(),
           action: browserAction,
           message: result,
         };
@@ -327,7 +229,7 @@ export const executeBrowserFlow = async function* (
       continue;
     }
 
-    const sessionId = extractSessionId(part);
+    const sessionId = extractStreamSessionId(part);
     if (sessionId) {
       streamState = {
         ...streamState,
@@ -347,7 +249,7 @@ export const executeBrowserFlow = async function* (
           yield {
             ...trailingEvent,
             sessionId: streamState.sessionId,
-            videoPath: resolveVideoPath(videoOutputPath),
+            videoPath: videoOutputPath,
           };
           return;
         }
@@ -360,10 +262,10 @@ export const executeBrowserFlow = async function* (
 
   yield {
     type: "run-completed",
-    timestamp: createTimestamp(),
+    timestamp: Date.now(),
     status: "passed",
     summary: "Run completed.",
     sessionId: streamState.sessionId,
-    videoPath: resolveVideoPath(videoOutputPath),
+    videoPath: videoOutputPath,
   };
 };

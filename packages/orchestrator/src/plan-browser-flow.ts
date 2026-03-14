@@ -1,8 +1,8 @@
 import type { LanguageModelV3 } from "@ai-sdk/provider";
-import { createClaudeModel } from "@browser-tester/agent";
 import { z } from "zod";
 import {
   BROWSER_TEST_MODEL,
+  DEFAULT_AGENT_PROVIDER,
   PLANNER_CHANGED_FILE_LIMIT,
   PLANNER_MAX_STEP_COUNT,
   PLANNER_MODEL_EFFORT,
@@ -10,6 +10,7 @@ import {
   PLANNER_RECENT_COMMIT_LIMIT,
   STEP_ID_PAD_LENGTH,
 } from "./constants.js";
+import { createAgentModel } from "./create-agent-model.js";
 import { extractJsonObject } from "./json.js";
 import type { BrowserFlowPlan, PlanBrowserFlowOptions, PlanStep, TestTarget } from "./types.js";
 import { buildPlanningDiffPreview } from "./utils/build-planning-diff-preview.js";
@@ -41,18 +42,24 @@ const browserFlowPlanSchema = z.object({
 });
 
 const createPlannerModel = (
-  options: Pick<PlanBrowserFlowOptions, "model" | "providerSettings" | "target">,
-): LanguageModelV3 =>
-  options.model ??
-  createClaudeModel({
+  options: Pick<PlanBrowserFlowOptions, "model" | "provider" | "providerSettings" | "target">,
+): LanguageModelV3 => {
+  if (options.model) return options.model;
+
+  const provider = options.provider ?? DEFAULT_AGENT_PROVIDER;
+  const claudeOnlySettings =
+    provider === "claude"
+      ? { model: BROWSER_TEST_MODEL, permissionMode: "plan" as const, tools: [] }
+      : {};
+
+  return createAgentModel(provider, {
     cwd: options.target.cwd,
     effort: PLANNER_MODEL_EFFORT,
     maxTurns: PLANNER_MAX_TURNS,
-    model: BROWSER_TEST_MODEL,
-    permissionMode: "plan",
-    tools: [],
+    ...claudeOnlySettings,
     ...(options.providerSettings ?? {}),
   });
+};
 
 const formatDiffStats = (target: TestTarget): string =>
   target.diffStats

@@ -4,8 +4,9 @@ import type {
   LanguageModelV3CallOptions,
   LanguageModelV3StreamPart,
 } from "@ai-sdk/provider";
+import type { BrowserRunEvent } from "../src/events.js";
 import { executeBrowserFlow } from "../src/execute-browser-flow.js";
-import type { BrowserFlowPlan, BrowserRunEvent, TestTarget } from "../src/types.js";
+import type { BrowserFlowPlan, TestTarget } from "../src/types.js";
 
 const createExecutionModel = (
   callback: (options: LanguageModelV3CallOptions) => void,
