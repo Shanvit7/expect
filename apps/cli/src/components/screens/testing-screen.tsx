@@ -13,6 +13,7 @@ import {
 } from "../../constants.js";
 import { useColors, type Colors } from "../theme-context.js";
 import { Spinner } from "../ui/spinner.js";
+import { TextShimmer } from "../ui/text-shimmer.js";
 import { useAppStore } from "../../store.js";
 import { ScreenHeading } from "../ui/screen-heading.js";
 import cliTruncate from "cli-truncate";
@@ -415,8 +416,12 @@ export const TestingScreen = () => {
 
       {running && (
         <Box marginTop={1}>
-          <Spinner
-            message={`${exitRequested ? "Stopping agent..." : "Agent is working..."} ${elapsedTimeLabel}`}
+          <Spinner />
+          <Text> </Text>
+          <TextShimmer
+            text={`${exitRequested ? "Stopping" : "Testing"}${figures.ellipsis} ${elapsedTimeLabel}`}
+            baseColor={COLORS.DIM}
+            highlightColor={COLORS.PRIMARY}
           />
         </Box>
       )}
