@@ -15,7 +15,7 @@ import { useColors, type Colors } from "../theme-context.js";
 import { Spinner } from "../ui/spinner.js";
 import { useAppStore } from "../../store.js";
 import { ScreenHeading } from "../ui/screen-heading.js";
-import { truncateText } from "../../utils/truncate-text.js";
+import cliTruncate from "cli-truncate";
 import { formatElapsedTime } from "../../utils/format-elapsed-time.js";
 import {
   formatBrowserToolCall,
@@ -91,7 +91,7 @@ const extractArtifactPathFromResult = (
 const formatTraceText = (value: string, traceDisplayMode: string): string =>
   isDetailedTraceDisplayMode(traceDisplayMode)
     ? value
-    : truncateText(value, TESTING_TOOL_TEXT_CHAR_LIMIT);
+    : cliTruncate(value, TESTING_TOOL_TEXT_CHAR_LIMIT);
 
 const formatRunEvent = (
   event: BrowserRunEvent,
@@ -111,12 +111,12 @@ const formatRunEvent = (
       };
     case "step-completed":
       return {
-        text: `${figures.tick} ${event.stepId} ${truncateText(event.summary, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
+        text: `${figures.tick} ${event.stepId} ${cliTruncate(event.summary, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
         color: colors.GREEN,
       };
     case "assertion-failed":
       return {
-        text: `${figures.cross} ${event.stepId} ${truncateText(event.message, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
+        text: `${figures.cross} ${event.stepId} ${cliTruncate(event.message, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
         color: colors.RED,
       };
     case "tool-call": {
@@ -159,12 +159,12 @@ const formatRunEvent = (
       return null;
     case "error":
       return {
-        text: `Error: ${truncateText(event.message, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
+        text: `Error: ${cliTruncate(event.message, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
         color: colors.RED,
       };
     case "run-completed":
       return {
-        text: `Run ${event.status}: ${truncateText(event.summary, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
+        text: `Run ${event.status}: ${cliTruncate(event.summary, TESTING_TOOL_TEXT_CHAR_LIMIT)}`,
         color: event.status === "passed" ? colors.GREEN : colors.RED,
       };
     default:

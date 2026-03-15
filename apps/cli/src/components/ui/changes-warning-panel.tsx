@@ -1,7 +1,6 @@
-import type { DiffStats } from "@browser-tester/supervisor";
+import { type DiffStats, formatDiffStats } from "@browser-tester/supervisor";
 import { Box, Text } from "ink";
 import { useColors } from "../theme-context.js";
-import { formatDiffStats } from "../../utils/format-diff-stats.js";
 
 interface ChangesWarningPanelProps {
   title: string;

@@ -13,12 +13,9 @@ import { useColors } from "../theme-context.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { SearchBar } from "../ui/search-bar.js";
-import {
-  fetchRemoteBranches,
-  type RemoteBranch,
-} from "../../utils/fetch-remote-branches.js";
+import { fetchRemoteBranches, type RemoteBranch } from "@browser-tester/supervisor";
 import { Spinner } from "../ui/spinner.js";
-import { truncateText } from "../../utils/truncate-text.js";
+import cliTruncate from "cli-truncate";
 import { visualPadEnd } from "../../utils/visual-pad-end.js";
 import { useScrollableList } from "../../hooks/use-scrollable-list.js";
 import { useAppStore } from "../../store.js";
@@ -26,14 +23,7 @@ import { ScreenHeading } from "../ui/screen-heading.js";
 
 type PrFilter = "recent" | "all" | "open" | "draft" | "merged" | "no-pr";
 
-const PR_FILTERS: PrFilter[] = [
-  "recent",
-  "all",
-  "open",
-  "draft",
-  "merged",
-  "no-pr",
-];
+const PR_FILTERS: PrFilter[] = ["recent", "all", "open", "draft", "merged", "no-pr"];
 
 export const PrPickerScreen = () => {
   const [columns] = useStdoutDimensions();
@@ -55,7 +45,7 @@ export const PrPickerScreen = () => {
 
   useEffect(() => {
     let cancelled = false;
-    fetchRemoteBranches()
+    fetchRemoteBranches(process.cwd())
       .then((branches) => {
         if (!cancelled) setRemoteBranches(branches);
       })
@@ -76,9 +66,7 @@ export const PrPickerScreen = () => {
     });
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
-      result = result.filter((branch) =>
-        branch.name.toLowerCase().includes(lowercaseQuery)
-      );
+      result = result.filter((branch) => branch.name.toLowerCase().includes(lowercaseQuery));
     }
     if (activeFilter === "recent") {
       result = result
@@ -92,15 +80,11 @@ export const PrPickerScreen = () => {
     return result;
   })();
 
-  const {
-    highlightedIndex,
-    setHighlightedIndex,
-    scrollOffset,
-    handleNavigation,
-  } = useScrollableList({
-    itemCount: filteredBranches.length,
-    visibleCount: BRANCH_VISIBLE_COUNT,
-  });
+  const { highlightedIndex, setHighlightedIndex, scrollOffset, handleNavigation } =
+    useScrollableList({
+      itemCount: filteredBranches.length,
+      visibleCount: BRANCH_VISIBLE_COUNT,
+    });
 
   const prColumnWidth =
     columns -
@@ -109,28 +93,24 @@ export const PrPickerScreen = () => {
     BRANCH_AUTHOR_COLUMN_WIDTH -
     TABLE_COLUMN_GAP;
 
-  const visibleItems = filteredBranches.slice(
-    scrollOffset,
-    scrollOffset + BRANCH_VISIBLE_COUNT
-  );
+  const visibleItems = filteredBranches.slice(scrollOffset, scrollOffset + BRANCH_VISIBLE_COUNT);
 
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearchQuery(stripMouseSequences(value));
       setHighlightedIndex(0);
     },
-    [setHighlightedIndex]
+    [setHighlightedIndex],
   );
 
   const cycleFilter = useCallback(
     (direction: 1 | -1) => {
       const currentIndex = PR_FILTERS.indexOf(activeFilter);
-      const nextIndex =
-        (currentIndex + direction + PR_FILTERS.length) % PR_FILTERS.length;
+      const nextIndex = (currentIndex + direction + PR_FILTERS.length) % PR_FILTERS.length;
       setActiveFilter(PR_FILTERS[nextIndex]);
       setHighlightedIndex(0);
     },
-    [activeFilter, setHighlightedIndex]
+    [activeFilter, setHighlightedIndex],
   );
 
   useInput((input, key) => {
@@ -178,7 +158,7 @@ export const PrPickerScreen = () => {
         setConfirmBranch(null);
       }
     },
-    { isActive: confirmBranch !== null }
+    { isActive: confirmBranch !== null },
   );
 
   return (
@@ -224,12 +204,7 @@ export const PrPickerScreen = () => {
           <Spinner message="Fetching PRs..." />
         </Box>
       ) : (
-        <Box
-          marginTop={1}
-          flexDirection="column"
-          height={BRANCH_VISIBLE_COUNT}
-          overflow="hidden"
-        >
+        <Box marginTop={1} flexDirection="column" height={BRANCH_VISIBLE_COUNT} overflow="hidden">
           {visibleItems.map((branch, index) => {
             const actualIndex = index + scrollOffset;
             const isSelected = actualIndex === highlightedIndex;
@@ -245,22 +220,16 @@ export const PrPickerScreen = () => {
                 <Text color={isSelected ? COLORS.PRIMARY : COLORS.DIM}>
                   {isSelected ? `${figures.pointer} ` : "  "}
                 </Text>
-                <Text
-                  color={isSelected ? COLORS.PRIMARY : COLORS.DIM}
-                  bold={isSelected}
-                >
+                <Text color={isSelected ? COLORS.PRIMARY : COLORS.DIM} bold={isSelected}>
                   {visualPadEnd(
-                    truncateText(branch.name, BRANCH_NAME_COLUMN_WIDTH - 1),
-                    BRANCH_NAME_COLUMN_WIDTH
+                    cliTruncate(branch.name, BRANCH_NAME_COLUMN_WIDTH - 1),
+                    BRANCH_NAME_COLUMN_WIDTH,
                   )}
                 </Text>
                 <Text color={COLORS.CYAN}>
                   {visualPadEnd(
-                    truncateText(
-                      branch.author || "—",
-                      BRANCH_AUTHOR_COLUMN_WIDTH - 1
-                    ),
-                    BRANCH_AUTHOR_COLUMN_WIDTH
+                    cliTruncate(branch.author || "—", BRANCH_AUTHOR_COLUMN_WIDTH - 1),
+                    BRANCH_AUTHOR_COLUMN_WIDTH,
                   )}
                 </Text>
                 {branch.prNumber && branch.prStatus ? (
@@ -269,14 +238,11 @@ export const PrPickerScreen = () => {
                       branch.prStatus === "open"
                         ? COLORS.GREEN
                         : branch.prStatus === "merged"
-                        ? COLORS.PURPLE
-                        : COLORS.DIM
+                          ? COLORS.PURPLE
+                          : COLORS.DIM
                     }
                   >
-                    {truncateText(
-                      `#${branch.prNumber} ${branch.prStatus}`,
-                      prColumnWidth
-                    )}
+                    {cliTruncate(`#${branch.prNumber} ${branch.prStatus}`, prColumnWidth)}
                   </Text>
                 ) : (
                   <Text color={COLORS.DIM}>—</Text>
@@ -284,9 +250,7 @@ export const PrPickerScreen = () => {
               </Clickable>
             );
           })}
-          {filteredBranches.length === 0 && (
-            <Text color={COLORS.DIM}>No matching branches</Text>
-          )}
+          {filteredBranches.length === 0 && <Text color={COLORS.DIM}>No matching branches</Text>}
         </Box>
       )}
 
@@ -305,7 +269,8 @@ export const PrPickerScreen = () => {
           paddingX={1}
         >
           <Text color={COLORS.YELLOW} bold>
-            Switching to {confirmBranch.name} will discard the current plan. A new plan will need to be generated.
+            Switching to {confirmBranch.name} will discard the current plan. A new plan will need to
+            be generated.
           </Text>
           <Text color={COLORS.DIM}>
             Press <Text color={COLORS.PRIMARY}>y</Text> to continue or{" "}
@@ -314,11 +279,7 @@ export const PrPickerScreen = () => {
         </Box>
       ) : null}
 
-      <SearchBar
-        isSearching={isSearching}
-        query={searchQuery}
-        onChange={handleSearchChange}
-      />
+      <SearchBar isSearching={isSearching} query={searchQuery} onChange={handleSearchChange} />
     </Box>
   );
 };

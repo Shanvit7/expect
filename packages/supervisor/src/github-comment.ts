@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { COMMENT_DIRECTORY_PREFIX, GITHUB_TIMEOUT_MS } from "./constants.js";
 import type { BrowserRunPullRequest, BrowserRunReport } from "./types.js";
+import { commandExists } from "./utils/command-exists.js";
 
 interface PullRequestJson {
   number?: unknown;
@@ -21,18 +22,6 @@ export interface PostPullRequestCommentResult {
   bodyPath: string;
   pullRequest: BrowserRunPullRequest;
 }
-
-const commandExists = (command: string): boolean => {
-  try {
-    execFileSync("which", [command], {
-      encoding: "utf-8",
-      stdio: "pipe",
-    });
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 const runGhCommand = (cwd: string, args: string[]): string =>
   execFileSync("gh", args, {

@@ -18,8 +18,9 @@ interface ScopeOption {
 const buildScopeOptions = (
   gitState: GitState,
   checkedOutBranch: string | null,
-  checkedOutPrNumber: number | null
+  checkedOutPrNumber: number | null,
 ): ScopeOption[] => {
+  if (!gitState.isGitRepo) return [];
   const options: ScopeOption[] = [];
 
   if (checkedOutBranch) {
@@ -52,13 +53,9 @@ type FocusArea = "branch" | "input" | "auto-run";
 export const MainMenu = () => {
   const COLORS = useColors();
   const gitState = useAppStore((state) => state.gitState);
-  const autoRunAfterPlanning = useAppStore(
-    (state) => state.autoRunAfterPlanning
-  );
+  const autoRunAfterPlanning = useAppStore((state) => state.autoRunAfterPlanning);
   const toggleAutoRun = useAppStore((state) => state.toggleAutoRun);
-  const submitFlowInstruction = useAppStore(
-    (state) => state.submitFlowInstruction
-  );
+  const submitFlowInstruction = useAppStore((state) => state.submitFlowInstruction);
   const selectAction = useAppStore((state) => state.selectAction);
   const navigateTo = useAppStore((state) => state.navigateTo);
   const checkedOutBranch = useAppStore((state) => state.checkedOutBranch);
@@ -69,8 +66,8 @@ export const MainMenu = () => {
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [scopeIndex, setScopeIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const defaultFocus =
-    gitState?.isOnMain && !checkedOutBranch ? "branch" : "input";
+  const hasScope = gitState?.isGitRepo ?? false;
+  const defaultFocus = hasScope && gitState?.isOnMain && !checkedOutBranch ? "branch" : "input";
   const [focus, setFocus] = useState<FocusArea>(defaultFocus);
 
   useEffect(() => {
@@ -91,7 +88,7 @@ export const MainMenu = () => {
   const testAction =
     currentScope?.action === "select-pr"
       ? "test-unstaged"
-      : currentScope?.action ?? "test-unstaged";
+      : (currentScope?.action ?? "test-unstaged");
   const submit = (submittedValue?: string) => {
     const trimmed = (submittedValue ?? value).trim();
     if (!trimmed) {
@@ -102,11 +99,12 @@ export const MainMenu = () => {
     submitFlowInstruction(trimmed);
   };
 
-  const showSuggestion =
-    focus === "input" && value === "" && FLOW_PRESETS.length > 0;
+  const showSuggestion = focus === "input" && value === "" && FLOW_PRESETS.length > 0;
   const currentSuggestion = FLOW_PRESETS[suggestionIndex % FLOW_PRESETS.length];
 
-  const focusAreas: FocusArea[] = ["branch", "input", "auto-run"];
+  const focusAreas: FocusArea[] = hasScope
+    ? ["branch", "input", "auto-run"]
+    : ["input", "auto-run"];
   const focusNext = () => {
     const currentIndex = focusAreas.indexOf(focus);
     const next = focusAreas[currentIndex + 1];
@@ -120,19 +118,11 @@ export const MainMenu = () => {
 
   useInput(
     (input, key) => {
-      if (
-        (key.tab && !key.shift) ||
-        (key.ctrl && input === "n") ||
-        key.downArrow
-      ) {
+      if ((key.tab && !key.shift) || (key.ctrl && input === "n") || key.downArrow) {
         focusNext();
         return;
       }
-      if (
-        (key.tab && key.shift) ||
-        (key.ctrl && input === "p") ||
-        key.upArrow
-      ) {
+      if ((key.tab && key.shift) || (key.ctrl && input === "p") || key.upArrow) {
         focusPrevious();
         return;
       }
@@ -143,10 +133,7 @@ export const MainMenu = () => {
           return;
         }
         if (key.leftArrow) {
-          setScopeIndex(
-            (previous) =>
-              (previous - 1 + scopeOptions.length) % scopeOptions.length
-          );
+          setScopeIndex((previous) => (previous - 1 + scopeOptions.length) % scopeOptions.length);
           return;
         }
         if (key.return) {
@@ -165,7 +152,7 @@ export const MainMenu = () => {
         }
       }
     },
-    { isActive: focus !== "input" }
+    { isActive: focus !== "input" },
   );
 
   useInput(
@@ -190,13 +177,12 @@ export const MainMenu = () => {
       }
       if (key.leftArrow) {
         setSuggestionIndex(
-          (previous) =>
-            (previous - 1 + FLOW_PRESETS.length) % FLOW_PRESETS.length
+          (previous) => (previous - 1 + FLOW_PRESETS.length) % FLOW_PRESETS.length,
         );
         return;
       }
     },
-    { isActive: focus === "input" }
+    { isActive: focus === "input" },
   );
 
   return (
@@ -208,25 +194,30 @@ export const MainMenu = () => {
         <Text color={COLORS.DIM}>arrow keys or tab to navigate sections</Text>
       </Box>
 
-      <Text color={COLORS.DIM}>Test scope</Text>
-      <Box
-        borderStyle="round"
-        borderColor={focus === "branch" ? COLORS.PRIMARY : COLORS.BORDER}
-        paddingX={2}
-      >
-        <Text
-          color={focus === "branch" ? COLORS.PRIMARY : COLORS.TEXT}
-          bold={focus === "branch"}
-        >
-          {currentScope?.label ?? "Select..."}
-        </Text>
-        {focus === "branch" ? (
-          <Text color={COLORS.DIM}>
-            {" ←→ "}[{(scopeIndex % scopeOptions.length) + 1}/
-            {scopeOptions.length}]
-          </Text>
-        ) : null}
-      </Box>
+      {hasScope ? (
+        <>
+          <Text color={COLORS.DIM}>Test scope</Text>
+          <Box
+            borderStyle="round"
+            borderColor={focus === "branch" ? COLORS.PRIMARY : COLORS.BORDER}
+            paddingX={2}
+          >
+            <Text
+              color={focus === "branch" ? COLORS.PRIMARY : COLORS.TEXT}
+              bold={focus === "branch"}
+            >
+              {currentScope?.label ?? "Select..."}
+            </Text>
+            {focus === "branch" ? (
+              <Text color={COLORS.DIM}>
+                {" ←→ "}[{(scopeIndex % scopeOptions.length) + 1}/{scopeOptions.length}]
+              </Text>
+            ) : null}
+          </Box>
+        </>
+      ) : (
+        <Text color={COLORS.DIM}>Not a git repository — enter a URL and describe what to test</Text>
+      )}
 
       <Box marginTop={1} flexDirection="column">
         <Text color={COLORS.DIM}>Describe what to test</Text>
@@ -240,9 +231,7 @@ export const MainMenu = () => {
             key={inputKey}
             focus={focus === "input"}
             multiline
-            placeholder={`${
-              currentSuggestion ?? "Describe what to test..."
-            }  [tab]`}
+            placeholder={`${currentSuggestion ?? "Describe what to test..."}  [tab]`}
             value={value}
             onSubmit={submit}
             onUpArrowAtTop={() => setFocus("branch")}
@@ -257,8 +246,8 @@ export const MainMenu = () => {
 
       {showSuggestion ? (
         <Text color={COLORS.DIM}>
-          {"  ←→ cycle suggestions "}[
-          {(suggestionIndex % FLOW_PRESETS.length) + 1}/{FLOW_PRESETS.length}]
+          {"  ←→ cycle suggestions "}[{(suggestionIndex % FLOW_PRESETS.length) + 1}/
+          {FLOW_PRESETS.length}]
         </Text>
       ) : null}
 

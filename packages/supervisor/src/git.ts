@@ -22,6 +22,9 @@ const execGit = (cwd: string, command: string): string => {
   }
 };
 
+export const isInsideGitRepo = (cwd: string): boolean =>
+  execGit(cwd, "git rev-parse --is-inside-work-tree") === "true";
+
 export const getCurrentBranchName = (cwd: string): string =>
   execGit(cwd, "git rev-parse --abbrev-ref HEAD") || "unknown";
 

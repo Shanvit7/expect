@@ -54,9 +54,6 @@ const formatRunEvent = (event: BrowserRunEvent): string | null => {
   }
 };
 
-const formatErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : String(error);
-
 const resolvePlan = async (
   config: TestRunConfig,
   selectedCommit?: CommitSummary,
@@ -104,7 +101,11 @@ export const runTest = async (config: TestRunConfig): Promise<void> => {
   }
 
   console.error(`testie v${VERSION}`);
-  console.error(`Testing ${ACTION_LABELS[action]} on ${gitState.currentBranch}\n`);
+  if (gitState.isGitRepo) {
+    console.error(`Testing ${ACTION_LABELS[action]} on ${gitState.currentBranch}\n`);
+  } else {
+    console.error(`Testing ${ACTION_LABELS[action]} (no git repository detected)\n`);
+  }
 
   try {
     const { target, plan, environment } = await resolvePlan(config, resolvedCommit);
@@ -132,13 +133,17 @@ export const runTest = async (config: TestRunConfig): Promise<void> => {
       );
     }
   } catch (error) {
-    console.error(`Error: ${formatErrorMessage(error)}`);
+    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 };
 
 export const autoDetectAndTest = async (config?: Partial<TestRunConfig>): Promise<void> => {
   const gitState = getGitState();
+  if (!gitState.isGitRepo) {
+    await runTest({ action: "test-unstaged", ...config });
+    return;
+  }
   const scope = getRecommendedScope(gitState);
   const action: TestAction = scope === "unstaged-changes" ? "test-unstaged" : "test-branch";
   await runTest({ action, ...config });

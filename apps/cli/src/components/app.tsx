@@ -14,10 +14,7 @@ import { ThemePickerScreen } from "./screens/theme-picker-screen.js";
 import { MainMenu } from "./screens/main-menu-screen.js";
 import { Modeline } from "./ui/modeline.js";
 import { InkGrab } from "../../ink-grab/index.js";
-import {
-  resolveBrowserTarget,
-  getBrowserEnvironment,
-} from "../utils/browser-agent.js";
+import { resolveBrowserTarget, getBrowserEnvironment } from "../utils/browser-agent.js";
 import { planBrowserFlow } from "@browser-tester/supervisor";
 import { useAppStore } from "../store.js";
 import { saveFlow } from "../utils/save-flow.js";
@@ -28,20 +25,12 @@ const usePlanningEffect = () => {
   const testAction = useAppStore((state) => state.testAction);
   const flowInstruction = useAppStore((state) => state.flowInstruction);
   const selectedCommit = useAppStore((state) => state.selectedCommit);
-  const environmentOverrides = useAppStore(
-    (state) => state.environmentOverrides
-  );
+  const environmentOverrides = useAppStore((state) => state.environmentOverrides);
   const completePlanning = useAppStore((state) => state.completePlanning);
   const failPlanning = useAppStore((state) => state.failPlanning);
 
   useEffect(() => {
-    if (
-      screen !== "planning" ||
-      !gitState ||
-      !testAction ||
-      !flowInstruction.trim()
-    )
-      return;
+    if (screen !== "planning" || !gitState || !testAction || !flowInstruction.trim()) return;
 
     let isCancelled = false;
 
@@ -66,9 +55,7 @@ const usePlanningEffect = () => {
 
     void run().catch((caughtError) => {
       if (!isCancelled) {
-        failPlanning(
-          caughtError instanceof Error ? caughtError.message : "Unknown error"
-        );
+        failPlanning(caughtError instanceof Error ? caughtError.message : "Unknown error");
       }
     });
 
@@ -171,7 +158,7 @@ export const App = () => {
     if (key.escape && screen !== "main" && screen !== "review-plan") {
       goBack();
     }
-    if (key.ctrl && input === "p" && screen === "main") {
+    if (key.ctrl && input === "p" && screen === "main" && gitState?.isGitRepo) {
       navigateTo("select-pr");
     }
     if (key.ctrl && input === "t") {

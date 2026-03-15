@@ -1,8 +1,6 @@
 export const VERSION = "0.0.1";
 
-export const GH_TIMEOUT_MS = 15000;
 export const COMMIT_LIMIT = 50;
-export const PR_LIMIT = 100;
 export const VISIBLE_COMMIT_COUNT = 15;
 export const TESTING_VISIBLE_LOG_COUNT = 18;
 export const TESTING_TOOL_TEXT_CHAR_LIMIT = 100;

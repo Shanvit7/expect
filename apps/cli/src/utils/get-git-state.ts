@@ -5,9 +5,11 @@ import {
   getCurrentBranchName,
   getMainBranchName,
   getUnstagedDiffStats,
+  isInsideGitRepo,
 } from "@browser-tester/supervisor";
 
 export interface GitState {
+  isGitRepo: boolean;
   currentBranch: string;
   isOnMain: boolean;
   hasUnstagedChanges: boolean;
@@ -21,6 +23,20 @@ export type TestScope = "unstaged-changes" | "entire-branch" | "default";
 
 export const getGitState = (): GitState => {
   const cwd = process.cwd();
+
+  if (!isInsideGitRepo(cwd)) {
+    return {
+      isGitRepo: false,
+      currentBranch: "unknown",
+      isOnMain: false,
+      hasUnstagedChanges: false,
+      hasBranchCommits: false,
+      branchCommitCount: 0,
+      diffStats: null,
+      branchDiffStats: null,
+    };
+  }
+
   const currentBranch = getCurrentBranchName(cwd);
   const mainBranch = getMainBranchName(cwd);
   const isOnMain = mainBranch === currentBranch;
@@ -35,6 +51,7 @@ export const getGitState = (): GitState => {
   }
 
   return {
+    isGitRepo: true,
     currentBranch,
     isOnMain,
     hasUnstagedChanges,

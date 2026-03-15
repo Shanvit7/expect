@@ -11,6 +11,7 @@ export const SHARE_REPORT_FILE_NAME = "index.html";
 export const SHARE_ASSET_DIRECTORY_NAME = "assets";
 export const GIT_TIMEOUT_MS = 5000;
 export const GITHUB_TIMEOUT_MS = 15000;
+export const PR_LIMIT = 100;
 export const RECENT_COMMIT_LIMIT = 10;
 export const CHANGED_FILE_LIMIT = 40;
 export const DIFF_PREVIEW_CHAR_LIMIT = 12000;

@@ -13,6 +13,7 @@ import {
 import { createAgentModel } from "./create-agent-model.js";
 import { extractJsonObject } from "./json.js";
 import type { BrowserFlowPlan, PlanBrowserFlowOptions, PlanStep, TestTarget } from "./types.js";
+import { formatDiffStats } from "./utils/format-diff-stats.js";
 import { buildPlanningDiffPreview } from "./utils/build-planning-diff-preview.js";
 import { prioritizePlanningFiles } from "./utils/prioritize-planning-files.js";
 
@@ -68,11 +69,6 @@ const createPlannerModel = (
   });
 };
 
-const formatDiffStats = (target: TestTarget): string =>
-  target.diffStats
-    ? `${target.diffStats.filesChanged} files changed, +${target.diffStats.additions} / -${target.diffStats.deletions}`
-    : "No diff stats available";
-
 const formatChangedFiles = (changedFiles: TestTarget["changedFiles"]): string =>
   changedFiles.length > 0
     ? changedFiles.map((file) => `- [${file.status}] ${file.path}`).join("\n")
@@ -100,7 +96,7 @@ const buildPlanningPrompt = (options: PlanBrowserFlowOptions): string => {
     `- Display name: ${target.displayName}`,
     `- Current branch: ${target.branch.current}`,
     `- Main branch: ${target.branch.main ?? "unknown"}`,
-    `- Diff stats: ${formatDiffStats(target)}`,
+    `- Diff stats: ${formatDiffStats(target.diffStats)}`,
     "",
     "Changed files:",
     formatChangedFiles(displayedFiles),

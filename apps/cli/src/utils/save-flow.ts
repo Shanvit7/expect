@@ -14,7 +14,7 @@ import {
 import { slugify } from "./slugify.js";
 import { formatSavedFlowFrontmatter } from "./saved-flow-file.js";
 import { syncSavedFlowDirectory } from "./sync-saved-flow-directory.js";
-import { truncateText } from "./truncate-text.js";
+import cliTruncate from "cli-truncate";
 
 interface SaveFlowOptions {
   target: TestTarget;
@@ -31,7 +31,7 @@ export interface SaveFlowResult {
 const normalizeWhitespace = (value: string): string => value.trim().replace(/\s+/g, " ");
 
 const createFlowDescription = (plan: BrowserFlowPlan): string =>
-  truncateText(
+  cliTruncate(
     normalizeWhitespace(plan.targetSummary || plan.rationale || plan.userInstruction),
     FLOW_DESCRIPTION_CHAR_LIMIT,
   );

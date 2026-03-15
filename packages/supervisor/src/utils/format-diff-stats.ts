@@ -1,4 +1,4 @@
-import type { DiffStats } from "@browser-tester/supervisor";
+import type { DiffStats } from "../types.js";
 
 export const formatDiffStats = (diffStats: DiffStats | null | undefined): string => {
   if (!diffStats) return "No code changes detected.";
