@@ -171,6 +171,7 @@ export const Modeline = () => {
           text={"─".repeat(columns)}
           baseColor={theme.border}
           highlightColor={theme.primary}
+          speed={3}
         />
       ) : (
         <Text color={theme.border}>{"─".repeat(columns)}</Text>
