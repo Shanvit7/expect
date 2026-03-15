@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Text } from "ink";
-import { Spinner } from "../ui/spinner.js";
+import InkSpinner from "ink-spinner";
 import { ScreenHeading } from "../ui/screen-heading.js";
 import { useColors } from "../theme-context.js";
 import { useAppStore } from "../../store.js";
@@ -70,7 +70,15 @@ export const PlanningScreen = () => {
         {PLANNING_PHASES.map((phase, index) => {
           if (index > phaseIndex) return null;
           if (index === phaseIndex) {
-            return <Spinner key={phase} message={phase} />;
+            return (
+              <Text key={phase} color={COLORS.DIM}>
+                <Text color={COLORS.SELECTION}>
+                  {"  "}
+                  <InkSpinner type="dots" />{" "}
+                </Text>
+                {phase}
+              </Text>
+            );
           }
           return (
             <Text key={phase} color={COLORS.DIM}>
