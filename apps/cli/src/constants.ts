@@ -48,7 +48,5 @@ export const FLOW_PRESETS: readonly string[] = [
   "Check for regressions in related features",
   "Test the main user flow end to end",
   "Smoke test the homepage and key pages",
-  "Verify form submissions and validation",
   "Check authentication and protected routes",
-  "Test responsive layout on mobile viewport",
 ];
