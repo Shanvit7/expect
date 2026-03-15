@@ -97,7 +97,12 @@ export const App = () => {
     if (key.escape && screen !== "main") {
       goBack();
     }
-    if (input === "t" && screen !== "theme" && screen !== "flow-input") {
+    if (
+      input === "t" &&
+      screen !== "theme" &&
+      screen !== "flow-input" &&
+      screen !== "select-pr"
+    ) {
       navigateTo("theme");
     }
   });

@@ -40,10 +40,14 @@ export const PrPickerScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchRemoteBranches().then((branches) => {
-      setRemoteBranches(branches);
-      setIsLoading(false);
-    });
+    fetchRemoteBranches()
+      .then((branches) => {
+        setRemoteBranches(branches);
+      })
+      .catch(() => {})
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const filteredBranches = (() => {
