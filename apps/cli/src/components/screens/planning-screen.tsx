@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Text } from "ink";
 import InkSpinner from "ink-spinner";
 import { ScreenHeading } from "../ui/screen-heading.js";
@@ -31,6 +31,7 @@ export const PlanningScreen = () => {
   const testAction = useAppStore((state) => state.testAction);
   const [startTime] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0);
+  const phaseTimestamps = useRef<number[]>([startTime]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -44,13 +45,31 @@ export const PlanningScreen = () => {
     PLANNING_PHASES.length - 1
   );
 
+  if (phaseTimestamps.current.length <= phaseIndex) {
+    const now = Date.now();
+    while (phaseTimestamps.current.length <= phaseIndex) {
+      phaseTimestamps.current.push(now);
+    }
+  }
+
+  const getPhaseTime = (index: number): string => {
+    const phaseStart = phaseTimestamps.current[index] ?? startTime;
+    if (index < phaseIndex) {
+      const phaseEnd = phaseTimestamps.current[index + 1] ?? Date.now();
+      return formatElapsedTime(phaseEnd - phaseStart);
+    }
+    if (index === phaseIndex) {
+      return formatElapsedTime(Date.now() - phaseStart);
+    }
+    return "";
+  };
+
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <ScreenHeading
         title={
           testAction ? ACTION_LABELS[testAction] : "Generating browser plan"
         }
-        subtitle={formatElapsedTime(elapsed)}
       />
 
       <Box
@@ -69,6 +88,7 @@ export const PlanningScreen = () => {
               <Text color={COLORS.DIM}>
                 <Text color={COLORS.GREEN}>{"  ✓ "}</Text>
                 {phase}
+                <Text color={COLORS.DIM}> {getPhaseTime(index)}</Text>
               </Text>
             ) : index === phaseIndex ? (
               <Text color={COLORS.DIM}>
@@ -77,6 +97,7 @@ export const PlanningScreen = () => {
                   <InkSpinner type="dots" />{" "}
                 </Text>
                 {phase}
+                <Text color={COLORS.DIM}> {getPhaseTime(index)}</Text>
               </Text>
             ) : (
               <Text color={COLORS.DIM}>
