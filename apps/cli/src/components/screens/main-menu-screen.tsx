@@ -53,10 +53,6 @@ export const MainMenu = () => {
 
   const testAction = getTestAction(gitState);
   const branchLabel = checkedOutBranch ?? gitState.currentBranch;
-  const hasChanges =
-    gitState.hasUnstagedChanges ||
-    (!gitState.isOnMain && gitState.hasBranchCommits);
-
   const submit = (submittedValue?: string) => {
     const trimmed = (submittedValue ?? value).trim();
     if (!trimmed) {
@@ -158,9 +154,7 @@ export const MainMenu = () => {
         <Text bold color={COLORS.TEXT}>
           browser-tester
         </Text>
-        {hasChanges ? (
-          <Text color={COLORS.PRIMARY}>changes detected</Text>
-        ) : null}
+        <Text color={COLORS.DIM}>↑↓ tab to navigate sections</Text>
       </Box>
 
       <Text color={COLORS.DIM}>Branch / PR</Text>
@@ -180,9 +174,7 @@ export const MainMenu = () => {
         </Box>
       </Clickable>
 
-      <Text color={COLORS.DIM}>{"  ↑↓ tab  navigate sections"}</Text>
-
-      <Box marginTop={0} flexDirection="column">
+      <Box marginTop={1} flexDirection="column">
         <Text color={COLORS.DIM}>Describe what to test</Text>
         <Box
           borderStyle="round"
