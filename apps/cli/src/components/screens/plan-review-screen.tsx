@@ -40,6 +40,7 @@ type EditingState = StepEditingState | AssumptionsEditingState | null;
 interface PlanStepRowProps {
   step: BrowserFlowPlan["steps"][number];
   stepNumber: number;
+  totalSteps: number;
   selected: boolean;
   onClick: () => void;
 }
@@ -47,36 +48,63 @@ interface PlanStepRowProps {
 const PlanStepRow = ({
   step,
   stepNumber,
+  totalSteps,
   selected,
   onClick,
 }: PlanStepRowProps) => {
   const COLORS = useColors();
-  const stepLabel = String(stepNumber).padStart(2, "0");
+  const isLast = stepNumber === totalSteps;
+  const connector = isLast ? "╰" : "│";
+  const bullet = selected ? "●" : "○";
 
   return (
     <Clickable onClick={onClick}>
-      <Box flexDirection="column" marginBottom={1}>
-        <Text>
-          <Text color={selected ? COLORS.PRIMARY : COLORS.DIM}>
-            {selected ? "  ▸ " : "    "}
-          </Text>
-          <Text color={COLORS.DIM}>[{stepLabel}] </Text>
-          <Text color={selected ? COLORS.PRIMARY : COLORS.TEXT} bold={selected}>
-            {step.title}
-          </Text>
+      <Text>
+        <Text color={selected ? COLORS.PRIMARY : COLORS.DIM}>
+          {"  "}
+          {bullet}{" "}
         </Text>
-        <Box flexDirection="column" marginLeft={SECTION_INDENT}>
-          <Text color={COLORS.DIM}>
-            {"      "}
-            {step.instruction}
-          </Text>
-          <Text color={COLORS.DIM}>
-            {"      expected "}
-            <Text color={COLORS.GREEN}>{step.expectedOutcome}</Text>
-          </Text>
-        </Box>
-      </Box>
+        <Text color={selected ? COLORS.PRIMARY : COLORS.TEXT} bold={selected}>
+          {step.title}
+        </Text>
+      </Text>
+      {!isLast ? (
+        <Text color={COLORS.DIM}>
+          {"  "}
+          {connector}
+        </Text>
+      ) : null}
     </Clickable>
+  );
+};
+
+interface StepPreviewProps {
+  step: BrowserFlowPlan["steps"][number];
+  stepNumber: number;
+  totalSteps: number;
+}
+
+const StepPreview = ({ step, stepNumber, totalSteps }: StepPreviewProps) => {
+  const COLORS = useColors();
+
+  return (
+    <Box
+      flexDirection="column"
+      borderStyle="round"
+      borderColor={COLORS.PRIMARY}
+      paddingX={2}
+    >
+      <Text color={COLORS.PRIMARY} bold>
+        Step {stepNumber}/{totalSteps} — {step.title}
+      </Text>
+      <Text color={COLORS.TEXT}>{step.instruction}</Text>
+      <Box marginTop={1}>
+        <Text color={COLORS.DIM}>
+          {"expected "}
+          <Text color={COLORS.GREEN}>{step.expectedOutcome}</Text>
+        </Text>
+      </Box>
+    </Box>
   );
 };
 
@@ -429,24 +457,36 @@ export const PlanReviewScreen = () => {
           open={!collapsed["steps"]}
           onToggle={() => toggleSection("steps")}
         >
-          {plan.steps.map((step, index) => {
-            const selected =
-              currentItem?.kind === "step" && currentItem.stepIndex === index;
-            return (
-              <PlanStepRow
-                key={step.id}
-                step={step}
-                stepNumber={index + 1}
-                selected={selected}
-                onClick={() => {
-                  const itemIndex = items.findIndex(
-                    (item) => item.kind === "step" && item.stepIndex === index
-                  );
-                  if (itemIndex >= 0) setSelectedIndex(itemIndex);
-                }}
+          <Box flexDirection="column">
+            {plan.steps.map((step, index) => {
+              const selected =
+                currentItem?.kind === "step" && currentItem.stepIndex === index;
+              return (
+                <PlanStepRow
+                  key={step.id}
+                  step={step}
+                  stepNumber={index + 1}
+                  totalSteps={plan.steps.length}
+                  selected={selected}
+                  onClick={() => {
+                    const itemIndex = items.findIndex(
+                      (item) => item.kind === "step" && item.stepIndex === index
+                    );
+                    if (itemIndex >= 0) setSelectedIndex(itemIndex);
+                  }}
+                />
+              );
+            })}
+          </Box>
+          {currentItem?.kind === "step" && plan.steps[currentItem.stepIndex] ? (
+            <Box marginTop={1}>
+              <StepPreview
+                step={plan.steps[currentItem.stepIndex]}
+                stepNumber={currentItem.stepIndex + 1}
+                totalSteps={plan.steps.length}
               />
-            );
-          })}
+            </Box>
+          ) : null}
         </Collapsible>
       </Box>
 
