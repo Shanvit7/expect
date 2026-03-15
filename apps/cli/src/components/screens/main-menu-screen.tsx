@@ -29,7 +29,7 @@ const buildMenuOptions = (gitState: GitState): ScopeMenuOption[] => {
   }
 
   options.push({
-    label: "Select a PR to test",
+    label: "Select a PR or branch to test",
     detail: "",
     action: "select-pr",
   });

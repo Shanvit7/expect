@@ -138,7 +138,7 @@ export const PrPickerScreen = () => {
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <ScreenHeading
-        title="Select a PR to test"
+        title="Select a PR or branch to test"
         subtitle={`${filteredBranches.length} branches`}
       />
 
