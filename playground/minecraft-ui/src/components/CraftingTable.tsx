@@ -13,6 +13,7 @@ const GUI_W = 176 * S;
 const GUI_H = 166 * S;
 
 // ─── Texture paths ───
+// Items that use isometric 3D rendering from face textures
 const BLOCK_TEXTURE_PATHS: Record<
   string,
   { top: string; side: string; front: string }
@@ -27,6 +28,93 @@ const BLOCK_TEXTURE_PATHS: Record<
     side: "/textures/oak_planks_flat.png",
     front: "/textures/oak_planks_flat.png",
   },
+  crafting_table: {
+    top: "/textures/crafting_table_top.png",
+    side: "/textures/crafting_table_side.png",
+    front: "/textures/crafting_table_front.png",
+  },
+};
+
+// Items that use flat 2D textures (tools, items)
+const FLAT_ITEM_PATHS: Record<string, string> = {
+  stick: "/textures/stick.png",
+  wooden_pickaxe: "/textures/wooden_pickaxe.png",
+  wooden_sword: "/textures/wooden_sword.png",
+  wooden_axe: "/textures/wooden_axe.png",
+  wooden_shovel: "/textures/wooden_shovel.png",
+  wooden_hoe: "/textures/wooden_hoe.png",
+  wooden_slab: "/textures/wooden_slab.png",
+  chest: "/textures/chest.png",
+  fence: "/textures/fence.png",
+  bowl: "/textures/bowl.png",
+};
+
+// ─── Crafting Recipes ───
+interface Recipe {
+  pattern: (string | null)[];
+  result: { id: string; count: number };
+}
+
+const _ = null;
+
+const RECIPES: Recipe[] = [
+  // Shapeless: oak log → 4 planks (any slot)
+  { pattern: ["oak_log", _, _, _, _, _, _, _, _], result: { id: "oak_planks", count: 4 } },
+
+  // 2 planks vertical → 4 sticks
+  { pattern: [_, _, _, "oak_planks", _, _, "oak_planks", _, _], result: { id: "stick", count: 4 } },
+  { pattern: ["oak_planks", _, _, "oak_planks", _, _, _, _, _], result: { id: "stick", count: 4 } },
+
+  // 2x2 planks → crafting table
+  { pattern: [_, _, _, "oak_planks", "oak_planks", _, "oak_planks", "oak_planks", _], result: { id: "crafting_table", count: 1 } },
+  { pattern: ["oak_planks", "oak_planks", _, "oak_planks", "oak_planks", _, _, _, _], result: { id: "crafting_table", count: 1 } },
+
+  // Wooden pickaxe
+  { pattern: ["oak_planks", "oak_planks", "oak_planks", _, "stick", _, _, "stick", _], result: { id: "wooden_pickaxe", count: 1 } },
+
+  // Wooden sword
+  { pattern: [_, "oak_planks", _, _, "oak_planks", _, _, "stick", _], result: { id: "wooden_sword", count: 1 } },
+
+  // Wooden axe
+  { pattern: ["oak_planks", "oak_planks", _, "oak_planks", "stick", _, _, "stick", _], result: { id: "wooden_axe", count: 1 } },
+  { pattern: [_, "oak_planks", "oak_planks", _, "stick", "oak_planks", _, "stick", _], result: { id: "wooden_axe", count: 1 } },
+
+  // Wooden shovel
+  { pattern: [_, "oak_planks", _, _, "stick", _, _, "stick", _], result: { id: "wooden_shovel", count: 1 } },
+
+  // Wooden hoe
+  { pattern: ["oak_planks", "oak_planks", _, _, "stick", _, _, "stick", _], result: { id: "wooden_hoe", count: 1 } },
+  { pattern: [_, "oak_planks", "oak_planks", _, "stick", _, _, "stick", _], result: { id: "wooden_hoe", count: 1 } },
+
+  // 3 planks bottom → 3 wooden slabs
+  { pattern: [_, _, _, _, _, _, "oak_planks", "oak_planks", "oak_planks"], result: { id: "wooden_slab", count: 3 } },
+
+  // Bowl (3 planks in V shape)
+  { pattern: [_, _, _, "oak_planks", _, "oak_planks", _, "oak_planks", _], result: { id: "bowl", count: 4 } },
+
+  // Chest (8 planks ring)
+  { pattern: ["oak_planks", "oak_planks", "oak_planks", "oak_planks", _, "oak_planks", "oak_planks", "oak_planks", "oak_planks"], result: { id: "chest", count: 1 } },
+
+  // Fence (planks-stick-planks x2)
+  { pattern: [_, _, _, "oak_planks", "stick", "oak_planks", "oak_planks", "stick", "oak_planks"], result: { id: "fence", count: 2 } },
+];
+
+const matchRecipe = (grid: ItemStack[]): { id: string; count: number } | null => {
+  // Shapeless: single oak_log anywhere
+  const filled = grid.filter((item) => item !== null);
+  if (filled.length === 1 && filled[0]!.id === "oak_log") {
+    return { id: "oak_planks", count: 4 };
+  }
+
+  // Shaped recipes
+  const gridIds = grid.map((item) => item?.id ?? null);
+  for (const recipe of RECIPES) {
+    const match = recipe.pattern.every(
+      (expected, index) => expected === gridIds[index]
+    );
+    if (match) return recipe.result;
+  }
+  return null;
 };
 
 type BlockTextures = {
@@ -243,6 +331,9 @@ export default function CraftingTable() {
         ]);
         icons[blockId] = renderIsometricBlock({ top, side, front });
       }
+      for (const [itemId, path] of Object.entries(FLAT_ITEM_PATHS)) {
+        icons[itemId] = path;
+      }
       setItemIcons(icons);
       setReady(true);
     };
@@ -252,7 +343,9 @@ export default function CraftingTable() {
   // Inventory: 36 slots (0-26 = main, 27-35 = hotbar)
   const [inventory, setInventory] = useState<ItemStack[]>(() => {
     const inv: ItemStack[] = new Array(36).fill(null);
-    inv[0] = { id: "oak_log", count: 1 };
+    inv[0] = { id: "oak_log", count: 64 };
+    inv[1] = { id: "oak_planks", count: 64 };
+    inv[2] = { id: "stick", count: 64 };
     return inv;
   });
 
@@ -274,12 +367,8 @@ export default function CraftingTable() {
 
   // Check crafting recipes whenever grid changes
   useEffect(() => {
-    const filled = craftingGrid.filter((item) => item !== null);
-    if (filled.length === 1 && filled[0]!.id === "oak_log") {
-      setCraftingOutput({ id: "oak_planks", count: 4 });
-    } else {
-      setCraftingOutput(null);
-    }
+    const result = matchRecipe(craftingGrid);
+    setCraftingOutput(result);
   }, [craftingGrid]);
 
   // ─── Click Handlers ──────────────────────────────────
