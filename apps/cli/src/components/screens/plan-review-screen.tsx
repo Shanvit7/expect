@@ -78,7 +78,9 @@ const StepPreview = ({ step, stepNumber, totalSteps }: StepPreviewProps) => {
       </Text>
       <Text color={COLORS.TEXT}>{step.instruction}</Text>
       <Box marginTop={1} flexDirection="column">
-        <Text color={COLORS.DIM} bold>Expected</Text>
+        <Text color={COLORS.DIM} bold>
+          Expected
+        </Text>
         <Text color={COLORS.GREEN}>{step.expectedOutcome}</Text>
       </Box>
     </Box>
@@ -465,14 +467,10 @@ export const PlanReviewScreen = () => {
           open={!collapsed["details"]}
           onToggle={() => toggleSection("details")}
         >
-          <Text color={COLORS.DIM}>
-            {"rationale  "}
-            {plan.rationale}
-          </Text>
-          <Text color={COLORS.DIM}>
-            {"target     "}
-            {plan.targetSummary}
-          </Text>
+          <Text color={COLORS.DIM}>{plan.rationale}</Text>
+          <Box marginTop={1}>
+            <Text color={COLORS.DIM}>{plan.targetSummary}</Text>
+          </Box>
         </Collapsible>
       </Box>
 
@@ -533,7 +531,8 @@ export const PlanReviewScreen = () => {
           >
             {plan.assumptions.map((assumption, index) => (
               <Text key={`${assumption}-${index}`} color={COLORS.DIM}>
-                <Text color={COLORS.TEXT}>{assumption}</Text>
+                {"· "}
+                {assumption}
               </Text>
             ))}
             {isSectionSelected("assumptions") && !editingAssumptions ? (
