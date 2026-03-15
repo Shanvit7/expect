@@ -5,6 +5,7 @@ import { useColors, useThemeContext } from "../theme-context.js";
 import { HintBar, HINT_SEPARATOR, type HintSegment } from "./hint-bar.js";
 import { useAppStore, type Screen } from "../../store.js";
 import { Clickable } from "./clickable.js";
+import { TextShimmer } from "./text-shimmer.js";
 
 const useHintSegments = (screen: Screen): HintSegment[] => {
   const COLORS = useColors();
@@ -165,7 +166,15 @@ export const Modeline = () => {
 
   return (
     <Box flexDirection="column">
-      <Text color={theme.border}>{"─".repeat(columns)}</Text>
+      {screen === "planning" ? (
+        <TextShimmer
+          text={"─".repeat(columns)}
+          baseColor={theme.border}
+          highlightColor={theme.primary}
+        />
+      ) : (
+        <Text color={theme.border}>{"─".repeat(columns)}</Text>
+      )}
       <Box paddingX={1}>
         {actions.map((action, index) => {
           const pill = (
