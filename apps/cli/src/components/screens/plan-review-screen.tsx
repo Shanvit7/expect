@@ -369,7 +369,7 @@ export const PlanReviewScreen = () => {
 
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      <Text color={COLORS.DIM} dimColor={inputFocused}>
+      <Text color={COLORS.DIM}>
         {"Branch / PR"}
       </Text>
       <Clickable onClick={() => navigateTo("select-pr")}>
