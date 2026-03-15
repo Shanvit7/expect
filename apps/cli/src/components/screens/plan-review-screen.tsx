@@ -116,9 +116,11 @@ export const PlanReviewScreen = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [exitConfirmationVisible, setExitConfirmationVisible] = useState(false);
-  const [inputFocused, setInputFocused] = useState(false);
+  const [topFocus, setTopFocus] = useState<"branch" | "input" | null>(null);
   const [inputValue, setInputValue] = useState(flowInstruction);
   const [resubmitConfirmVisible, setResubmitConfirmVisible] = useState(false);
+  const inputFocused = topFocus === "input";
+  const branchFocused = topFocus === "branch";
 
   if (!plan || !resolvedTarget) return null;
 
@@ -233,7 +235,7 @@ export const PlanReviewScreen = () => {
     }
     if (key.upArrow || input === "k" || (key.ctrl && input === "p")) {
       if (selectedIndex === 0) {
-        setInputFocused(true);
+        setTopFocus("input");
       } else {
         setSelectedIndex((previous) => Math.max(0, previous - 1));
       }
@@ -299,18 +301,31 @@ export const PlanReviewScreen = () => {
 
   useInput(
     (_input, key) => {
-      if (key.escape) {
-        setInputFocused(false);
-        setInputValue(flowInstruction);
+      if (inputFocused) {
+        if (key.escape) {
+          setTopFocus(null);
+          setInputValue(flowInstruction);
+        }
+      }
+      if (branchFocused) {
+        if (key.escape) {
+          setTopFocus(null);
+        }
+        if (key.downArrow) {
+          setTopFocus("input");
+        }
+        if (key.return) {
+          navigateTo("select-pr");
+        }
       }
     },
-    { isActive: inputFocused && !resubmitConfirmVisible }
+    { isActive: topFocus !== null && !resubmitConfirmVisible }
   );
 
   const handleInputSubmit = () => {
     const trimmed = inputValue.trim();
     if (!trimmed || trimmed === flowInstruction) {
-      setInputFocused(false);
+      setTopFocus(null);
       setInputValue(flowInstruction);
       return;
     }
@@ -328,15 +343,24 @@ export const PlanReviewScreen = () => {
         {"Branch / PR"}
       </Text>
       <Clickable onClick={() => navigateTo("select-pr")}>
-        <Box borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
-          <Text color={COLORS.TEXT}>{branchLabel}</Text>
+        <Box
+          borderStyle="round"
+          borderColor={branchFocused ? COLORS.PRIMARY : COLORS.BORDER}
+          paddingX={2}
+        >
+          <Text
+            color={branchFocused ? COLORS.PRIMARY : COLORS.TEXT}
+            bold={branchFocused}
+          >
+            {branchLabel}
+          </Text>
           <Text color={COLORS.DIM}>{" · press enter to change"}</Text>
         </Box>
       </Clickable>
 
       <Box marginTop={1} flexDirection="column">
         <Text color={COLORS.DIM}>Describe what to test</Text>
-        <Clickable onClick={() => setInputFocused(true)}>
+        <Clickable onClick={() => setTopFocus("input")}>
           <Box
             borderStyle="round"
             borderColor={inputFocused ? COLORS.PRIMARY : COLORS.BORDER}
@@ -350,7 +374,8 @@ export const PlanReviewScreen = () => {
                   multiline
                   value={inputValue}
                   onSubmit={handleInputSubmit}
-                  onDownArrowAtBottom={() => setInputFocused(false)}
+                  onUpArrowAtTop={() => setTopFocus("branch")}
+                  onDownArrowAtBottom={() => setTopFocus(null)}
                   onChange={(nextValue) =>
                     setInputValue(stripMouseSequences(nextValue))
                   }
