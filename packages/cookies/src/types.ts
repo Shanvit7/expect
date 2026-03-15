@@ -60,6 +60,7 @@ export interface BrowserProfile {
   profilePath: string;
   displayName: string;
   browser: BrowserInfo;
+  locale?: string;
 }
 
 export interface LocalStateProfile {

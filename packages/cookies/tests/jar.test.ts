@@ -84,8 +84,8 @@ describe("toPlaywrightCookies", () => {
     expect(pw.sameSite).toBe("Lax");
   });
 
-  it("defaults sameSite to Lax", () => {
-    expect(toPlaywrightCookies([cookie({ sameSite: undefined })])[0].sameSite).toBe("Lax");
+  it("preserves undefined sameSite", () => {
+    expect(toPlaywrightCookies([cookie({ sameSite: undefined })])[0].sameSite).toBeUndefined();
   });
 
   it("uses -1 for session cookies", () => {

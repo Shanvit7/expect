@@ -1,11 +1,11 @@
 import {
   detectBrowserProfiles,
   detectDefaultBrowser,
-  extractAllProfileCookies,
   extractCookies,
+  extractProfileCookies,
 } from "@browser-tester/cookies";
 import { tmpdir } from "node:os";
-import type { Browser as BrowserKey, Cookie } from "@browser-tester/cookies";
+import type { Browser as BrowserKey, BrowserProfile, Cookie } from "@browser-tester/cookies";
 import { chromium } from "playwright";
 import {
   DEFAULT_VIDEO_HEIGHT_PX,
@@ -15,17 +15,35 @@ import {
 import { injectCookies } from "./inject-cookies";
 import type { CreatePageOptions, CreatePageResult, VideoOptions } from "./types";
 
+interface DefaultBrowserContext {
+  defaultBrowser: BrowserKey | null;
+  preferredProfile: BrowserProfile | null;
+}
+
+const EMPTY_DEFAULT_BROWSER_CONTEXT: DefaultBrowserContext = {
+  defaultBrowser: null,
+  preferredProfile: null,
+};
+
+const resolveDefaultBrowserContext = async (): Promise<DefaultBrowserContext> => {
+  const defaultBrowser = await detectDefaultBrowser();
+  if (!defaultBrowser) {
+    return EMPTY_DEFAULT_BROWSER_CONTEXT;
+  }
+
+  const preferredProfile = detectBrowserProfiles({ browser: defaultBrowser })[0] ?? null;
+  return { defaultBrowser, preferredProfile };
+};
+
 const extractDefaultBrowserCookies = async (
   url: string,
-  defaultBrowser: BrowserKey | null,
+  defaultBrowserContext: DefaultBrowserContext,
 ): Promise<Cookie[]> => {
-  if (defaultBrowser) {
-    const profiles = detectBrowserProfiles({ browser: defaultBrowser });
+  const { defaultBrowser, preferredProfile } = defaultBrowserContext;
 
-    if (profiles.length > 0) {
-      const result = await extractAllProfileCookies(profiles);
-      if (result.cookies.length > 0) return result.cookies;
-    }
+  if (preferredProfile) {
+    const result = await extractProfileCookies({ profile: preferredProfile });
+    if (result.cookies.length > 0) return result.cookies;
   }
 
   const browsers = defaultBrowser ? [defaultBrowser] : undefined;
@@ -52,6 +70,18 @@ const resolveVideoOptions = (
   };
 };
 
+const resolveContextOptions = (
+  video: VideoOptions | undefined,
+  locale: string | undefined,
+) => {
+  if (!video && !locale) return undefined;
+
+  return {
+    ...(video ? { recordVideo: video } : {}),
+    ...(locale ? { locale } : {}),
+  };
+};
+
 const navigatePage = async (
   page: CreatePageResult["page"],
   url: string | undefined,
@@ -72,13 +102,17 @@ export const createPage = async (
   });
 
   try {
+    const defaultBrowserContext =
+      options.cookies === true ? await resolveDefaultBrowserContext() : EMPTY_DEFAULT_BROWSER_CONTEXT;
     const recordVideo = resolveVideoOptions(options.video);
-    const context = await browser.newContext(recordVideo ? { recordVideo } : undefined);
+    const context = await browser.newContext(
+      resolveContextOptions(recordVideo, defaultBrowserContext.preferredProfile?.locale),
+    );
 
     if (options.cookies) {
       const cookies = Array.isArray(options.cookies)
         ? options.cookies
-        : await extractDefaultBrowserCookies(url ?? "", await detectDefaultBrowser());
+        : await extractDefaultBrowserCookies(url ?? "", defaultBrowserContext);
       await injectCookies(context, cookies);
     }
 

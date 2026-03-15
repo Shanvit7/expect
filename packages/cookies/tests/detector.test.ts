@@ -2,7 +2,10 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { detectBrowserProfiles } from "../src/profiles/detector.js";
+import {
+  detectBrowserProfiles,
+  loadProfileLocaleFromPreferences,
+} from "../src/profiles/detector.js";
 
 describe("detectBrowserProfiles", () => {
   it("returns an array", () => {
@@ -89,5 +92,20 @@ describe("profile detection with synthetic data", () => {
     expect(content.profile.info_cache["Default"].name).toBe("Alice");
     expect(content.profile.info_cache["Profile 1"].name).toBe("Bob");
     expect(content.profile.info_cache["Profile 2"].name).toBe("Charlie");
+  });
+
+  it("reads the preferred locale from profile preferences", () => {
+    const defaultProfile = path.join(fakeUserDataDir, "Default");
+    mkdirSync(defaultProfile, { recursive: true });
+    writeFileSync(
+      path.join(defaultProfile, "Preferences"),
+      JSON.stringify({
+        intl: {
+          selected_languages: "en-US,en,af",
+        },
+      }),
+    );
+
+    expect(loadProfileLocaleFromPreferences(defaultProfile)).toBe("en-US");
   });
 });

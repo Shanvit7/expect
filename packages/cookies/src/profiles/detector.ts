@@ -17,25 +17,82 @@ import {
 
 const findFirstExisting = (paths: string[]): string | null => paths.find(existsSync) ?? null;
 
-const loadProfileNamesFromLocalState = (userDataDir: string): Record<string, LocalStateProfile> => {
+interface LocalStateProfileMetadata {
+  profileNames: Record<string, LocalStateProfile>;
+  lastUsedProfileName: string | null;
+}
+
+const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === "object";
+
+const resolveLocaleFromPreferenceValue = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+
+  const locale = value
+    .split(",")
+    .map((language) => language.trim())
+    .find((language) => language.length > 0);
+
+  return locale ?? null;
+};
+
+const loadProfileMetadataFromLocalState = (userDataDir: string): LocalStateProfileMetadata => {
   const localStatePath = path.join(userDataDir, "Local State");
   try {
     const content = readFileSync(localStatePath, "utf-8");
     const localState = JSON.parse(content);
-    const infoCache = localState?.profile?.info_cache;
-    if (!infoCache || typeof infoCache !== "object") {
-      return {};
+
+    if (!isObjectRecord(localState)) {
+      return { profileNames: {}, lastUsedProfileName: null };
     }
-    const profiles: Record<string, LocalStateProfile> = {};
+
+    const profileState = localState["profile"];
+    if (!isObjectRecord(profileState)) {
+      return { profileNames: {}, lastUsedProfileName: null };
+    }
+
+    const infoCache = profileState["info_cache"];
+    const lastUsedProfileName =
+      typeof profileState["last_used"] === "string" ? profileState["last_used"] : null;
+
+    if (!isObjectRecord(infoCache)) {
+      return { profileNames: {}, lastUsedProfileName };
+    }
+
+    const profileNames: Record<string, LocalStateProfile> = {};
     for (const [profileId, profileEntry] of Object.entries(infoCache)) {
-      const entry = profileEntry as Record<string, unknown>;
-      if (entry?.name && typeof entry.name === "string") {
-        profiles[profileId] = { name: entry.name };
+      if (!isObjectRecord(profileEntry)) continue;
+
+      const displayName = profileEntry["name"];
+      if (typeof displayName === "string") {
+        profileNames[profileId] = { name: displayName };
       }
     }
-    return profiles;
+
+    return { profileNames, lastUsedProfileName };
   } catch {
-    return {};
+    return { profileNames: {}, lastUsedProfileName: null };
+  }
+};
+
+export const loadProfileLocaleFromPreferences = (profilePath: string): string | null => {
+  const preferencesPath = path.join(profilePath, "Preferences");
+
+  try {
+    const content = readFileSync(preferencesPath, "utf-8");
+    const preferences = JSON.parse(content);
+
+    if (!isObjectRecord(preferences)) return null;
+
+    const intlState = preferences["intl"];
+    if (!isObjectRecord(intlState)) return null;
+
+    return (
+      resolveLocaleFromPreferenceValue(intlState["selected_languages"]) ??
+      resolveLocaleFromPreferenceValue(intlState["accept_languages"])
+    );
+  } catch {
+    return null;
   }
 };
 
@@ -85,7 +142,7 @@ export const getUserDataDir = (
 const detectProfilesForBrowser = (browser: BrowserInfo, userDataDir: string): BrowserProfile[] => {
   if (!existsSync(userDataDir)) return [];
 
-  const profileNames = loadProfileNamesFromLocalState(userDataDir);
+  const { profileNames, lastUsedProfileName } = loadProfileMetadataFromLocalState(userDataDir);
   const profiles: BrowserProfile[] = [];
 
   try {
@@ -97,19 +154,30 @@ const detectProfilesForBrowser = (browser: BrowserInfo, userDataDir: string): Br
 
       const localStateProfile = profileNames[entry];
       const displayName = localStateProfile?.name ?? entry;
+      const locale = loadProfileLocaleFromPreferences(profilePath);
 
       profiles.push({
         profileName: entry,
         profilePath,
         displayName,
         browser,
+        ...(locale ? { locale } : {}),
       });
     }
   } catch {
     return [];
   }
 
-  profiles.sort((left, right) => naturalCompare(left.profileName, right.profileName));
+  profiles.sort((left, right) => {
+    const leftIsLastUsed = left.profileName === lastUsedProfileName;
+    const rightIsLastUsed = right.profileName === lastUsedProfileName;
+
+    if (leftIsLastUsed !== rightIsLastUsed) {
+      return leftIsLastUsed ? -1 : 1;
+    }
+
+    return naturalCompare(left.profileName, right.profileName);
+  });
   return profiles;
 };
 

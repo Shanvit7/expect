@@ -12,7 +12,7 @@ export interface PlaywrightCookie {
   expires: number;
   secure: boolean;
   httpOnly: boolean;
-  sameSite: SameSitePolicy;
+  sameSite?: SameSitePolicy;
 }
 
 export interface PuppeteerCookie {
@@ -65,7 +65,7 @@ export const matchCookieHeader = (cookies: Cookie[], url: string): string =>
 export const toPlaywrightCookies = (cookies: Cookie[]): PlaywrightCookie[] =>
   cookies.map((cookie) => ({
     ...toBaseCookie(cookie),
-    sameSite: cookie.sameSite ?? "Lax",
+    sameSite: cookie.sameSite,
   }));
 
 export const toPuppeteerCookies = (cookies: Cookie[]): PuppeteerCookie[] =>

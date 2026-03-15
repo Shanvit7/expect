@@ -5,7 +5,7 @@ import { DEFAULT_VIDEO_HEIGHT_PX, DEFAULT_VIDEO_WIDTH_PX } from "../src/constant
 const {
   detectBrowserProfilesMock,
   detectDefaultBrowserMock,
-  extractAllProfileCookiesMock,
+  extractProfileCookiesMock,
   extractCookiesMock,
   injectCookiesMock,
   launchMock,
@@ -16,7 +16,7 @@ const {
 } = vi.hoisted(() => ({
   detectBrowserProfilesMock: vi.fn(),
   detectDefaultBrowserMock: vi.fn(),
-  extractAllProfileCookiesMock: vi.fn(),
+  extractProfileCookiesMock: vi.fn(),
   extractCookiesMock: vi.fn(),
   injectCookiesMock: vi.fn(),
   launchMock: vi.fn(),
@@ -29,7 +29,7 @@ const {
 vi.mock("@browser-tester/cookies", () => ({
   detectBrowserProfiles: detectBrowserProfilesMock,
   detectDefaultBrowser: detectDefaultBrowserMock,
-  extractAllProfileCookies: extractAllProfileCookiesMock,
+  extractProfileCookies: extractProfileCookiesMock,
   extractCookies: extractCookiesMock,
 }));
 
@@ -49,6 +49,18 @@ const heliumProfile: BrowserProfile = {
   profileName: "Default",
   profilePath: "/tmp/helium/Default",
   displayName: "You",
+  locale: "en-US",
+  browser: {
+    name: "Helium",
+    executablePath: "/Applications/Helium.app/Contents/MacOS/Helium",
+  },
+};
+
+const workProfile: BrowserProfile = {
+  profileName: "Profile 1",
+  profilePath: "/tmp/helium/Profile 1",
+  displayName: "Work",
+  locale: "en-CA",
   browser: {
     name: "Helium",
     executablePath: "/Applications/Helium.app/Contents/MacOS/Helium",
@@ -95,8 +107,8 @@ describe("createPage cookie reuse", () => {
     });
 
     detectDefaultBrowserMock.mockResolvedValue("helium");
-    detectBrowserProfilesMock.mockReturnValue([heliumProfile]);
-    extractAllProfileCookiesMock.mockResolvedValue({
+    detectBrowserProfilesMock.mockReturnValue([heliumProfile, workProfile]);
+    extractProfileCookiesMock.mockResolvedValue({
       cookies: profileCookies,
       warnings: [],
     });
@@ -107,18 +119,20 @@ describe("createPage cookie reuse", () => {
     injectCookiesMock.mockResolvedValue(undefined);
   });
 
-  it("uses profile cookies before sqlite fallback for the default browser", async () => {
+  it("uses the preferred profile cookies before sqlite fallback for the default browser", async () => {
     await createPage("https://github.com", { cookies: true });
 
     expect(detectDefaultBrowserMock).toHaveBeenCalledOnce();
     expect(detectBrowserProfilesMock).toHaveBeenCalledWith({ browser: "helium" });
-    expect(extractAllProfileCookiesMock).toHaveBeenCalledWith([heliumProfile]);
+    expect(extractProfileCookiesMock).toHaveBeenCalledOnce();
+    expect(extractProfileCookiesMock).toHaveBeenCalledWith({ profile: heliumProfile });
+    expect(newContextMock).toHaveBeenCalledWith({ locale: "en-US" });
     expect(extractCookiesMock).not.toHaveBeenCalled();
     expect(injectCookiesMock).toHaveBeenCalledWith(expect.anything(), profileCookies);
   });
 
   it("falls back to sqlite extraction when profile extraction returns no cookies", async () => {
-    extractAllProfileCookiesMock.mockResolvedValueOnce({
+    extractProfileCookiesMock.mockResolvedValueOnce({
       cookies: [],
       warnings: ["no cookies found in profile: You"],
     });
