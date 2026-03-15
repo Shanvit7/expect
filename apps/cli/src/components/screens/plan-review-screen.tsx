@@ -44,38 +44,43 @@ interface PlanStepRowProps {
   onClick: () => void;
 }
 
-const PlanStepRow = ({ step, stepNumber, selected, onClick }: PlanStepRowProps) => {
+const PlanStepRow = ({
+  step,
+  stepNumber,
+  selected,
+  onClick,
+}: PlanStepRowProps) => {
   const COLORS = useColors();
   const stepLabel = String(stepNumber).padStart(2, "0");
 
   return (
     <Clickable onClick={onClick}>
-      <Box flexDirection="column">
+      <Box flexDirection="column" marginBottom={1}>
         <Text>
-          <Text color={selected ? COLORS.PRIMARY : COLORS.DIM}>{selected ? "  ▸ " : "    "}</Text>
+          <Text color={selected ? COLORS.PRIMARY : COLORS.DIM}>
+            {selected ? "  ▸ " : "    "}
+          </Text>
           <Text color={COLORS.DIM}>[{stepLabel}] </Text>
-          <Text color={selected ? COLORS.PRIMARY : COLORS.DIM} bold={selected}>
+          <Text color={selected ? COLORS.PRIMARY : COLORS.TEXT} bold={selected}>
             {step.title}
           </Text>
         </Text>
-        {selected ? (
-          <Box flexDirection="column" marginLeft={SECTION_INDENT} marginBottom={1}>
+        <Box flexDirection="column" marginLeft={SECTION_INDENT}>
+          <Text color={COLORS.DIM}>
+            {"      "}
+            {step.instruction}
+          </Text>
+          <Text color={COLORS.DIM}>
+            {"      expected "}
+            <Text color={COLORS.GREEN}>{step.expectedOutcome}</Text>
+          </Text>
+          {step.routeHint ? (
             <Text color={COLORS.DIM}>
-              {"  "}
-              <Text color={COLORS.TEXT}>{step.instruction}</Text>
+              {"      route    "}
+              <Text color={COLORS.CYAN}>{step.routeHint}</Text>
             </Text>
-            <Text color={COLORS.DIM}>
-              {"  expected "}
-              <Text color={COLORS.GREEN}>{step.expectedOutcome}</Text>
-            </Text>
-            {step.routeHint ? (
-              <Text color={COLORS.DIM}>
-                {"  route    "}
-                <Text color={COLORS.CYAN}>{step.routeHint}</Text>
-              </Text>
-            ) : null}
-          </Box>
-        ) : null}
+          ) : null}
+        </Box>
       </Box>
     </Clickable>
   );
@@ -105,8 +110,11 @@ export const PlanReviewScreen = () => {
   if (!plan || !resolvedTarget) return null;
 
   const editingStep =
-    editingState?.kind === "step" ? (plan.steps[editingState.stepIndex] ?? null) : null;
-  const editingStepIndex = editingState?.kind === "step" ? editingState.stepIndex : null;
+    editingState?.kind === "step"
+      ? plan.steps[editingState.stepIndex] ?? null
+      : null;
+  const editingStepIndex =
+    editingState?.kind === "step" ? editingState.stepIndex : null;
   const editingAssumptions = editingState?.kind === "assumptions";
   const cookiesEnabled = (environment ?? {}).cookies === true;
   const cookieSyncIsRequired = plan.cookieSync.required;
@@ -150,7 +158,9 @@ export const PlanReviewScreen = () => {
         updatePlan({
           ...plan,
           steps: plan.steps.map((step, index) =>
-            index === editingStepIndex ? { ...step, instruction: editingValue.trim() } : step,
+            index === editingStepIndex
+              ? { ...step, instruction: editingValue.trim() }
+              : step
           ),
         });
         setEditingState(null);
@@ -208,7 +218,11 @@ export const PlanReviewScreen = () => {
       }
     }
 
-    if (input === "e" && currentItem?.kind === "section" && currentItem.section === "assumptions") {
+    if (
+      input === "e" &&
+      currentItem?.kind === "section" &&
+      currentItem.section === "assumptions"
+    ) {
       setEditingState({ kind: "assumptions" });
       setEditingValue(plan.assumptions.join("\n"));
     }
@@ -229,11 +243,17 @@ export const PlanReviewScreen = () => {
         environment: environment ?? {},
       })
         .then((result) => {
-          setSaveMessage(`Saved ${result.flowPath} and updated ${result.directoryPath}`);
+          setSaveMessage(
+            `Saved ${result.flowPath} and updated ${result.directoryPath}`
+          );
           void loadSavedFlows();
         })
         .catch((caughtError) => {
-          setSaveError(caughtError instanceof Error ? caughtError.message : "Failed to save flow.");
+          setSaveError(
+            caughtError instanceof Error
+              ? caughtError.message
+              : "Failed to save flow."
+          );
         })
         .finally(() => {
           setSaving(false);
@@ -259,7 +279,10 @@ export const PlanReviewScreen = () => {
           borderColor={cookieSyncNeedsAttention ? COLORS.RED : COLORS.YELLOW}
           paddingX={1}
         >
-          <Text color={cookieSyncNeedsAttention ? COLORS.RED : COLORS.YELLOW} bold>
+          <Text
+            color={cookieSyncNeedsAttention ? COLORS.RED : COLORS.YELLOW}
+            bold
+          >
             {cookieSyncNeedsAttention
               ? "Cookie sync is required and currently off."
               : "Cookie sync is enabled for this plan."}
@@ -274,7 +297,8 @@ export const PlanReviewScreen = () => {
           </Text>
           {cookieSyncNeedsAttention ? (
             <Text color={COLORS.DIM}>
-              Press <Text color={COLORS.PRIMARY}>c</Text> to turn cookie sync on before approving.
+              Press <Text color={COLORS.PRIMARY}>c</Text> to turn cookie sync on
+              before approving.
             </Text>
           ) : null}
         </Box>
@@ -337,7 +361,9 @@ export const PlanReviewScreen = () => {
               </Clickable>
               <Text color={COLORS.DIM}>
                 {"impact    "}
-                <Text color={cookieSyncNeedsAttention ? COLORS.RED : COLORS.TEXT}>
+                <Text
+                  color={cookieSyncNeedsAttention ? COLORS.RED : COLORS.TEXT}
+                >
                   {cookieSyncNeedsAttention
                     ? "Without synced cookies, this run is more likely to fail."
                     : "Synced cookies will make the run more reliable."}
@@ -394,8 +420,9 @@ export const PlanReviewScreen = () => {
             Leave plan review?
           </Text>
           <Text color={COLORS.DIM}>
-            You have not started this run yet. Press <Text color={COLORS.PRIMARY}>y</Text> to
-            leave or <Text color={COLORS.PRIMARY}>n</Text> to stay here.
+            You have not started this run yet. Press{" "}
+            <Text color={COLORS.PRIMARY}>y</Text> to leave or{" "}
+            <Text color={COLORS.PRIMARY}>n</Text> to stay here.
           </Text>
         </Box>
       ) : null}
@@ -409,7 +436,8 @@ export const PlanReviewScreen = () => {
           onToggle={() => toggleSection("steps")}
         >
           {plan.steps.map((step, index) => {
-            const selected = currentItem?.kind === "step" && currentItem.stepIndex === index;
+            const selected =
+              currentItem?.kind === "step" && currentItem.stepIndex === index;
             return (
               <PlanStepRow
                 key={step.id}
@@ -418,7 +446,7 @@ export const PlanReviewScreen = () => {
                 selected={selected}
                 onClick={() => {
                   const itemIndex = items.findIndex(
-                    (item) => item.kind === "step" && item.stepIndex === index,
+                    (item) => item.kind === "step" && item.stepIndex === index
                   );
                   if (itemIndex >= 0) setSelectedIndex(itemIndex);
                 }}
@@ -444,7 +472,9 @@ export const PlanReviewScreen = () => {
               focus
               multiline={editingAssumptions}
               value={editingValue}
-              onChange={(nextValue) => setEditingValue(stripMouseSequences(nextValue))}
+              onChange={(nextValue) =>
+                setEditingValue(stripMouseSequences(nextValue))
+              }
             />
           </Box>
         </Box>
