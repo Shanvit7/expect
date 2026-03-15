@@ -19,7 +19,10 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
   const latestRunReport = useAppStore((state) => state.latestRunReport);
   switch (screen) {
     case "main": {
-      const hints: HintSegment[] = [{ key: "shift+enter", label: "newline" }];
+      const hints: HintSegment[] = [
+        { key: "ctrl+p", label: "switch PR/branch" },
+        { key: "shift+enter", label: "newline" },
+      ];
       if (savedFlowSummaries.length > 0) {
         hints.push({
           key: "r",
