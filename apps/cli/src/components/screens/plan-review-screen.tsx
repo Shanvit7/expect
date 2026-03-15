@@ -110,6 +110,7 @@ export const PlanReviewScreen = () => {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
     details: true,
     assumptions: true,
+    cookies: true,
   });
   const [editingState, setEditingState] = useState<EditingState>(null);
   const [editingValue, setEditingValue] = useState("");
