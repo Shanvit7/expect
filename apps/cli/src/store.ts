@@ -13,7 +13,10 @@ import {
   type TestAction,
 } from "./utils/browser-agent.js";
 import { getGitState, type GitState } from "./utils/get-git-state.js";
-import { listSavedFlows, type SavedFlowSummary } from "./utils/list-saved-flows.js";
+import {
+  listSavedFlows,
+  type SavedFlowSummary,
+} from "./utils/list-saved-flows.js";
 import type { LoadedSavedFlow } from "./utils/load-saved-flow.js";
 import type { EnvironmentOverrides } from "./utils/test-run-config.js";
 
@@ -46,6 +49,9 @@ interface AppStore {
   savedFlowSummaries: SavedFlowSummary[];
   pendingSavedFlow: LoadedSavedFlow | null;
   mainMenuOnAction: boolean;
+  checkedOutBranch: string | null;
+  checkedOutPrNumber: number | null;
+  checkoutError: string | null;
 
   setMainMenuOnAction: (value: boolean) => void;
   loadGitState: () => void;
@@ -69,7 +75,8 @@ interface AppStore {
   requestPlanApproval: () => void;
   approvePlan: () => void;
   exitTesting: () => void;
-  switchBranch: (branch: string) => void;
+  switchBranch: (branch: string, prNumber?: number | null) => void;
+  clearCheckoutError: () => void;
 }
 
 const RESET_PLAN_STATE = {
@@ -89,13 +96,16 @@ const RESET_FLOW_STATE = {
   planOrigin: null,
 };
 
-const rememberFlowInstruction = (history: string[], instruction: string): string[] => {
+const rememberFlowInstruction = (
+  history: string[],
+  instruction: string
+): string[] => {
   if (!instruction) return history;
 
-  return [instruction, ...history.filter((entry) => entry !== instruction)].slice(
-    0,
-    FLOW_INPUT_HISTORY_LIMIT,
-  );
+  return [
+    instruction,
+    ...history.filter((entry) => entry !== instruction),
+  ].slice(0, FLOW_INPUT_HISTORY_LIMIT);
 };
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -116,6 +126,9 @@ export const useAppStore = create<AppStore>((set) => ({
   savedFlowSummaries: [],
   pendingSavedFlow: null,
   mainMenuOnAction: true,
+  checkedOutBranch: null,
+  checkedOutPrNumber: null,
+  checkoutError: null,
 
   setMainMenuOnAction: (value) => set({ mainMenuOnAction: value }),
   loadGitState: () => set({ gitState: getGitState() }),
@@ -129,7 +142,8 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => {
       if (state.screen === "review-plan") {
         return {
-          screen: state.planOrigin === "saved" ? "saved-flow-picker" : "flow-input",
+          screen:
+            state.planOrigin === "saved" ? "saved-flow-picker" : "flow-input",
         };
       }
       if (state.screen === "planning") {
@@ -153,7 +167,8 @@ export const useAppStore = create<AppStore>((set) => ({
       return {};
     }),
 
-  navigateTo: (screen) => set((state) => ({ screen, previousScreen: state.screen })),
+  navigateTo: (screen) =>
+    set((state) => ({ screen, previousScreen: state.screen })),
 
   selectAction: (action) =>
     set({
@@ -226,13 +241,17 @@ export const useAppStore = create<AppStore>((set) => ({
     set((state) => ({
       ...RESET_PLAN_STATE,
       flowInstruction: instruction,
-      flowInstructionHistory: rememberFlowInstruction(state.flowInstructionHistory, instruction),
+      flowInstructionHistory: rememberFlowInstruction(
+        state.flowInstructionHistory,
+        instruction
+      ),
       planningError: null,
       planOrigin: "generated",
       screen: "planning",
     })),
 
-  toggleAutoRun: () => set((state) => ({ autoRunAfterPlanning: !state.autoRunAfterPlanning })),
+  toggleAutoRun: () =>
+    set((state) => ({ autoRunAfterPlanning: !state.autoRunAfterPlanning })),
 
   completePlanning: (result) =>
     set((state) => ({
@@ -240,7 +259,9 @@ export const useAppStore = create<AppStore>((set) => ({
       generatedPlan: result.plan,
       browserEnvironment: result.environment,
       screen:
-        state.autoRunAfterPlanning && !result.plan.cookieSync.required ? "testing" : "review-plan",
+        state.autoRunAfterPlanning && !result.plan.cookieSync.required
+          ? "testing"
+          : "review-plan",
     })),
 
   failPlanning: (error) => set({ planningError: error }),
@@ -252,7 +273,8 @@ export const useAppStore = create<AppStore>((set) => ({
   requestPlanApproval: () =>
     set((state) => ({
       screen:
-        state.generatedPlan?.cookieSync.required && state.browserEnvironment?.cookies !== true
+        state.generatedPlan?.cookieSync.required &&
+        state.browserEnvironment?.cookies !== true
           ? "cookie-sync-confirm"
           : "testing",
     })),
@@ -265,12 +287,25 @@ export const useAppStore = create<AppStore>((set) => ({
       screen: "main",
     }),
 
-  switchBranch: (branch) => {
+  switchBranch: (branch, prNumber) => {
     const success = checkoutBranch(process.cwd(), branch);
     if (success) {
-      set({ gitState: getGitState(), screen: "main" });
+      set({
+        gitState: getGitState(),
+        testAction: "test-branch",
+        checkedOutBranch: branch,
+        checkedOutPrNumber: prNumber ?? null,
+        checkoutError: null,
+        selectedCommit: null,
+        planOrigin: null,
+        screen: "flow-input",
+      });
     } else {
-      set({ screen: "main" });
+      set({
+        checkoutError: `Could not checkout "${branch}". You may have uncommitted changes or the branch may not exist locally.`,
+      });
     }
   },
+
+  clearCheckoutError: () => set({ checkoutError: null }),
 }));

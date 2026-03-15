@@ -18,9 +18,15 @@ export const FlowInputScreen = () => {
   const COLORS = useColors();
   const testAction = useAppStore((state) => state.testAction);
   const selectedCommit = useAppStore((state) => state.selectedCommit);
+  const checkedOutBranch = useAppStore((state) => state.checkedOutBranch);
+  const checkedOutPrNumber = useAppStore((state) => state.checkedOutPrNumber);
   const flowInstruction = useAppStore((state) => state.flowInstruction);
-  const flowInstructionHistory = useAppStore((state) => state.flowInstructionHistory);
-  const submitFlowInstruction = useAppStore((state) => state.submitFlowInstruction);
+  const flowInstructionHistory = useAppStore(
+    (state) => state.flowInstructionHistory
+  );
+  const submitFlowInstruction = useAppStore(
+    (state) => state.submitFlowInstruction
+  );
   const [value, setValue] = useState(flowInstruction);
   const [inputInstanceKey, setInputInstanceKey] = useState(0);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
@@ -43,7 +49,10 @@ export const FlowInputScreen = () => {
       return;
     }
 
-    const nextIndex = Math.min(flowInstructionHistory.length - 1, historyIndex + 1);
+    const nextIndex = Math.min(
+      flowInstructionHistory.length - 1,
+      historyIndex + 1
+    );
     if (nextIndex === historyIndex) return;
 
     setHistoryIndex(nextIndex);
@@ -68,7 +77,9 @@ export const FlowInputScreen = () => {
     const trimmedValue = nextValue.trim();
 
     if (!trimmedValue) {
-      setErrorMessage("Describe the user flow you want the browser agent to test.");
+      setErrorMessage(
+        "Describe the user flow you want the browser agent to test."
+      );
       return;
     }
 
@@ -81,7 +92,21 @@ export const FlowInputScreen = () => {
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <ScreenHeading title={ACTION_LABELS[testAction]} />
 
-      {selectedCommit ? (
+      {checkedOutBranch ? (
+        <Box marginTop={1}>
+          <Text color={COLORS.GREEN}>{"✓ "}</Text>
+          <Text color={COLORS.DIM}>{"checked out "}</Text>
+          <Text color={COLORS.TEXT} bold>
+            {checkedOutBranch}
+          </Text>
+          {checkedOutPrNumber ? (
+            <Text color={COLORS.DIM}>
+              {" · PR #"}
+              {checkedOutPrNumber}
+            </Text>
+          ) : null}
+        </Box>
+      ) : selectedCommit ? (
         <Box marginTop={1}>
           <Text color={COLORS.DIM}>{"commit "}</Text>
           <Text color={COLORS.PURPLE}>{selectedCommit.shortHash}</Text>
@@ -90,7 +115,12 @@ export const FlowInputScreen = () => {
         </Box>
       ) : null}
 
-      <Box marginTop={1} borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
+      <Box
+        marginTop={1}
+        borderStyle="round"
+        borderColor={COLORS.BORDER}
+        paddingX={2}
+      >
         <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
         <Input
           key={`flow-input-${inputInstanceKey}`}
@@ -115,7 +145,9 @@ export const FlowInputScreen = () => {
         <Text color={COLORS.DIM}>
           {historyIndex === null
             ? "Use ↑/↓ on the first or last line to recall previous inputs."
-            : `Browsing previous inputs ${historyIndex + 1}/${flowInstructionHistory.length}.`}{" "}
+            : `Browsing previous inputs ${historyIndex + 1}/${
+                flowInstructionHistory.length
+              }.`}{" "}
           Press <Text color={COLORS.PRIMARY}>Shift+Enter</Text> for a new line.
         </Text>
       </Box>

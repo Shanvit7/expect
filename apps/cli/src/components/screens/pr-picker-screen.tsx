@@ -31,6 +31,8 @@ const PR_FILTERS: PrFilter[] = ["all", "open", "draft", "merged", "no-pr"];
 export const PrPickerScreen = () => {
   const [columns] = useStdoutDimensions();
   const storeSwitchBranch = useAppStore((state) => state.switchBranch);
+  const checkoutError = useAppStore((state) => state.checkoutError);
+  const clearCheckoutError = useAppStore((state) => state.clearCheckoutError);
   const COLORS = useColors();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<PrFilter>("open");
@@ -126,7 +128,8 @@ export const PrPickerScreen = () => {
     if (key.return) {
       const selected = filteredBranches[highlightedIndex];
       if (selected) {
-        storeSwitchBranch(selected.name);
+        clearCheckoutError();
+        storeSwitchBranch(selected.name, selected.prNumber);
       }
     }
 
@@ -242,6 +245,12 @@ export const PrPickerScreen = () => {
           )}
         </Box>
       )}
+
+      {checkoutError ? (
+        <Box marginTop={1}>
+          <Text color={COLORS.RED}>{checkoutError}</Text>
+        </Box>
+      ) : null}
 
       <SearchBar
         isSearching={isSearching}
