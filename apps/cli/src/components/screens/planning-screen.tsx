@@ -11,8 +11,6 @@ import { TESTING_TIMER_UPDATE_INTERVAL_MS } from "../../constants.js";
 export const PlanningScreen = () => {
   const COLORS = useColors();
   const flowInstruction = useAppStore((state) => state.flowInstruction);
-  const gitState = useAppStore((state) => state.gitState);
-  const checkedOutBranch = useAppStore((state) => state.checkedOutBranch);
   const [startTime] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0);
 
@@ -23,20 +21,9 @@ export const PlanningScreen = () => {
     return () => clearInterval(interval);
   }, [startTime]);
 
-  const branchLabel = checkedOutBranch ?? gitState?.currentBranch ?? "unknown";
-
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      {gitState ? (
-        <>
-          <Text color={COLORS.DIM}>Branch / PR</Text>
-          <Box borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
-            <Text color={COLORS.TEXT}>{branchLabel}</Text>
-          </Box>
-        </>
-      ) : null}
-
-      <Box marginTop={gitState ? 1 : 0} flexDirection="column">
+      <Box flexDirection="column">
         <Text color={COLORS.DIM}>Describe what to test</Text>
         <Box borderStyle="round" borderColor={COLORS.BORDER} paddingX={2}>
           <Text color={COLORS.DIM}>{flowInstruction}</Text>

@@ -96,8 +96,6 @@ export const PlanReviewScreen = () => {
   const requestPlanApproval = useAppStore((state) => state.requestPlanApproval);
   const loadSavedFlows = useAppStore((state) => state.loadSavedFlows);
   const flowInstruction = useAppStore((state) => state.flowInstruction);
-  const gitState = useAppStore((state) => state.gitState);
-  const checkedOutBranch = useAppStore((state) => state.checkedOutBranch);
   const navigateTo = useAppStore((state) => state.navigateTo);
   const selectAction = useAppStore((state) => state.selectAction);
   const submitFlowInstruction = useAppStore((state) => state.submitFlowInstruction);
@@ -343,30 +341,9 @@ export const PlanReviewScreen = () => {
   const isSectionSelected = (section: Section) =>
     currentItem?.kind === "section" && currentItem.section === section;
 
-  const branchLabel = checkedOutBranch ?? gitState?.currentBranch ?? "unknown";
-
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      {gitState ? (
-        <>
-          <Text color={COLORS.DIM}>{"Branch / PR"}</Text>
-          <Clickable onClick={() => navigateTo("select-pr")}>
-            <Box
-              width="100%"
-              borderStyle="round"
-              borderColor={branchFocused ? COLORS.PRIMARY : COLORS.BORDER}
-              paddingX={2}
-            >
-              <Text color={branchFocused ? COLORS.PRIMARY : COLORS.TEXT} bold={branchFocused}>
-                {branchLabel}
-              </Text>
-              <Text color={COLORS.DIM}>{" · press enter to change"}</Text>
-            </Box>
-          </Clickable>
-        </>
-      ) : null}
-
-      <Box marginTop={gitState ? 1 : 0} flexDirection="column">
+      <Box flexDirection="column">
         <Text color={COLORS.DIM}>Describe what to test</Text>
         <Clickable onClick={() => setTopFocus("input")}>
           <Box
