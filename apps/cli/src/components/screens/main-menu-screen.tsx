@@ -312,7 +312,7 @@ export const MainMenu = () => {
           <RuledBox color={focus === "input" ? COLORS.PRIMARY : COLORS.BORDER} marginTop={1} paddingX={0}>
             <Box justifyContent="space-between">
               <Box>
-                <Text color={COLORS.PRIMARY}>{" ❯ "}</Text>
+                <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
                 <Input
                   key={inputKey}
                   focus={focus === "input" && !pickerOpen}
