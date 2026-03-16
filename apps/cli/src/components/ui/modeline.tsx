@@ -166,13 +166,13 @@ export const Modeline = () => {
     <Box flexDirection="column">
       {screen === "planning" || screen === "testing" ? (
         <TextShimmer
-          text={"-".repeat(columns)}
+          text={"─".repeat(columns)}
           baseColor={theme.border}
           highlightColor={theme.primary}
           speed={3}
         />
       ) : (
-        <Text color={theme.border}>{"-".repeat(columns)}</Text>
+        <Text color={theme.border}>{"─".repeat(columns)}</Text>
       )}
       <Box paddingX={1}>
         {actions.map((action, index) => {
