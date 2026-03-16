@@ -36,7 +36,7 @@ export const DashboardPage = ({
   const monthlySpend = invoices
     .filter((invoice) => invoice.status === "paid")
     .slice(0, 3)
-    .reduce((sum, invoice) => sum + invoice.amount, 1);
+    .reduce((sum, invoice) => sum + invoice.amount, 0);
 
   return (
     <div className="space-y-8 p-8">
