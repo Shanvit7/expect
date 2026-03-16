@@ -453,7 +453,7 @@ export const PlanReviewScreen = () => {
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <Box flexDirection="column">
-        <Text color={COLORS.DIM}>{selectedContext ? selectedContext.label : "Describe what to test"}</Text>
+        <Text color={COLORS.DIM}>{selectedContext?.label ?? flowInstruction}</Text>
         <Clickable onClick={() => setTopFocus("input")}>
           <Box
             width="100%"

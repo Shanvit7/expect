@@ -7,6 +7,7 @@ import { Input } from "../ui/input.js";
 import { ErrorMessage } from "../ui/error-message.js";
 import { ContextPicker } from "../ui/context-picker.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
+import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions.js";
 import { generateFlowSuggestions } from "@browser-tester/supervisor";
 import { getFlowSuggestions } from "../../utils/get-flow-suggestions.js";
 import {
@@ -19,6 +20,7 @@ type FocusArea = "input";
 
 export const MainMenu = () => {
   const COLORS = useColors();
+  const [columns] = useStdoutDimensions();
   const gitState = useAppStore((state) => state.gitState);
   const toggleAutoRun = useAppStore((state) => state.toggleAutoRun);
   const submitFlowInstruction = useAppStore((state) => state.submitFlowInstruction);
@@ -266,7 +268,13 @@ export const MainMenu = () => {
   return (
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <Box marginBottom={1}>
-        <Text>{" "}</Text>
+        <Text color={COLORS.BORDER}>
+          {"┤ "}
+          <Text bold color={COLORS.TEXT}>{"TESTIE"}</Text>
+          <Text color={COLORS.DIM}>{" v0.0.1"}</Text>
+          {" ├"}
+          {"─".repeat(Math.max(0, columns - 20))}
+        </Text>
       </Box>
 
       <Box flexDirection="column">
@@ -309,7 +317,7 @@ export const MainMenu = () => {
               key={inputKey}
               focus={focus === "input" && !pickerOpen}
               multiline
-              placeholder={`${currentSuggestion ?? "Describe what to test..."}  [tab]`}
+              placeholder={currentSuggestion ? `${currentSuggestion}  [tab]` : ""}
               value={value}
               onSubmit={submit}
               onDownArrowAtBottom={() => {}}
