@@ -1,5 +1,6 @@
 import { Box, Text, useInput } from "ink";
 import { useColors } from "../theme-context.js";
+import { RuledBox } from "./ruled-box.js";
 import type { ContextOption } from "../../utils/context-options.js";
 import { CONTEXT_PICKER_VISIBLE_COUNT } from "../../constants.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
@@ -84,14 +85,14 @@ export const ContextPicker = ({
 
   if (options.length === 0 && !isLoading) {
     return (
-      <Box flexDirection="column" borderStyle="single" borderColor={COLORS.BORDER} paddingX={1}>
+      <RuledBox color={COLORS.BORDER}>
         <Text color={COLORS.DIM}>No matching results</Text>
-      </Box>
+      </RuledBox>
     );
   }
 
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor={COLORS.PRIMARY} paddingX={1}>
+    <RuledBox color={COLORS.PRIMARY}>
       {visibleOptions.map((option, index) => {
         const actualIndex = index + scrollOffset;
         const isSelected = actualIndex === selectedIndex;
@@ -143,6 +144,6 @@ export const ContextPicker = ({
           </Text>
         </Box>
       ) : null}
-    </Box>
+    </RuledBox>
   );
 };

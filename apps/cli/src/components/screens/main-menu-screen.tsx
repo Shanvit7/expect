@@ -4,6 +4,7 @@ import { useAppStore } from "../../store.js";
 import { useColors } from "../theme-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { Input } from "../ui/input.js";
+import { RuledBox } from "../ui/ruled-box.js";
 import { ErrorMessage } from "../ui/error-message.js";
 import { ContextPicker } from "../ui/context-picker.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
@@ -267,8 +268,8 @@ export const MainMenu = () => {
   if (!gitState) return null;
 
   return (
-    <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
-      <Box marginBottom={1}>
+    <Box flexDirection="column" width="100%" paddingY={1}>
+      <Box marginBottom={1} paddingX={1}>
         <Text color={COLORS.BORDER}>
           <Text bold color={COLORS.TEXT}>{"TESTIE"}</Text>
           <Text color={COLORS.DIM}>{" v0.0.1"}</Text>
@@ -277,8 +278,8 @@ export const MainMenu = () => {
         </Text>
       </Box>
 
-      <Box flexDirection="column">
-        <Box justifyContent="space-between">
+      <Box flexDirection="column" width="100%">
+        <Box justifyContent="space-between" paddingX={1}>
           <Clickable
             fullWidth={false}
             onClick={() => {
@@ -287,9 +288,12 @@ export const MainMenu = () => {
             }}
           >
             {activeContext ? (
-              <Text color={COLORS.PRIMARY}>
-                @{activeContext.type === "pr" ? `#${activeContext.prNumber}` : activeContext.label}{" "}
-                <Text color={COLORS.DIM}>{activeContext.description}</Text>
+              <Text color={COLORS.DIM}>
+                Testing{" "}
+                <Text color={COLORS.PRIMARY}>
+                  @{activeContext.type === "pr" ? `#${activeContext.prNumber}` : activeContext.label}
+                </Text>{" "}
+                {activeContext.description}
               </Text>
             ) : (
               <Text color={COLORS.DIM}>
@@ -305,28 +309,24 @@ export const MainMenu = () => {
           ) : null}
         </Box>
         <Clickable onClick={() => setFocus("input")}>
-          <Box
-            marginTop={1}
-            width="100%"
-            borderStyle="single"
-            borderColor={focus === "input" ? COLORS.PRIMARY : COLORS.BORDER}
-            paddingX={1}
-          >
-            <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
-            <Input
-              key={inputKey}
-              focus={focus === "input" && !pickerOpen}
-              multiline
-              placeholder={currentSuggestion ? `${currentSuggestion}  [tab]` : ""}
-              value={value}
-              onSubmit={submit}
-              onDownArrowAtBottom={() => {}}
-              onChange={handleInputChange}
-            />
-          </Box>
+          <RuledBox color={focus === "input" ? COLORS.PRIMARY : COLORS.BORDER} marginTop={1}>
+            <Box>
+              <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
+              <Input
+                key={inputKey}
+                focus={focus === "input" && !pickerOpen}
+                multiline
+                placeholder={currentSuggestion ? `${currentSuggestion}  [tab]` : ""}
+                value={value}
+                onSubmit={submit}
+                onDownArrowAtBottom={() => {}}
+                onChange={handleInputChange}
+              />
+            </Box>
+          </RuledBox>
         </Clickable>
         {pickerOpen ? (
-          <Box flexDirection="column">
+          <Box flexDirection="column" paddingX={1}>
             <Box marginBottom={0}>
               <Text color={COLORS.DIM}>@ </Text>
               <Text color={COLORS.PRIMARY}>{pickerQuery}</Text>
@@ -344,7 +344,7 @@ export const MainMenu = () => {
             />
           </Box>
         ) : (
-          <Box marginTop={1}>
+          <Box marginTop={1} paddingX={1}>
             <Text color={COLORS.DIM}>
               type <Text color={COLORS.PRIMARY}>@</Text> to set context
             </Text>

@@ -5,6 +5,7 @@ import { postPullRequestComment, type BrowserRunReport } from "@browser-tester/s
 import { useAppStore } from "../../store.js";
 import { copyToClipboard } from "../../utils/copy-to-clipboard.js";
 import { useColors } from "../theme-context.js";
+import { RuledBox } from "../ui/ruled-box.js";
 import { ScreenHeading } from "../ui/screen-heading.js";
 import { FileLink } from "../ui/file-link.js";
 import { Image } from "../ui/image.js";
@@ -146,13 +147,7 @@ export const ResultsScreen = () => {
         subtitle={`${latestRunReport.title} │ ${latestRunReport.status.toUpperCase()}`}
       />
 
-      <Box
-        flexDirection="column"
-        marginTop={1}
-        borderStyle="single"
-        borderColor={latestRunReport.status === "passed" ? COLORS.GREEN : COLORS.RED}
-        paddingX={1}
-      >
+      <RuledBox color={latestRunReport.status === "passed" ? COLORS.GREEN : COLORS.RED} marginTop={1}>
         <Text color={latestRunReport.status === "passed" ? COLORS.GREEN : COLORS.RED} bold>
           {latestRunReport.status === "passed" ? "Plan completed" : "Issues found"}
         </Text>
@@ -165,7 +160,7 @@ export const ResultsScreen = () => {
             </Link>
           </Text>
         ) : null}
-      </Box>
+      </RuledBox>
 
       <Box flexDirection="column" marginTop={1}>
         <Text color={COLORS.DIM} bold>
@@ -265,13 +260,7 @@ export const ResultsScreen = () => {
       </Box>
 
       {latestRunReport.warnings.length > 0 ? (
-        <Box
-          flexDirection="column"
-          marginTop={1}
-          borderStyle="single"
-          borderColor={COLORS.YELLOW}
-          paddingX={1}
-        >
+        <RuledBox color={COLORS.YELLOW} marginTop={1}>
           <Text color={COLORS.YELLOW} bold>
             ARTIFACT WARNINGS
           </Text>
@@ -280,7 +269,7 @@ export const ResultsScreen = () => {
               • {warning}
             </Text>
           ))}
-        </Box>
+        </RuledBox>
       ) : null}
 
       <Box flexDirection="column" marginTop={1}>

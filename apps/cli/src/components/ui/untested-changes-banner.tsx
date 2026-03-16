@@ -1,9 +1,10 @@
 import figures from "figures";
-import { Box, Text } from "ink";
+import { Text } from "ink";
 import { useAppStore } from "../../store.js";
 import { formatFileCategories } from "../../utils/categorize-changed-files.js";
 import { getHealthcheckReport } from "../../utils/get-healthcheck-report.js";
 import { useColors } from "../theme-context.js";
+import { RuledBox } from "./ruled-box.js";
 
 export const UntestedChangesBanner = () => {
   const COLORS = useColors();
@@ -27,17 +28,11 @@ export const UntestedChangesBanner = () => {
       : `${fileCount} file${fileCount === 1 ? "" : "s"} changed`;
 
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="single"
-      borderColor={COLORS.YELLOW}
-      paddingX={1}
-      marginBottom={1}
-    >
+    <RuledBox color={COLORS.YELLOW} marginBottom={1}>
       <Text color={COLORS.YELLOW} bold>
         {figures.warning} {headline}
       </Text>
       <Text color={COLORS.DIM}>{detail}</Text>
-    </Box>
+    </RuledBox>
   );
 };

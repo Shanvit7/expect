@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 import figures from "figures";
 import { SAVED_FLOW_PICKER_VISIBLE_COUNT } from "../../constants.js";
 import { useColors } from "../theme-context.js";
+import { RuledBox } from "../ui/ruled-box.js";
 import { useAppStore } from "../../store.js";
 import { formatTimeAgo } from "../../utils/format-time-ago.js";
 import { loadSavedFlow } from "../../utils/load-saved-flow.js";
@@ -170,13 +171,7 @@ export const SavedFlowPickerScreen = () => {
       </Box>
 
       {deleteConfirmationVisible && selectedFlow ? (
-        <Box
-          flexDirection="column"
-          marginTop={1}
-          borderStyle="single"
-          borderColor={COLORS.YELLOW}
-          paddingX={1}
-        >
+        <RuledBox color={COLORS.YELLOW} marginTop={1}>
           <Text color={COLORS.YELLOW} bold>
             Remove saved flow?
           </Text>
@@ -185,7 +180,7 @@ export const SavedFlowPickerScreen = () => {
             <Text color={COLORS.TEXT}>{selectedFlow.title}</Text> or{" "}
             <Text color={COLORS.PRIMARY}>n</Text> to cancel.
           </Text>
-        </Box>
+        </RuledBox>
       ) : savedFlowSummaries.length > 0 ? (
         <Box marginTop={1}>
           <Text color={COLORS.DIM}>

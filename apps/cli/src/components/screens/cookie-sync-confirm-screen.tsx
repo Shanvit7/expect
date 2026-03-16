@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 import figures from "figures";
 import { useColors } from "../theme-context.js";
 import { Clickable } from "../ui/clickable.js";
+import { RuledBox } from "../ui/ruled-box.js";
 import { ScreenHeading } from "../ui/screen-heading.js";
 import { useAppStore } from "../../store.js";
 
@@ -72,13 +73,7 @@ export const CookieSyncConfirmScreen = () => {
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <ScreenHeading title="Cookie sync is off" subtitle={plan.title} />
 
-      <Box
-        flexDirection="column"
-        marginTop={1}
-        borderStyle="single"
-        borderColor={COLORS.RED}
-        paddingX={1}
-      >
+      <RuledBox color={COLORS.RED} marginTop={1}>
         <Text color={COLORS.RED} bold>
           This plan depends on cookie sync.
         </Text>
@@ -92,7 +87,7 @@ export const CookieSyncConfirmScreen = () => {
         <Text color={COLORS.DIM}>
           If this flow needs an authenticated session, the browser may start in the wrong state.
         </Text>
-      </Box>
+      </RuledBox>
 
       <Box flexDirection="column" marginTop={1}>
         {CONFIRM_OPTIONS.map((option, index) => {

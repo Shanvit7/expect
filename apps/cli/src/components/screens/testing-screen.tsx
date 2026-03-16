@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Box, Text, useInput } from "ink";
+import { Box, Static, Text, useInput } from "ink";
 import figures from "figures";
 import { executeBrowserFlow, type BrowserRunEvent } from "@browser-tester/supervisor";
 import {
@@ -9,6 +9,7 @@ import {
   TESTING_TOOL_TEXT_CHAR_LIMIT,
 } from "../../constants.js";
 import { useColors } from "../theme-context.js";
+import { RuledBox } from "../ui/ruled-box.js";
 import { Spinner } from "../ui/spinner.js";
 import { TextShimmer } from "../ui/text-shimmer.js";
 import { useAppStore } from "../../store.js";
@@ -228,6 +229,14 @@ export const TestingScreen = () => {
   const emptyWidth = PROGRESS_BAR_WIDTH - filledWidth;
 
   return (
+    <>
+    <Static items={screenshotPaths}>
+      {(screenshotPath) => (
+        <Box key={screenshotPath} paddingX={1}>
+          <Image src={screenshotPath} alt={screenshotPath} />
+        </Box>
+      )}
+    </Static>
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <ScreenHeading
         title="Executing browser plan"
@@ -285,13 +294,7 @@ export const TestingScreen = () => {
       </Box>
 
       {showCancelConfirmation ? (
-        <Box
-          flexDirection="column"
-          marginTop={1}
-          borderStyle="single"
-          borderColor={COLORS.YELLOW}
-          paddingX={1}
-        >
+        <RuledBox color={COLORS.YELLOW} marginTop={1}>
           <Text color={COLORS.YELLOW} bold>
             Stop this browser run?
           </Text>
@@ -301,7 +304,7 @@ export const TestingScreen = () => {
             to stop, or <Text color={COLORS.PRIMARY}>Esc</Text> or{" "}
             <Text color={COLORS.PRIMARY}>n</Text> to keep it running.
           </Text>
-        </Box>
+        </RuledBox>
       ) : null}
 
       {running && !showCancelConfirmation ? (
@@ -327,11 +330,8 @@ export const TestingScreen = () => {
         </Box>
       ) : null}
 
-      {screenshotPaths.map((screenshotPath) => (
-        <Image key={screenshotPath} src={screenshotPath} alt={`Screenshot: ${screenshotPath}`} />
-      ))}
-
       <ErrorMessage message={error ? `Error: ${error}` : null} />
     </Box>
+    </>
   );
 };

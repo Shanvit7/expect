@@ -4,6 +4,7 @@ import { Input } from "../ui/input.js";
 import { useColors } from "../theme-context.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
 import { Clickable } from "../ui/clickable.js";
+import { RuledBox } from "../ui/ruled-box.js";
 import { Collapsible } from "../ui/collapsible.js";
 import { FileLink } from "../ui/file-link.js";
 import { ContextPicker } from "../ui/context-picker.js";
@@ -77,7 +78,7 @@ const StepPreview = ({ step, stepNumber, totalSteps }: StepPreviewProps) => {
   const COLORS = useColors();
 
   return (
-    <Box flexDirection="column" borderStyle="single" borderColor={COLORS.BORDER} paddingX={1}>
+    <RuledBox color={COLORS.BORDER}>
       <Text color={COLORS.PRIMARY} bold>
         STEP {stepNumber}/{totalSteps} │ {step.title}
       </Text>
@@ -89,7 +90,7 @@ const StepPreview = ({ step, stepNumber, totalSteps }: StepPreviewProps) => {
         {"EXPECTED  "}
         <Text color={COLORS.GREEN}>{step.expectedOutcome}</Text>
       </Text>
-    </Box>
+    </RuledBox>
   );
 };
 
@@ -455,14 +456,9 @@ export const PlanReviewScreen = () => {
       <Box flexDirection="column">
         <Text color={COLORS.DIM}>{selectedContext?.label ?? flowInstruction}</Text>
         <Clickable onClick={() => setTopFocus("input")}>
-          <Box
-            width="100%"
-            borderStyle="single"
-            borderColor={inputFocused ? COLORS.PRIMARY : COLORS.BORDER}
-            paddingX={1}
-          >
+          <RuledBox color={inputFocused ? COLORS.PRIMARY : COLORS.BORDER}>
             {inputFocused ? (
-              <>
+              <Box>
                 <Text color={COLORS.PRIMARY}>{"❯ "}</Text>
                 <Input
                   focus={inputFocused && !pickerOpen}
@@ -471,11 +467,11 @@ export const PlanReviewScreen = () => {
                   onSubmit={handleInputSubmit}
                   onChange={handleInputChange}
                 />
-              </>
+              </Box>
             ) : (
               <Text color={COLORS.DIM}>{flowInstruction}</Text>
             )}
-          </Box>
+          </RuledBox>
         </Clickable>
         {pickerOpen ? (
           <Box flexDirection="column">
@@ -503,7 +499,7 @@ export const PlanReviewScreen = () => {
       </Box>
 
       {resubmitConfirmVisible ? (
-        <Box marginTop={1} borderStyle="single" borderColor={COLORS.YELLOW} paddingX={1}>
+        <RuledBox color={COLORS.YELLOW} marginTop={1}>
           <Text color={COLORS.YELLOW} bold>
             Re-generate plan with new description?
           </Text>
@@ -512,17 +508,11 @@ export const PlanReviewScreen = () => {
             Press <Text color={COLORS.PRIMARY}>y</Text> to submit or{" "}
             <Text color={COLORS.PRIMARY}>n</Text> to cancel.
           </Text>
-        </Box>
+        </RuledBox>
       ) : null}
 
       {cookieSyncIsRequired ? (
-        <Box
-          flexDirection="column"
-          marginTop={1}
-          borderStyle="single"
-          borderColor={cookieSyncNeedsAttention ? COLORS.RED : COLORS.YELLOW}
-          paddingX={1}
-        >
+        <RuledBox color={cookieSyncNeedsAttention ? COLORS.RED : COLORS.YELLOW} marginTop={1}>
           <Text color={cookieSyncNeedsAttention ? COLORS.RED : COLORS.YELLOW} bold>
             {cookieSyncNeedsAttention
               ? "Cookie sync is required and currently off."
@@ -541,7 +531,7 @@ export const PlanReviewScreen = () => {
               Press <Text color={COLORS.PRIMARY}>c</Text> to turn cookie sync on before approving.
             </Text>
           ) : null}
-        </Box>
+        </RuledBox>
       ) : null}
 
       <Box flexDirection="column" marginTop={1}>
@@ -710,13 +700,7 @@ export const PlanReviewScreen = () => {
       ) : null}
 
       {exitConfirmationVisible ? (
-        <Box
-          flexDirection="column"
-          marginTop={1}
-          borderStyle="single"
-          borderColor={COLORS.YELLOW}
-          paddingX={1}
-        >
+        <RuledBox color={COLORS.YELLOW} marginTop={1}>
           <Text color={COLORS.YELLOW} bold>
             Leave plan review?
           </Text>
@@ -724,7 +708,7 @@ export const PlanReviewScreen = () => {
             You have not started this run yet. Press <Text color={COLORS.PRIMARY}>y</Text> to leave
             or <Text color={COLORS.PRIMARY}>n</Text> to stay here.
           </Text>
-        </Box>
+        </RuledBox>
       ) : null}
     </Box>
   );

@@ -4,6 +4,7 @@ import figures from "figures";
 import { Spinner } from "../ui/spinner.js";
 import { TextShimmer } from "../ui/text-shimmer.js";
 import { useColors } from "../theme-context.js";
+import { RuledBox } from "../ui/ruled-box.js";
 import { useAppStore } from "../../store.js";
 import { formatElapsedTime } from "../../utils/format-elapsed-time.js";
 import { TESTING_TIMER_UPDATE_INTERVAL_MS } from "../../constants.js";
@@ -26,9 +27,9 @@ export const PlanningScreen = () => {
     <Box flexDirection="column" width="100%" paddingX={1} paddingY={1}>
       <Box flexDirection="column">
         <Text color={COLORS.DIM}>{selectedContext?.label ?? flowInstruction}</Text>
-        <Box borderStyle="single" borderColor={COLORS.BORDER} paddingX={1}>
+        <RuledBox color={COLORS.BORDER}>
           <Text color={COLORS.DIM}>{flowInstruction}</Text>
-        </Box>
+        </RuledBox>
       </Box>
 
       <Box marginTop={1}>

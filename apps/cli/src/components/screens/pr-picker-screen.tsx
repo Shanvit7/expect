@@ -10,6 +10,7 @@ import {
   TABLE_COLUMN_GAP,
 } from "../../constants.js";
 import { useColors } from "../theme-context.js";
+import { RuledBox } from "../ui/ruled-box.js";
 import { stripMouseSequences } from "../../hooks/mouse-context.js";
 import { Clickable } from "../ui/clickable.js";
 import { SearchBar } from "../ui/search-bar.js";
@@ -261,13 +262,7 @@ export const PrPickerScreen = () => {
       ) : null}
 
       {confirmBranch ? (
-        <Box
-          marginTop={1}
-          flexDirection="column"
-          borderStyle="single"
-          borderColor={COLORS.YELLOW}
-          paddingX={1}
-        >
+        <RuledBox color={COLORS.YELLOW} marginTop={1}>
           <Text color={COLORS.YELLOW} bold>
             Switching to {confirmBranch.name} will discard the current plan. A new plan will need to
             be generated.
@@ -276,7 +271,7 @@ export const PrPickerScreen = () => {
             Press <Text color={COLORS.PRIMARY}>y</Text> to continue or{" "}
             <Text color={COLORS.PRIMARY}>n</Text> to cancel.
           </Text>
-        </Box>
+        </RuledBox>
       ) : null}
 
       <SearchBar isSearching={isSearching} query={searchQuery} onChange={handleSearchChange} />
