@@ -6,10 +6,10 @@
     "dist"
   ],
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.mjs",
   "exports": {
-    ".": "./dist/index.js",
-    "./start": "./dist/start.js"
+    ".": "./dist/index.mjs",
+    "./start": "./dist/start.mjs"
   },
   "scripts": {
     "build": "vp pack",
