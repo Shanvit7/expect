@@ -93,7 +93,7 @@ export const PlanningScreen = () => {
         </Text>
       </Box>
 
-      <Box paddingX={1}>
+      <Box paddingX={1} marginTop={1}>
         <Text>
           {Array.from({ length: columns - 2 }, (_, index) => {
             const progress = (stageIndex + 1) / PLANNING_STAGES.length;
