@@ -130,7 +130,7 @@ export const deriveTestingState = (
             includeRelevantInputs: toolCallDisplayMode === TOOL_CALL_DETAILED,
           });
           if (formatted) {
-            currentToolCallText = formatted;
+            currentToolCallText = `${formatted} ${event.input}`;
           }
         }
         break;
