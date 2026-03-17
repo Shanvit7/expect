@@ -5,6 +5,9 @@ export default defineConfig({
     entry: ["src/index.ts"],
     format: ["esm"],
     dts: true,
+    deps: {
+      neverBundle: ["@anthropic-ai/claude-agent-sdk"],
+    },
     sourcemap: true,
   },
   test: {

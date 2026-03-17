@@ -26,6 +26,7 @@ export const buildBrowserMcpServerEnv = (options: {
 const buildBrowserTesterMcpServerConfig = (
   serverEnv: Record<string, string> | undefined,
 ): McpServerConfig => ({
+  type: "stdio",
   command: process.execPath,
   args: [getBrowserMcpEntrypoint()],
   ...(serverEnv ? { env: serverEnv } : {}),
@@ -46,16 +47,16 @@ export const buildBrowserMcpSettings = (options: {
   const resolvedBrowserServerConfig = buildBrowserTesterMcpServerConfig(serverEnv);
 
   return {
-    ...(options.providerSettings ?? {}),
+    ...options.providerSettings,
     mcpServers: {
       [browserMcpServerName]: {
-        ...(existingBrowserServerConfig ?? {}),
+        ...existingBrowserServerConfig,
         ...resolvedBrowserServerConfig,
         ...(existingBrowserServerConfig?.env || resolvedBrowserServerConfig.env
           ? {
               env: {
-                ...(existingBrowserServerConfig?.env ?? {}),
-                ...(resolvedBrowserServerConfig.env ?? {}),
+                ...existingBrowserServerConfig?.env,
+                ...resolvedBrowserServerConfig.env,
               },
             }
           : {}),

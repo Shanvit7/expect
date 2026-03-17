@@ -9,6 +9,7 @@ import { FileLink } from "../ui/file-link.js";
 import { ContextPicker } from "../ui/context-picker.js";
 import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions.js";
 import { saveFlow } from "../../utils/flow-storage.js";
+import { CliRuntime } from "../../runtime.js";
 import { useAppStore } from "../../store.js";
 import { ErrorMessage } from "../ui/error-message.js";
 import {
@@ -302,11 +303,13 @@ export const PlanReviewScreen = () => {
       setSaveError(null);
       setSavedPaths(null);
       setSaving(true);
-      void saveFlow({
-        target: resolvedTarget,
-        plan,
-        environment: environment ?? {},
-      })
+      void CliRuntime.runPromise(
+        saveFlow({
+          target: resolvedTarget,
+          plan,
+          environment: environment ?? {},
+        }),
+      )
         .then((result) => {
           setSavedPaths({
             flowPath: result.flowPath,

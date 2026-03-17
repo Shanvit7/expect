@@ -1,6 +1,5 @@
 import * as fs from "node:fs";
 import { createRequire } from "node:module";
-import * as nodeOs from "node:os";
 import path from "node:path";
 import type {
   LanguageModelV3,
@@ -27,12 +26,32 @@ import type { AgentProviderSettings } from "./types.js";
 import { buildClaudeProcessEnv } from "./utils/build-claude-process-env.js";
 
 const DEFAULT_CLAUDE_MAX_TURNS = 200;
-const AGENT_LOG_DIRECTORY = path.join(nodeOs.tmpdir(), "browser-tester-agent-logs");
+const AGENT_TRACES_DIRECTORY_NAME = ".testie-agent-traces";
 
-const createAgentDebugLogPath = (): string => {
-  fs.mkdirSync(AGENT_LOG_DIRECTORY, { recursive: true });
+const createAgentDebugLogPath = (cwd?: string): string => {
+  const baseDirectory = ensureSafeCurrentWorkingDirectory(cwd);
+  const tracesDirectory = path.join(baseDirectory, AGENT_TRACES_DIRECTORY_NAME);
+  fs.mkdirSync(tracesDirectory, { recursive: true });
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  return path.join(AGENT_LOG_DIRECTORY, `${timestamp}.log`);
+  return path.join(tracesDirectory, `${timestamp}.log`);
+};
+
+const assertNoDebugLogErrors = (debugLogPath: string) => {
+  let content: string;
+  try {
+    content = fs.readFileSync(debugLogPath, "utf-8");
+  } catch {
+    return;
+  }
+  const uniqueErrors = new Set<string>();
+  for (const line of content.split("\n")) {
+    if (line.includes("[ERROR]")) {
+      uniqueErrors.add(line.replace(/^\S+\s+\[ERROR\]\s*/, ""));
+    }
+  }
+  if (uniqueErrors.size > 0) {
+    throw new Error([...uniqueErrors].join("\n"));
+  }
 };
 
 const resolveClaudeExecutablePath = (): string | undefined => {
@@ -61,9 +80,10 @@ const runGenerate = Effect.fn("ClaudeAgent.generate")(function* (
   yield* Effect.tryPromise({
     try: async () => {
       const query = await loadClaudeQuery(settings.cwd);
+      const queryOptions = buildQueryOptions(settings, abortController, systemPrompt);
       for await (const event of query({
         prompt: userPrompt,
-        options: buildQueryOptions(settings, abortController, systemPrompt),
+        options: queryOptions,
       })) {
         sessionId = extractSessionId(event) ?? sessionId;
         if (event.type === "assistant")
@@ -74,6 +94,7 @@ const runGenerate = Effect.fn("ClaudeAgent.generate")(function* (
           finalResultText = event.result;
         }
       }
+      assertNoDebugLogErrors(queryOptions.debugFile);
     },
     catch: (cause) => new ClaudeQueryError({ cause: String(cause) }),
   });
@@ -116,6 +137,26 @@ const runStream = Effect.fn("ClaudeAgent.stream")(function* (
   const stream = buildAgentStream(
     async (controller) => {
       const query = await loadClaudeQuery(settings.cwd);
+      const queryOptions = buildQueryOptions(settings, abortController, systemPrompt);
+      fs.writeFileSync(
+        path.join(
+          ensureSafeCurrentWorkingDirectory(settings.cwd),
+          AGENT_TRACES_DIRECTORY_NAME,
+          "_debug-query-options.json",
+        ),
+        JSON.stringify(
+          {
+            timestamp: new Date().toISOString(),
+            permissionMode: queryOptions.permissionMode,
+            allowDangerouslySkipPermissions: queryOptions.allowDangerouslySkipPermissions,
+            model: queryOptions.model,
+            mcpServers: queryOptions.mcpServers ?? "NOT SET",
+            debugFile: queryOptions.debugFile,
+          },
+          undefined,
+          2,
+        ),
+      );
       let sessionId: string | undefined;
       let blockCounter = 0;
 
@@ -123,7 +164,7 @@ const runStream = Effect.fn("ClaudeAgent.stream")(function* (
 
       for await (const event of query({
         prompt: userPrompt,
-        options: buildQueryOptions(settings, abortController, systemPrompt),
+        options: queryOptions,
       })) {
         const eventSessionId = extractSessionId(event);
         if (eventSessionId) {
@@ -142,6 +183,8 @@ const runStream = Effect.fn("ClaudeAgent.stream")(function* (
         if (event.type === "user" && Array.isArray(event.message.content))
           emitToolResultParts(event.message.content, controller);
       }
+
+      assertNoDebugLogErrors(queryOptions.debugFile);
 
       controller.enqueue({
         type: "finish",
@@ -184,18 +227,19 @@ const buildQueryOptions = (
   systemPrompt: string,
 ) => {
   const resolvedModel = settings.model ?? "claude-opus-4-6";
+  const resolvedPermissionMode = settings.permissionMode ?? "bypassPermissions";
   const supportsEffort = !resolvedModel.toLowerCase().includes("sonnet");
   const explicitExecutablePath = resolveClaudeExecutablePath();
   const env = buildClaudeProcessEnv(settings.env);
-  const debugLogPath = settings.debugLogPath ?? createAgentDebugLogPath();
+  const debugLogPath = settings.debugLogPath ?? createAgentDebugLogPath(settings.cwd);
 
   return {
     model: resolvedModel,
     maxTurns: settings.maxTurns ?? DEFAULT_CLAUDE_MAX_TURNS,
     cwd: ensureSafeCurrentWorkingDirectory(settings.cwd),
     allowDangerouslySkipPermissions:
-      settings.permissionMode === "bypassPermissions" ? true : undefined,
-    permissionMode: settings.permissionMode ?? "bypassPermissions",
+      resolvedPermissionMode === "bypassPermissions" ? true : undefined,
+    permissionMode: resolvedPermissionMode,
     abortController,
     debugFile: debugLogPath,
     ...(settings.effort && supportsEffort ? { effort: settings.effort } : {}),
