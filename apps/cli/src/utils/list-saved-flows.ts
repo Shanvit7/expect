@@ -1,7 +1,8 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import type { TestTarget } from "@browser-tester/supervisor";
-import { FLOW_DIRECTORY_INDEX_FILE_NAME, FLOW_DIRECTORY_NAME } from "../constants.js";
+import { FLOW_DIRECTORY_INDEX_FILE_NAME } from "../constants.js";
+import { getSavedFlowDirectoryPath } from "./get-saved-flow-directory-path.js";
 import { parseSavedFlowFile } from "./saved-flow-file.js";
 
 export interface SavedFlowSummary {
@@ -34,7 +35,7 @@ const parseSavedFlowSummary = (
 };
 
 export const listSavedFlows = async (cwd: string = process.cwd()): Promise<SavedFlowSummary[]> => {
-  const flowDirectoryPath = join(cwd, FLOW_DIRECTORY_NAME);
+  const flowDirectoryPath = getSavedFlowDirectoryPath(cwd);
 
   let flowFileNames: string[];
   try {

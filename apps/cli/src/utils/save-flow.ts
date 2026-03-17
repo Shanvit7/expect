@@ -8,9 +8,9 @@ import type {
 import {
   FLOW_DESCRIPTION_CHAR_LIMIT,
   FLOW_DIRECTORY_INDEX_FILE_NAME,
-  FLOW_DIRECTORY_NAME,
   SAVED_FLOW_FORMAT_VERSION,
 } from "../constants.js";
+import { getSavedFlowDirectoryPath } from "./get-saved-flow-directory-path.js";
 import { slugify } from "./slugify.js";
 import { formatSavedFlowFrontmatter } from "./saved-flow-file.js";
 import { syncSavedFlowDirectory } from "./sync-saved-flow-directory.js";
@@ -118,7 +118,7 @@ const formatFlowFileContent = (
 export const saveFlow = async (options: SaveFlowOptions): Promise<SaveFlowResult> => {
   const slug = slugify(options.plan.title);
   const description = createFlowDescription(options.plan);
-  const flowDirectoryPath = join(options.target.cwd, FLOW_DIRECTORY_NAME);
+  const flowDirectoryPath = getSavedFlowDirectoryPath(options.target.cwd);
   const flowFilePath = join(flowDirectoryPath, `${slug}.md`);
 
   await mkdir(flowDirectoryPath, { recursive: true });
@@ -126,8 +126,8 @@ export const saveFlow = async (options: SaveFlowOptions): Promise<SaveFlowResult
   await syncSavedFlowDirectory(flowDirectoryPath);
 
   return {
-    flowPath: join(FLOW_DIRECTORY_NAME, `${slug}.md`),
-    directoryPath: join(FLOW_DIRECTORY_NAME, FLOW_DIRECTORY_INDEX_FILE_NAME),
+    flowPath: flowFilePath,
+    directoryPath: join(flowDirectoryPath, FLOW_DIRECTORY_INDEX_FILE_NAME),
     slug,
   };
 };
