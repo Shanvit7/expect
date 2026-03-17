@@ -140,7 +140,8 @@ export const ResultsScreen = () => {
     }
 
     if (normalizedInput === "v" && latestRunReport) {
-      const videoPath = latestRunReport.artifacts.redactedVideoPath ?? latestRunReport.artifacts.rawVideoPath;
+      const videoPath =
+        latestRunReport.artifacts.redactedVideoPath ?? latestRunReport.artifacts.rawVideoPath;
       if (videoPath) openLocalFile(videoPath);
       return;
     }

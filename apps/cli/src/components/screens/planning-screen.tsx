@@ -100,7 +100,8 @@ export const PlanningScreen = () => {
 
       <Box paddingX={1} marginTop={1}>
         <Text color={COLORS.BORDER}>
-          {"TIP "}<Text color={COLORS.DIM}>{TIPS[tipIndex]}</Text>
+          {"TIP "}
+          <Text color={COLORS.DIM}>{TIPS[tipIndex]}</Text>
         </Text>
       </Box>
     </Box>
