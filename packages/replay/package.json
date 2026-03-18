@@ -23,6 +23,9 @@
     "build": "pnpm build:runtime && vp pack",
     "dev": "vp pack --watch",
     "lint": "vp lint && tsc --noEmit",
+    "format": "vp fmt",
+    "format:check": "vp fmt --check",
+    "check": "vp check",
     "test": "vp test run",
     "test:watch": "vp test"
   },

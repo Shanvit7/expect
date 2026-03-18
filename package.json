@@ -5,12 +5,12 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "vp lint",
-    "lint:fix": "vp lint --fix",
-    "format": "vp fmt",
-    "format:check": "vp fmt --check",
-    "check": "vp check",
-    "test": "vp test",
+    "lint": "turbo lint",
+    "lint:fix": "turbo lint --fix",
+    "format": "turbo format",
+    "format:check": "turbo format --check",
+    "check": "turbo check",
+    "test": "turbo test",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish"

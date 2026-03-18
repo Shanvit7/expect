@@ -10,6 +10,22 @@
       "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "outputs": ["*.ts"]
+    },
+    "format": {
+      "dependsOn": ["^format"],
+      "outputs": ["*.ts"]
+    },
+    "check": {
+      "dependsOn": ["^check"],
+      "outputs": ["*.ts"]
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "outputs": ["*.ts"]
     }
   }
 }

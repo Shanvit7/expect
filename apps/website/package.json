@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "vp lint"
+    "lint": "vp lint",
+    "format": "vp fmt",
+    "format:check": "vp fmt --check",
+    "check": "vp check",
+    "test": "vp test"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
