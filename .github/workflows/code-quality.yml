@@ -34,8 +34,8 @@ jobs:
         run: pnpm install --frozen-lockfile
         env:
           GITHUB_ACTIONS: "1"
-      # need to build before running typecheck to ensure all files are built
-      - name: Build 
+      - name: Build
+        if: matrix.name != 'Format'
         run: pnpm build
       - name: ${{ matrix.name }}
         run: ${{ matrix.command }}
