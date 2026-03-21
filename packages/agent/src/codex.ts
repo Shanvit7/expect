@@ -57,14 +57,18 @@ const runStream = Effect.fn("CodexAgent.stream")(function* (
   yield* Effect.annotateCurrentSpan({ model: "codex" });
   const { thread, input, userPrompt } = prepareRun(settings, options);
 
+  const streamedResult = yield* Effect.tryPromise({
+    try: () => thread.runStreamed(input, { signal: options.abortSignal }),
+    catch: (cause) => new CodexRunError({ cause: String(cause) }),
+  });
+
   const stream = buildAgentStream(
     async (controller) => {
       let sessionId: string | undefined;
 
       controller.enqueue({ type: "stream-start", warnings: [] });
-      const { events } = await thread.runStreamed(input, { signal: options.abortSignal });
 
-      for await (const event of events) {
+      for await (const event of streamedResult.events) {
         if (event.type === "thread.started") {
           sessionId = event.thread_id;
           controller.enqueue({
