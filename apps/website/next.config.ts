@@ -1,14 +1,7 @@
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
 import type { NextConfig } from "next";
 
-const currentDirectory = dirname(fileURLToPath(import.meta.url));
-
 const nextConfig: NextConfig = {
-  devIndicators: false,
-  turbopack: {
-    root: resolve(currentDirectory, "../.."),
-  },
+  allowedDevOrigins: ["bens-macbook-pro.tail36228.ts.net"],
 };
 
 export default nextConfig;

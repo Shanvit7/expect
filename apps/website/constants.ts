@@ -1,5 +1,0 @@
-export const COPY_FEEDBACK_DURATION_MS = 2000;
-
-export const DEMO_CHAR_INTERVAL_MS = 40;
-export const DEMO_LINE_PAUSE_MS = 600;
-export const DEMO_PROMPT_PAUSE_MS = 1200;
