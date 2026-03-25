@@ -45,6 +45,12 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.80.7
         version: 5.90.21(react@19.2.4)
+      '@zed-industries/claude-agent-acp':
+        specifier: ^0.22.2
+        version: 0.22.2
+      '@zed-industries/codex-acp':
+        specifier: ^0.10.0
+        version: 0.10.0
       cli-truncate:
         specifier: ^5.2.0
         version: 5.2.0
