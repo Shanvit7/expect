@@ -20,7 +20,7 @@ npx -y expect-cli@latest init
 ## Usage
 
 ```
-Usage: expect [options] [command]
+Usage: expect-cli [options] [command]
 
 Options:
   -m, --message <instruction>   natural language instruction for what to test
@@ -36,10 +36,10 @@ Commands:
   init                          install expect globally and set up skill
 
 Examples:
-  $ expect                                          open interactive TUI
-  $ expect -m "test the login flow" -y              plan and run immediately
-  $ expect --target branch                          test all branch changes
-  $ expect --target unstaged                        test unstaged changes
+  $ expect-cli                                          open interactive TUI
+  $ expect-cli -m "test the login flow" -y              plan and run immediately
+  $ expect-cli --target branch                          test all branch changes
+  $ expect-cli --target unstaged                        test unstaged changes
 ```
 
 ## Resources & Contributing Back
