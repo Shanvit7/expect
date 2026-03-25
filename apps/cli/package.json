@@ -53,6 +53,8 @@
   "dependencies": {
     "@effect/atom-react": "4.0.0-beta.35",
     "@effect/platform-node": "4.0.0-beta.35",
+    "@expect/shared": "workspace:*",
+    "@expect/supervisor": "workspace:*",
     "@tanstack/react-query": "^5.80.7",
     "cli-truncate": "^5.2.0",
     "commander": "^13.1.0",
@@ -67,9 +69,7 @@
     "string-width": "^8.2.0",
     "supports-terminal-graphics": "^0.1.0",
     "zod": "^4.3.6",
-    "zustand": "^5.0.11",
-    "@expect/shared": "workspace:*",
-    "@expect/supervisor": "workspace:*"
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

@@ -157,7 +157,16 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
       triggerCreatePlan(Atom.Interrupt);
       setPlanningStatus("");
     };
-  }, [existingPlan, triggerCreatePlan, triggerExecute, agentBackend, changesFor, skipPlanning, instruction, setScreen]);
+  }, [
+    existingPlan,
+    triggerCreatePlan,
+    triggerExecute,
+    agentBackend,
+    changesFor,
+    skipPlanning,
+    instruction,
+    setScreen,
+  ]);
 
   const goToMain = () => {
     usePlanStore.getState().setPlan(undefined);
@@ -194,7 +203,17 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
     if (awaitingApproval) {
       if (key.return || normalizedInput === "y") {
         usePlanStore.getState().setPlan(Plan.plan(testPlan!));
-        setScreen(Screen.CookieSyncConfirm({ plan: testPlan! }));
+        if (testPlan!.requiresCookies) {
+          setScreen(Screen.CookieSyncConfirm({ plan: testPlan! }));
+        } else {
+          setScreen(
+            Screen.Testing({
+              changesFor: testPlan!.changesFor,
+              instruction: testPlan!.instruction,
+              existingPlan: testPlan!,
+            }),
+          );
+        }
         return;
       }
       if (key.escape || normalizedInput === "n") {

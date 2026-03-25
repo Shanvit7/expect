@@ -197,7 +197,17 @@ export const PlanReviewScreen = ({ plan }: PlanReviewScreenProps) => {
 
       if (input === "a" || key.return) {
         usePlanStore.getState().setPlan(Plan.plan(plan));
-        setScreen(Screen.CookieSyncConfirm({ plan }));
+        if (plan.requiresCookies) {
+          setScreen(Screen.CookieSyncConfirm({ plan }));
+        } else {
+          setScreen(
+            Screen.Testing({
+              changesFor: plan.changesFor,
+              instruction: plan.instruction,
+              existingPlan: plan,
+            }),
+          );
+        }
       }
     },
     {

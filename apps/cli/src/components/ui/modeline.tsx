@@ -66,7 +66,17 @@ const useHintSegments = (screen: Screen): HintSegment[] => {
           cta: true,
           onClick: () => {
             usePlanStore.getState().setPlan(Plan.plan(screen.plan));
-            setScreen(Screen.CookieSyncConfirm({ plan: screen.plan }));
+            if (screen.plan.requiresCookies) {
+              setScreen(Screen.CookieSyncConfirm({ plan: screen.plan }));
+            } else {
+              setScreen(
+                Screen.Testing({
+                  changesFor: screen.plan.changesFor,
+                  instruction: screen.plan.instruction,
+                  existingPlan: screen.plan,
+                }),
+              );
+            }
           },
         },
       ];
