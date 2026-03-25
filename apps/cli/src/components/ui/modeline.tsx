@@ -154,8 +154,8 @@ export const Modeline = () => {
       {screen._tag === "Testing" ? (
         <TextShimmer
           text={"─".repeat(columns)}
-          baseColor={theme.border}
-          highlightColor={theme.primary}
+          baseColor={theme.shimmerBase}
+          highlightColor={theme.shimmerHighlight}
           speed={3}
         />
       ) : (

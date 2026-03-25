@@ -13,18 +13,20 @@ export interface Colors {
 }
 
 export const theme = {
-  primary: "#ffffff",
+  primary: "white",
   secondary: "gray",
-  accent: "#ffffff",
+  accent: "white",
   error: "red",
   warning: "yellow",
   success: "green",
   info: "gray",
-  text: "#ffffff",
-  textMuted: "#808080",
-  border: "#808080",
-  borderActive: "#ffffff",
-  borderSubtle: "#555555",
+  text: "white",
+  textMuted: "gray",
+  border: "gray",
+  borderActive: "white",
+  borderSubtle: "blackBright",
+  shimmerBase: "#555555",
+  shimmerHighlight: "#ffffff",
 };
 
 export const COLORS: Colors = {

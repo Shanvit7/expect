@@ -14,7 +14,7 @@ import {
   type ExecutedTestPlan,
 } from "@expect/shared/models";
 import { TESTING_TIMER_UPDATE_INTERVAL_MS, TESTING_TOOL_TEXT_CHAR_LIMIT } from "../../constants";
-import { useColors } from "../theme-context";
+import { useColors, theme } from "../theme-context";
 import { RuledBox } from "../ui/ruled-box";
 import { Spinner } from "../ui/spinner";
 import { TextShimmer } from "../ui/text-shimmer";
@@ -234,8 +234,8 @@ export const TestingScreen = ({ changesFor, instruction, savedFlow }: TestingScr
                       text={`${stepPrefix} ${step.title} ${formatElapsedTime(
                         Math.round(elapsedTimeMs),
                       )}`}
-                      baseColor={COLORS.SELECTION}
-                      highlightColor={COLORS.PRIMARY}
+                      baseColor={theme.shimmerBase}
+                      highlightColor={theme.shimmerHighlight}
                     />
                   </Box>
                 )}
@@ -268,8 +268,8 @@ export const TestingScreen = ({ changesFor, instruction, savedFlow }: TestingScr
           <Box marginTop={1} paddingX={1} flexDirection="column">
             <TextShimmer
               text={`${runStatusLabel}${figures.ellipsis} ${elapsedTimeLabel}`}
-              baseColor={COLORS.DIM}
-              highlightColor={COLORS.PRIMARY}
+              baseColor={theme.shimmerBase}
+              highlightColor={theme.shimmerHighlight}
             />
           </Box>
         )}
