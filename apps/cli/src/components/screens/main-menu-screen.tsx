@@ -13,7 +13,6 @@ import { RuledBox } from "../ui/ruled-box";
 import { ErrorMessage } from "../ui/error-message";
 import { ContextPicker } from "../ui/context-picker";
 import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions";
-import { DotField } from "../ui/dot-field";
 import { useContextPicker } from "../../hooks/use-context-picker";
 import { getFlowSuggestions } from "../../utils/get-flow-suggestions";
 import { getContextDisplayLabel, getContextDescription } from "../../utils/context-options";
@@ -180,7 +179,6 @@ export const MainMenu = ({ gitState }: MainMenuProps) => {
 
   return (
     <Box flexDirection="column" width="100%" paddingY={1}>
-      <DotField rows={3} dimColor="#1a1a1a" brightColor={COLORS.BORDER} />
       <Box marginBottom={1} paddingX={1}>
         <Text color={COLORS.BORDER}>
           <Text bold color={COLORS.TEXT}>
