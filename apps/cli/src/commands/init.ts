@@ -25,7 +25,9 @@ export const runInit = async (options: { yes?: boolean } = {}) => {
   const nonInteractive = detectNonInteractive(options.yes ?? false);
 
   logger.break();
-  logger.log(`  ${highlighter.info("expect")} ${highlighter.dim("— AI-powered browser testing")}`);
+  logger.log(
+    `  ${highlighter.info("expect-cli")} ${highlighter.dim("— AI-powered browser testing")}`,
+  );
   logger.break();
 
   const globalSpinner = spinner("Installing expect-cli globally...").start();
@@ -33,7 +35,7 @@ export const runInit = async (options: { yes?: boolean } = {}) => {
 
   if (globalSuccess) {
     globalSpinner.succeed(
-      `Installed! You can now run ${highlighter.info("expect")} from anywhere.`,
+      `Installed! You can now run ${highlighter.info("expect-cli")} from anywhere.`,
     );
   } else {
     globalSpinner.fail("Failed to install globally.");
@@ -48,7 +50,7 @@ export const runInit = async (options: { yes?: boolean } = {}) => {
     const response = await prompts({
       type: "confirm",
       name: "installSkill",
-      message: `Install the ${highlighter.info("expect")} skill for your coding agent?`,
+      message: `Install the ${highlighter.info("expect-cli")} skill for your coding agent?`,
       initial: true,
     });
     installSkill = response.installSkill;
@@ -68,6 +70,6 @@ export const runInit = async (options: { yes?: boolean } = {}) => {
 
   logger.break();
   logger.success("You're all set!");
-  logger.log(`  Run ${highlighter.info("expect")} in any project to start testing.`);
+  logger.log(`  Run ${highlighter.info("expect-cli")} in any project to start testing.`);
   logger.break();
 };

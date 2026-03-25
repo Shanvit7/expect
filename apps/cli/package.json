@@ -22,6 +22,7 @@
     "directory": "apps/cli"
   },
   "bin": {
+    "expect-cli": "./dist/index.js",
     "expect": "./dist/index.js",
     "expect-agent": "./dist/index.js",
     "testie": "./dist/index.js"
