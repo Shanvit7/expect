@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { readFileSync, realpathSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
+import type { Plugin } from "rolldown";
 import { defineConfig } from "vite-plus";
 import { reactCompilerPlugin } from "./react-compiler-plugin";
 
@@ -40,8 +41,8 @@ const distToSource = (distPath: string): string =>
     .replace(/\.mjs$/, ".ts")
     .replace(/\.d\.mts$/, ".ts");
 
-const resolveExpectSubpaths = (): Record<string, string> => {
-  const alias: Record<string, string> = {};
+const buildExpectSubpathMap = (): Record<string, string> => {
+  const map: Record<string, string> = {};
   const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
 
   for (const packageName of Object.keys(allDeps)) {
@@ -62,12 +63,22 @@ const resolveExpectSubpaths = (): Record<string, string> => {
       const specifier = `${packageName}/${subpath.slice(2)}`;
       const file = resolveExportFile(packageJson.exports[subpath]);
       if (file) {
-        alias[specifier] = join(realpathSync(packageDir), distToSource(file));
+        map[specifier] = join(realpathSync(packageDir), distToSource(file));
       }
     }
   }
 
-  return alias;
+  return map;
+};
+
+const expectSubpathPlugin = (): Plugin => {
+  const subpathMap = buildExpectSubpathMap();
+  return {
+    name: "expect-subpath-resolve",
+    resolveId(source) {
+      if (subpathMap[source]) return subpathMap[source];
+    },
+  };
 };
 
 export default defineConfig({
@@ -83,12 +94,11 @@ export default defineConfig({
     define: {
       __VERSION__: JSON.stringify(pkg.version),
     },
-    alias: resolveExpectSubpaths(),
     deps: {
       alwaysBundle: [/^@expect\//],
       neverBundle: ["playwright", "playwright-core", "chromium-bidi", "libsql", "ws", "undici"],
     },
     minify: true,
-    plugins: [reactCompilerPlugin()],
+    plugins: [expectSubpathPlugin(), reactCompilerPlugin()],
   },
 });
