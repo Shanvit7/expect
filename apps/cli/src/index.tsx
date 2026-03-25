@@ -174,7 +174,10 @@ program.action(async () => {
   if (hasDirectOptions) {
     await runInteractiveForTarget(target, opts);
   } else {
-    usePreferencesStore.setState({ browserHeaded: opts.headed ?? false });
+    usePreferencesStore.setState({
+      browserHeaded: opts.headed ?? false,
+      replayHost: opts.replayHost ?? "https://expect.dev",
+    });
     renderApp(opts.agent ?? "claude");
   }
 });

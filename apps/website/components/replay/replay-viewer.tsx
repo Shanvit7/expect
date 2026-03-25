@@ -57,8 +57,10 @@ const getReplayDuration = (replayEvents: eventWithTime[]) => {
 const formatPaperTime = (timeMs: number) => formatTime(timeMs).padStart(PAPER_TIME_LENGTH, "0");
 
 const getStepRelativeTime = (step: ViewerStepEvent, replayStartMs: number) => {
-  const startMs = step.startedAtMs !== undefined ? step.startedAtMs - replayStartMs : undefined;
-  const endMs = step.endedAtMs !== undefined ? step.endedAtMs - replayStartMs : undefined;
+  const startMs =
+    step.startedAtMs !== undefined ? Math.max(0, step.startedAtMs - replayStartMs) : undefined;
+  const endMs =
+    step.endedAtMs !== undefined ? Math.max(0, step.endedAtMs - replayStartMs) : undefined;
   return { startMs, endMs };
 };
 
