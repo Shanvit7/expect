@@ -15,6 +15,7 @@ export default defineConfig({
       alwaysBundle: [/^@expect\//],
       neverBundle: ["playwright", "playwright-core", "chromium-bidi", "libsql", "ws", "undici"],
     },
+    minify: true,
     plugins: [reactCompilerPlugin()],
   },
 });

@@ -15,6 +15,7 @@ import type { AgentBackend } from "@expect/agent";
 import figures from "figures";
 import { VERSION } from "../constants.js";
 import { layerCli } from "../layers.js";
+import { playSound } from "./play-sound.js";
 
 interface HeadlessRunOptions {
   changesFor: ChangesFor;
@@ -119,6 +120,7 @@ export const runHeadless = (options: HeadlessRunOptions) =>
     yield* analytics.flush;
 
     console.error(`\n${report.toPlainText}`);
+    yield* Effect.promise(() => playSound());
     process.exit(report.status === "passed" ? 0 : 1);
   }).pipe(
     Effect.provide(layerCli({ verbose: options.verbose, agent: options.agent })),

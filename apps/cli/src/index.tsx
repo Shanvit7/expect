@@ -18,6 +18,7 @@ import { setInkInstance } from "./utils/clear-ink-display.js";
 import { RegistryProvider } from "@effect/atom-react";
 import { agentProviderAtom } from "./data/runtime.js";
 import { flushSession, trackSessionStarted } from "./utils/session-analytics";
+import { playSound } from "./utils/play-sound.js";
 
 const DEFAULT_SKIP_PLANNING = true;
 
@@ -71,6 +72,7 @@ const renderApp = async (agent: AgentBackend, skipPlanning = DEFAULT_SKIP_PLANNI
   setInkInstance(instance);
   await instance.waitUntilExit();
   await flushSession(sessionStartedAt);
+  await playSound();
   process.exit(0);
 };
 

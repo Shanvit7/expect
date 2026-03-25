@@ -2,6 +2,133 @@
 
 How to make Expect native to a developer's workflow — not a separate step, but an embedded part of how code gets written, verified, and shipped.
 
+## Static Analysis Layer (oxc-parser)
+
+Core insight: many things Expect currently relies on an LLM to guess can be determined statically from the AST + import graph. This makes Expect faster, cheaper, and deterministic for the "which flows are affected?" question. The LLM still handles plan generation and adversarial reasoning — but the _targeting_ becomes precise.
+
+### Import Graph → Change Impact Map
+
+Parse the entire project with oxc. Build a full import graph. When a file changes, walk the graph upward to find every route/page that transitively imports it.
+
+```
+Button.tsx changed
+  → imported by CheckoutForm.tsx
+    → imported by CheckoutPage.tsx
+      → route: /checkout
+        → run: checkout.plan.md
+```
+
+This is fully deterministic. No LLM needed to answer "which pages are affected by this diff." oxc can parse thousands of files in milliseconds.
+
+### Route Detection (Framework-Aware)
+
+Statically detect all routes in the app by framework:
+
+- **Next.js App Router**: glob `app/**/page.tsx`, parse the file tree into routes
+- **Next.js Pages Router**: glob `pages/**/*.tsx`, same
+- **React Router / Remix**: parse `createBrowserRouter()` / `Route` JSX to extract path patterns
+- **Vite + file-based**: follow the framework's routing convention
+- **Express / Hono / Fastify**: parse `app.get("/path", ...)` calls
+
+Output: a complete route map with zero config. Expect knows every URL in the app without crawling.
+
+### Form Detection
+
+Parse JSX AST for `<form>`, `<input>`, `<select>`, `<textarea>`, `<button type="submit">`. Extract:
+
+- Field names (`name` attribute)
+- Input types (email, password, number, file)
+- Validation attributes (required, pattern, min, max)
+- Submit handler (onSubmit)
+- Action endpoint (form action or fetch URL inside handler)
+
+Output: "The signup form at `/signup` has fields: email (required, email), password (required, minlength=8), name (text). Submits to POST /api/auth/register."
+
+Expect can generate targeted plans: "Fill email with invalid format, verify error. Fill password with 7 chars, verify error. Fill all valid, verify success."
+
+### API Call Extraction
+
+Find all `fetch()`, `axios.*()`, `$fetch()`, `useSWR()`, `useQuery()` calls. Extract:
+
+- URL pattern
+- HTTP method
+- Which component/page calls it
+- Request body shape (if inline object literal)
+
+Output: a map of every API call in the frontend. When a backend endpoint changes, Expect knows exactly which pages call it and what they expect.
+
+### Event Handler Inventory
+
+Find all `onClick`, `onSubmit`, `onChange`, `onKeyDown`, etc. in JSX. Map each to the component, the element type, and what the handler does (calls an API? navigates? updates state?).
+
+Output: "The 'Delete Account' button on `/settings` calls `DELETE /api/account` then navigates to `/`. This is a destructive action."
+
+Expect auto-generates adversarial plans: "Click Delete Account without confirmation. Click Delete Account with confirmation. Click Delete Account and interrupt the network request."
+
+### Link / Navigation Map
+
+Find all `<Link href="...">`, `<a href="...">`, `router.push(...)`, `redirect(...)`, `navigate(...)`. Build a directed graph of page-to-page navigation.
+
+Output: a sitemap derived from code, not crawling. Expect knows which pages link to which, and can detect orphaned routes (pages with no links pointing to them — likely bugs or dead code).
+
+### State Mutation Detection
+
+Find all state mutations: `useState` setters, Zustand actions, Redux dispatches, Effect atoms. Map which components can change which state. When state shapes change in a diff, trace which components render that state.
+
+Output: "You changed the shape of `useCartStore` — components that read from it: CartSidebar, CheckoutPage, CartBadge. All three need re-verification."
+
+### Environment Variable Usage
+
+Parse all `process.env.*`, `import.meta.env.*`, `Config.string(...)` calls. Know exactly which env vars the app depends on. When `.env` changes, Expect knows which code paths are affected.
+
+### Third-Party Service Detection
+
+Find imports of `stripe`, `@auth0/nextjs-auth0`, `@clerk/nextjs`, `posthog-js`, `@sentry/nextjs`, etc. Automatically understand: "This app uses Stripe for payments, Auth0 for auth, PostHog for analytics." Inform plan generation without the LLM having to guess from crawling.
+
+### Dead Code / Unreachable Route Detection
+
+Cross-reference the route map with the navigation map. Routes that exist but have no links/navigations pointing to them are suspicious. Routes that have links but don't exist are broken. Report both.
+
+### Deterministic Plan Targeting (The Big Payoff)
+
+Combine all of the above into a single flow:
+
+1. Developer changes `src/components/PriceDisplay.tsx`
+2. oxc parses the import graph in <100ms
+3. Impact map: `PriceDisplay` → used in `ProductCard`, `CartItem`, `CheckoutSummary`
+4. Route map: these components are on `/products/[id]`, `/cart`, `/checkout`
+5. Form map: `/checkout` has a form that submits to `POST /api/orders`
+6. API map: `CartItem` calls `PATCH /api/cart` on quantity change
+7. Expect generates a precise plan: test price display on product pages, cart, and checkout. Specifically verify the order total is correct after submission.
+
+The LLM only does step 7 (writing the adversarial plan). Steps 1-6 are fully deterministic, instant, and free.
+
+### `expect graph` — Visualize the Impact
+
+`expect graph` renders the import graph + route map + API map as an interactive visualization. Developer sees exactly how their app is wired. Useful for onboarding, architecture reviews, and understanding blast radius before making changes.
+
+### `expect coverage` — Static Coverage Analysis
+
+Without running anything, Expect can compare: "Your plans cover routes `/`, `/signup`, `/checkout`. Routes `/settings`, `/admin`, `/billing` have no plans." Coverage gaps identified statically. "You have 12 routes, plans cover 8. Here are the 4 uncovered routes."
+
+### Incremental Parsing
+
+oxc is fast enough to re-parse on every file save. The import graph stays hot in memory. When Expect watch mode detects a change, it doesn't re-analyze the whole project — it updates the affected subtree and instantly knows the new impact set.
+
+### Framework Plugin Architecture
+
+Each framework gets a small plugin that knows how to extract routes, data fetching, middleware, etc.:
+
+```
+expect-plugin-nextjs    → app router, pages router, API routes, middleware
+expect-plugin-remix     → loaders, actions, routes
+expect-plugin-vite      → file-based routing, plugins
+expect-plugin-express   → route handlers
+expect-plugin-astro     → pages, islands
+```
+
+The oxc parser is shared. Plugins add framework-specific semantics on top of the raw AST.
+
 ## Integration Points
 
 ### Git Subcommand — `git expect`
@@ -496,6 +623,8 @@ Expect reads `.env.test` or `.env.expect` for test user credentials. Developers 
 ### Package Manager postinstall Hook
 
 `npm install expect` adds a postinstall script that registers Expect's git hooks, creates the config file, and adds the MCP server entry. One `npm install` and the entire team has Expect configured. No manual setup steps.
+
+post installs frequrtly do not work :(
 
 ## Time-Based / Temporal Triggers
 
