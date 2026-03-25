@@ -256,6 +256,7 @@ const eventBuffer: eventWithTime[] = [];
 let stopFn: (() => void) | undefined;
 
 export const startRecording = (): void => {
+  if (stopFn) return;
   eventBuffer.length = 0;
   stopFn =
     record({
@@ -281,3 +282,5 @@ export const getAllEvents = (): eventWithTime[] => {
 export const getEventCount = (): number => {
   return eventBuffer.length;
 };
+
+startRecording();
