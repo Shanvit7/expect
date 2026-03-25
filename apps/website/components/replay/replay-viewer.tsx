@@ -14,7 +14,12 @@ const SPEEDS = [1, 2, 4, 8] as const;
 const TIMER_INTERVAL_MS = 100;
 const LIVE_EDGE_THRESHOLD_MS = 2000;
 const IDLE_THRESHOLD_MS = 1000;
-const IDLE_SPEED = 2;
+const IDLE_SPEED_TIERS = [
+  { afterMs: 0, speed: 2 },
+  { afterMs: 5000, speed: 4 },
+  { afterMs: 15000, speed: 8 },
+  { afterMs: 30000, speed: 16 },
+] as const;
 const CONTROL_BUTTON_SHADOW = [
   "color(display-p3 0 0 0 / 12%) 0px 0px 0px 1px",
   "color(display-p3 0.752 0.752 0.752 / 12%) 0px 2px 2px",
@@ -247,6 +252,18 @@ export const ReplayViewer = ({
   const setupIdleSpeedObserver = (cursorEl: HTMLElement) => {
     const idleThresholdTicks = Math.ceil(IDLE_THRESHOLD_MS / TIMER_INTERVAL_MS);
 
+    let currentIdleSpeed = 0;
+
+    const getIdleSpeed = (idleMs: number) => {
+      let speed = 0;
+      for (const tier of IDLE_SPEED_TIERS) {
+        if (idleMs >= tier.afterMs) {
+          speed = tier.speed;
+        }
+      }
+      return speed;
+    };
+
     const checkIdle = () => {
       const replayer = replayerRef.current;
       if (!replayer || liveRef.current) return;
@@ -259,12 +276,19 @@ export const ReplayViewer = ({
         lastCursorPosRef.current = pos;
       }
 
-      const shouldIdle = idleTicksRef.current >= idleThresholdTicks;
-      if (shouldIdle && !isIdleSpeedRef.current) {
-        isIdleSpeedRef.current = true;
-        replayer.setConfig({ speed: IDLE_SPEED });
-      } else if (!shouldIdle && isIdleSpeedRef.current) {
+      const idleMs = idleTicksRef.current * TIMER_INTERVAL_MS;
+      const shouldIdle = idleMs >= IDLE_THRESHOLD_MS;
+
+      if (shouldIdle) {
+        const targetSpeed = getIdleSpeed(idleMs - IDLE_THRESHOLD_MS);
+        if (!isIdleSpeedRef.current || targetSpeed !== currentIdleSpeed) {
+          isIdleSpeedRef.current = true;
+          currentIdleSpeed = targetSpeed;
+          replayer.setConfig({ speed: targetSpeed });
+        }
+      } else if (isIdleSpeedRef.current) {
         isIdleSpeedRef.current = false;
+        currentIdleSpeed = 0;
         replayer.setConfig({ speed: userSpeedRef.current });
       }
     };
