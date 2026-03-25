@@ -1,7 +1,7 @@
 "use client";
 
 import { Calligraph } from "calligraph";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { eventWithTime } from "@posthog/rrweb";
 import type { Replayer } from "@posthog/rrweb";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
@@ -44,6 +44,12 @@ const LIVE_PLAYBACK_PROGRESS_RIGHT_EDGE_HIDE_PERCENT = 99;
 const VIEWER_SHELL_SHADOW = "color(display-p3 0.788 0.788 0.788 / 20%) 0px 2px 3px";
 const CONTROL_FONT_FAMILY =
   '"SF Pro Display", "SFProDisplay-Medium", "Inter Variable", system-ui, sans-serif';
+const REPLAY_BACKDROP_STYLE = {
+  backgroundImage: "url('/replay-viewer-background.webp')",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
+  backgroundSize: "cover",
+} satisfies CSSProperties;
 const PAPER_TIME_LENGTH = 5;
 const LIVE_PLAYBACK_BAR_SURFACE_COLOR = "color(display-p3 0.938 0.938 0.938)";
 const LIVE_PLAYBACK_PROGRESS_BACKGROUND_IMAGE =
@@ -909,7 +915,8 @@ export const ReplayViewer = ({
         <div className="relative min-w-0 flex-1">
           <div
             ref={backdropRef}
-            className="absolute inset-0 bg-linear-to-br from-sky-200 to-blue-400 p-6"
+            className="absolute inset-0 p-6"
+            style={REPLAY_BACKDROP_STYLE}
           >
             <MacWindow>
               <div
