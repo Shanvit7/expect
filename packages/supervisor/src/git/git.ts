@@ -339,18 +339,21 @@ export class Git extends ServiceMap.Service<Git>()("@supervisor/Git", {
         });
       }
 
-      const currentBranch = yield* getCurrentBranch;
-      const mainBranch = yield* getMainBranch;
+      const [currentBranch, mainBranch, fingerprint, savedFingerprint] = yield* Effect.all(
+        [getCurrentBranch, getMainBranch, computeFingerprint(), loadSavedFingerprint()],
+        { concurrency: "unbounded" },
+      );
+
       const isOnMain = currentBranch === mainBranch;
-      const branchFileStats = yield* getFileStats(
-        ChangesFor.makeUnsafe({ _tag: "Changes", mainBranch }),
+
+      const [branchFileStats, workingTreeFileStats, recentCommits] = yield* Effect.all(
+        [
+          getFileStats(ChangesFor.makeUnsafe({ _tag: "Changes", mainBranch })),
+          getFileStats(ChangesFor.makeUnsafe({ _tag: "WorkingTree" })),
+          getRecentCommits(`${mainBranch}..HEAD`),
+        ],
+        { concurrency: "unbounded" },
       );
-      const workingTreeFileStats = yield* getFileStats(
-        ChangesFor.makeUnsafe({ _tag: "WorkingTree" }),
-      );
-      const recentCommits = yield* getRecentCommits(`${mainBranch}..HEAD`);
-      const fingerprint = yield* computeFingerprint();
-      const savedFingerprint = yield* loadSavedFingerprint();
 
       return new GitState({
         isGitRepo: true,

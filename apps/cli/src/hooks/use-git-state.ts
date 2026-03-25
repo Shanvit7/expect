@@ -1,6 +1,7 @@
 import { Effect, Exit } from "effect";
 import { useQuery } from "@tanstack/react-query";
 import { Git, GitState } from "@expect/supervisor";
+import { GIT_STATE_TIMEOUT_MS } from "../constants";
 
 export type { GitState };
 
@@ -29,11 +30,15 @@ export const useGitState = () =>
         }).pipe(
           Effect.provide(Git.withRepoRoot(process.cwd())),
           Effect.catchTag("FindRepoRootError", () => Effect.succeed(NON_GIT_STATE)),
+          Effect.timeoutOrElse({
+            duration: GIT_STATE_TIMEOUT_MS,
+            onTimeout: () => Effect.succeed(NON_GIT_STATE),
+          }),
         ),
       );
       if (Exit.isSuccess(exit)) {
         return exit.value;
       }
-      throw exit.cause;
+      return NON_GIT_STATE;
     },
   });

@@ -28,6 +28,8 @@ export const TEST_FILE_SCAN_LIMIT = 50;
 export const HEALTHCHECK_LINT_KEYWORDS = ["lint", "check", "format", "typecheck", "type-check"];
 export const HEALTHCHECK_SCRIPT_TIMEOUT_MS = 120_000;
 
+export const GIT_STATE_TIMEOUT_MS = 10_000;
+
 export const LOCK_FILE_TO_AGENT: Record<string, string> = {
   "pnpm-lock.yaml": "pnpm",
   "pnpm-workspace.yaml": "pnpm",

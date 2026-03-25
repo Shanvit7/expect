@@ -1759,7 +1759,7 @@ export default function Home() {
             href="https://github.com/millionco/expect"
             target="_blank"
             rel="noopener noreferrer"
-            className={`${restartHardRegular.className} w-fit h-4.5 [letter-spacing:0em] text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)] text-[13px]/4.5`}
+            className={`${restartHardRegular.className} w-fit h-4.5 [letter-spacing:0em] text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)] text-[13px]/4.5 hover:underline`}
             style={{ fontVariationSettings: '"CONN" 50, "wght" 400, "ital" 0' }}
           >
             GitHub
@@ -1769,7 +1769,7 @@ export default function Home() {
             href="https://x.com/aidenybai"
             target="_blank"
             rel="noopener noreferrer"
-            className={`${restartHardRegular.className} w-fit h-4.5 [letter-spacing:0em] text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)] text-[13px]/4.5`}
+            className={`${restartHardRegular.className} w-fit h-4.5 [letter-spacing:0em] text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)] text-[13px]/4.5 hover:underline`}
             style={{ fontVariationSettings: '"CONN" 50, "wght" 400, "ital" 0' }}
           >
             X
@@ -1781,7 +1781,7 @@ export default function Home() {
               href="https://github.com/millionco/expect"
               target="_blank"
               rel="noopener noreferrer"
-              className="tracking-[-0.01em] text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)] font-['ABC_Diatype',system-ui,sans-serif] text-[15px]/5"
+              className="tracking-[-0.01em] text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)] font-['ABC_Diatype',system-ui,sans-serif] text-[15px]/5 hover:underline"
             >
               GitHub
             </a>
@@ -1789,7 +1789,7 @@ export default function Home() {
               href="https://x.com/aidenybai"
               target="_blank"
               rel="noopener noreferrer"
-              className="tracking-[-0.01em] text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)] font-['ABC_Diatype',system-ui,sans-serif] text-[15px]/5"
+              className="tracking-[-0.01em] text-[color(display-p3_0.033_0.033_0.033)] dark:text-[color(display-p3_0.881_0.881_0.881)] font-['ABC_Diatype',system-ui,sans-serif] text-[15px]/5 hover:underline"
             >
               X
             </a>
