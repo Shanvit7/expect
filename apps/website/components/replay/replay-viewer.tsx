@@ -38,8 +38,9 @@ const LIVE_FAILED_STEP_MARKER_BACKGROUND_IMAGE =
   "linear-gradient(in oklab 180deg, oklab(63.6% 0.216 0.107) 0%, oklab(67.1% 0.194 0.096) 100%)";
 const LIVE_PLAYBACK_PROGRESS_SHADOW =
   "color(display-p3 0.615 0.615 0.615 / 20%) 0px 0px 3px";
-const LIVE_PLAYBACK_PROGRESS_RIGHT_BORDER =
-  "1px solid color(display-p3 0.725 0.725 0.725 / 80%)";
+const LIVE_PLAYBACK_PROGRESS_RIGHT_EDGE_SHADOW =
+  "inset -1px 0px 0px color(display-p3 0.725 0.725 0.725 / 80%)";
+const LIVE_PLAYBACK_PROGRESS_RIGHT_EDGE_HIDE_PERCENT = 99;
 const VIEWER_SHELL_SHADOW = "color(display-p3 0.788 0.788 0.788 / 20%) 0px 2px 3px";
 const CONTROL_FONT_FAMILY =
   '"SF Pro Display", "SFProDisplay-Medium", "Inter Variable", system-ui, sans-serif';
@@ -640,15 +641,22 @@ export const ReplayViewer = ({
   const playbackBarTrackClassName = playbackBarClientReady
     ? "group/playback-bar relative h-9.75 overflow-hidden rounded-full"
     : "relative h-9.75 overflow-hidden rounded-full";
+  const defaultPlaybackBarButtonClassName =
+    "transition-transform duration-150 ease-out disabled:opacity-40";
   const playbackBarButtonVisibilityClassName = live
     ? playbackBarClientReady
       ? "opacity-0 pointer-events-none transition-[opacity,transform] duration-150 ease-out group-hover/playback-bar:opacity-100 group-hover/playback-bar:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
-      : "opacity-0 pointer-events-none"
-    : "transition-transform duration-150 ease-out disabled:opacity-40";
+      : defaultPlaybackBarButtonClassName
+    : defaultPlaybackBarButtonClassName;
+  const playbackBarInputStep = playbackBarClientReady ? 1 : 100;
   const playbackBarMax = totalTime || 1;
   const playbackBarValue = Math.min(currentTime, playbackBarMax);
   const playbackBarProgressPercent = (playbackBarValue / playbackBarMax) * 100;
   const playbackBarProgress = playbackBarProgressPercent.toFixed(1);
+  const playbackBarFillShadow =
+    playbackBarProgressPercent >= LIVE_PLAYBACK_PROGRESS_RIGHT_EDGE_HIDE_PERCENT
+      ? LIVE_PLAYBACK_PROGRESS_SHADOW
+      : `${LIVE_PLAYBACK_PROGRESS_RIGHT_EDGE_SHADOW}, ${LIVE_PLAYBACK_PROGRESS_SHADOW}`;
 
   const activeStepIndex = getPlaybackStepIndex(steps?.steps, replayStartMs, currentTime);
   const currentStep = steps && activeStepIndex >= 0 ? steps.steps[activeStepIndex] : undefined;
@@ -817,7 +825,7 @@ export const ReplayViewer = ({
       value={playbackBarValue}
       min={0}
       max={playbackBarMax}
-      step={100}
+      step={playbackBarInputStep}
       disabled={!hasEvents}
       onChange={handleSeek}
       onPointerDown={handlePlaybackBarPointerDown}
@@ -1038,9 +1046,8 @@ export const ReplayViewer = ({
                   className={`pointer-events-none absolute inset-y-0 left-0 ${playbackBarFillClassName}`}
                   style={{
                     width: `${playbackBarProgress}%`,
-                    boxShadow: LIVE_PLAYBACK_PROGRESS_SHADOW,
+                    boxShadow: playbackBarFillShadow,
                     backgroundImage: LIVE_PLAYBACK_PROGRESS_BACKGROUND_IMAGE,
-                    borderRight: LIVE_PLAYBACK_PROGRESS_RIGHT_BORDER,
                   }}
                 />
               )}
