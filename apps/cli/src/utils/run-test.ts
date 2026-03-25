@@ -37,6 +37,7 @@ export const runHeadless = (options: HeadlessRunOptions) =>
         console.log("Starting browser test...");
 
         const runStartedAt = Date.now();
+        yield* analytics.capture("run:started", { plan_id: "direct" });
         const seenEvents = new Set<string>();
         const finalExecuted = yield* executor
           .execute({

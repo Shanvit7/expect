@@ -61,6 +61,8 @@ const execute = Effect.fnUntraced(
       liveViewUrl,
     };
 
+    yield* analytics.capture("run:started", { plan_id: "direct" });
+
     const finalExecuted = yield* executor.execute(executeOptions).pipe(
       Stream.tap((executed) =>
         Effect.gen(function* () {
@@ -136,5 +138,20 @@ const execute = Effect.fnUntraced(
 );
 
 export const executeFn = cliAtomRuntime.fn<ExecuteInput>()((input, ctx) =>
-  stripUndefinedRequirement(execute(input, ctx)).pipe(Effect.provide(NodeServices.layer)),
+  stripUndefinedRequirement(execute(input, ctx)).pipe(
+    Effect.tapErrorCause((cause) =>
+      Effect.gen(function* () {
+        const analytics = yield* Analytics;
+        const errorTag =
+          cause._tag === "Fail" && cause.error instanceof Error
+            ? cause.error.constructor.name
+            : cause._tag;
+        yield* analytics.capture("run:failed", {
+          plan_id: "direct",
+          error_tag: errorTag,
+        });
+      }).pipe(Effect.catchCause(() => Effect.void)),
+    ),
+    Effect.provide(NodeServices.layer),
+  ),
 );

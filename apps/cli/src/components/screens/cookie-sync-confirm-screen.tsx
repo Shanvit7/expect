@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import figures from "figures";
 import type { ChangesFor, SavedFlow } from "@expect/shared/models";
+import { trackEvent } from "../../utils/session-analytics";
 import { useColors } from "../theme-context";
 import { Clickable } from "../ui/clickable";
 import { Logo } from "../ui/logo";
@@ -43,6 +44,9 @@ export const CookieSyncConfirmScreen = ({
 
   const activateOption = (option: ConfirmOption) => {
     const requiresCookies = option.id === "enable-sync";
+    trackEvent("cookies:sync_choice", {
+      choice: requiresCookies ? "use_cookies" : "skip_cookies",
+    });
     setScreen(
       screenForTestingOrPortPicker({ changesFor, instruction, savedFlow, requiresCookies }),
     );

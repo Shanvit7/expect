@@ -12,6 +12,7 @@ import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions";
 import { useScrollableList } from "../../hooks/use-scrollable-list";
 import { useSavedFlows } from "../../hooks/use-saved-flows";
 import { useGitState } from "../../hooks/use-git-state";
+import { trackEvent } from "../../utils/session-analytics";
 import { ScreenHeading } from "../ui/screen-heading";
 import { Spinner } from "../ui/spinner";
 import { Clickable } from "../ui/clickable";
@@ -31,6 +32,8 @@ const selectFlow = (flow: SavedFlowFileData, mainBranch: string) => {
     steps,
   };
   const requiresCookies = flow.environment.cookies;
+
+  trackEvent("flow:reused", { slug: flow.slug, step_count: steps.length });
 
   useNavigationStore.getState().setScreen(
     screenForTestingOrPortPicker({

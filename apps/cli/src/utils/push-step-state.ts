@@ -7,9 +7,7 @@ const optionDateTimeToMs = (value: Option.Option<DateTime.DateTime>): number | u
 
 const deriveStatusFromSteps = (steps: ExecutedTestPlan["steps"]): ViewerRunState["status"] => {
   if (steps.length === 0) return "running";
-  const allDone = steps.every(
-    (step) => step.status === "passed" || step.status === "failed",
-  );
+  const allDone = steps.every((step) => step.status === "passed" || step.status === "failed");
   if (!allDone) return "running";
   const anyFailed = steps.some((step) => step.status === "failed");
   return anyFailed ? "failed" : "passed";

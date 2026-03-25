@@ -1,18 +1,33 @@
 import { Effect } from "effect";
-import { Analytics } from "@expect/shared/observability";
+import { Analytics, type EventMap } from "@expect/shared/observability";
 import { usePreferencesStore } from "../stores/use-preferences";
 
-export const trackSessionStarted = () =>
+const analyticsLayer = Analytics.layerPostHog;
+
+export const trackEvent = <K extends keyof EventMap>(
+  eventName: K,
+  ...[properties]: EventMap[K] extends undefined ? [] : [EventMap[K]]
+) =>
   Effect.runPromise(
     Effect.gen(function* () {
       const analytics = yield* Analytics;
-      yield* analytics.capture("session:started", {
-        mode: "interactive",
-        skip_planning: false,
-        browser_headed: usePreferencesStore.getState().browserHeaded,
-      });
-    }).pipe(Effect.provide(Analytics.layerPostHog)),
+      yield* (analytics.capture as Function).call(
+        analytics,
+        eventName,
+        ...(properties !== undefined ? [properties] : []),
+      );
+    }).pipe(
+      Effect.catchCause(() => Effect.void),
+      Effect.provide(analyticsLayer),
+    ),
   );
+
+export const trackSessionStarted = () =>
+  trackEvent("session:started", {
+    mode: "interactive",
+    skip_planning: false,
+    browser_headed: usePreferencesStore.getState().browserHeaded,
+  });
 
 export const flushSession = (sessionStartedAt: number) =>
   Effect.runPromise(
@@ -22,5 +37,5 @@ export const flushSession = (sessionStartedAt: number) =>
         session_ms: Date.now() - sessionStartedAt,
       });
       yield* analytics.flush;
-    }).pipe(Effect.provide(Analytics.layerPostHog)),
+    }).pipe(Effect.provide(analyticsLayer)),
   );

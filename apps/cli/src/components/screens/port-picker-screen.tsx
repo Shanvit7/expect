@@ -8,6 +8,7 @@ import { useNavigationStore, Screen } from "../../stores/use-navigation";
 import { useProjectPreferencesStore } from "../../stores/use-project-preferences";
 import { useListeningPorts } from "../../hooks/use-listening-ports";
 import { useScrollableList } from "../../hooks/use-scrollable-list";
+import { trackEvent } from "../../utils/session-analytics";
 import { SearchBar } from "../ui/search-bar";
 import { Input } from "../ui/input";
 import { Clickable } from "../ui/clickable";
@@ -101,12 +102,19 @@ export const PortPickerScreen = ({
     });
 
   const navigateToTesting = (baseUrls: readonly string[]) => {
-    const allUrls = [
-      ...baseUrls,
-      ...customUrls,
-    ];
+    const allUrls = [...baseUrls, ...customUrls];
     const lastUrl = allUrls.length > 0 ? allUrls[0] : undefined;
     setLastBaseUrl(lastUrl);
+
+    if (allUrls.length === 0) {
+      trackEvent("port:skipped");
+    } else {
+      trackEvent("port:selected", {
+        port_count: allUrls.length,
+        has_custom_url: customUrls.size > 0,
+      });
+    }
+
     setScreen(
       Screen.Testing({
         changesFor,
@@ -265,9 +273,7 @@ export const PortPickerScreen = ({
       </Box>
 
       <Box marginTop={1}>
-        <Text color={COLORS.DIM}>
-          Pick the dev server the agent should open in the browser.
-        </Text>
+        <Text color={COLORS.DIM}>Pick the dev server the agent should open in the browser.</Text>
       </Box>
 
       <Box marginTop={1}>
@@ -276,11 +282,14 @@ export const PortPickerScreen = ({
             {figures.tick} {allSelectedUrls.join(", ")}
           </Text>
         )}
-        {allSelectedUrls.length === 0 && !isSkipHighlighted && !isCustomUrlHighlighted && highlightedEntry && (
-          <Text color={COLORS.DIM}>
-            {figures.arrowRight} {portToUrl(highlightedEntry.port)}
-          </Text>
-        )}
+        {allSelectedUrls.length === 0 &&
+          !isSkipHighlighted &&
+          !isCustomUrlHighlighted &&
+          highlightedEntry && (
+            <Text color={COLORS.DIM}>
+              {figures.arrowRight} {portToUrl(highlightedEntry.port)}
+            </Text>
+          )}
         {allSelectedUrls.length === 0 && isSkipHighlighted && (
           <Text color={COLORS.YELLOW}>
             {figures.warning} No base URL. The agent won{"'"}t know where your dev server is.
@@ -352,16 +361,17 @@ export const PortPickerScreen = ({
             </Box>
           </Clickable>
         )}
-        {customUrlVisible && [...customUrls].map((url) => (
-          <Clickable key={url} onClick={() => removeCustomUrl(url)}>
-            <Box>
-              <Text>  </Text>
-              <Text color={COLORS.PRIMARY}>{figures.checkboxOn} </Text>
-              <Text color={COLORS.TEXT}>{url}</Text>
-              <Text color={COLORS.DIM}> (click to remove)</Text>
-            </Box>
-          </Clickable>
-        ))}
+        {customUrlVisible &&
+          [...customUrls].map((url) => (
+            <Clickable key={url} onClick={() => removeCustomUrl(url)}>
+              <Box>
+                <Text> </Text>
+                <Text color={COLORS.PRIMARY}>{figures.checkboxOn} </Text>
+                <Text color={COLORS.TEXT}>{url}</Text>
+                <Text color={COLORS.DIM}> (click to remove)</Text>
+              </Box>
+            </Clickable>
+          ))}
         {skipVisible && (
           <Clickable
             onClick={() => {

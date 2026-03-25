@@ -7,6 +7,7 @@ import { useAtom } from "@effect/atom-react";
 import type { TestReport } from "@expect/supervisor";
 import type { TestPlanStep } from "@expect/shared/models";
 import { copyToClipboard } from "../../utils/copy-to-clipboard";
+import { trackEvent } from "../../utils/session-analytics";
 import { useColors } from "../theme-context";
 import { Logo } from "../ui/logo";
 import { Image } from "../ui/image";
@@ -49,6 +50,7 @@ export const ResultsScreen = ({ report, replayUrl }: ResultsScreenProps) => {
 
   const handlePostPullRequestComment = () => {
     if (!Option.isSome(report.pullRequest)) return;
+    trackEvent("results:posted_to_pr");
     commentMutation.mutate({
       pullRequest: report.pullRequest.value,
       body: report.toPlainText,
@@ -58,6 +60,7 @@ export const ResultsScreen = ({ report, replayUrl }: ResultsScreenProps) => {
   const handleCopyToClipboard = () => {
     const didCopy = copyToClipboard(report.toPlainText);
     if (didCopy) {
+      trackEvent("results:copied_to_clipboard");
       setStatusMessage({ text: `${figures.tick} Copied to clipboard`, color: COLORS.GREEN });
     } else {
       setStatusMessage({ text: `${figures.cross} Failed to copy to clipboard`, color: COLORS.RED });
@@ -66,10 +69,12 @@ export const ResultsScreen = ({ report, replayUrl }: ResultsScreenProps) => {
 
   const handleSaveFlow = async () => {
     if (savePending || saveSucceeded) return;
+    trackEvent("flow:saved", { step_count: report.steps.length });
     await triggerSave({ plan: report });
   };
 
   const handleRestartFlow = () => {
+    trackEvent("results:restarted");
     usePlanExecutionStore.getState().setExecutedPlan(undefined);
     setScreen(
       screenForTestingOrPortPicker({

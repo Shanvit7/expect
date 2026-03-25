@@ -27,6 +27,7 @@ import { formatElapsedTime } from "../../utils/format-elapsed-time";
 import { Image } from "../ui/image";
 import { ErrorMessage } from "../ui/error-message";
 import { executeFn, screenshotPathsAtom } from "../../data/execution-atom";
+import { trackEvent } from "../../utils/session-analytics";
 import { formatToolCall, type FormattedToolCall } from "../../utils/format-tool-call";
 import { useScrollableList } from "../../hooks/use-scrollable-list";
 import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions";
@@ -444,6 +445,7 @@ export const TestingScreen = ({
     if (showCancelConfirmation) {
       if (key.return || normalizedInput === "y") {
         setShowCancelConfirmation(false);
+        trackEvent("run:cancelled");
         goToMain();
         return;
       }
@@ -457,6 +459,7 @@ export const TestingScreen = ({
       const { exec } = require("node:child_process") as typeof import("node:child_process");
       const escapedUrl = liveReplayUrl.replace(/"/g, '\\"');
       exec(`open "${escapedUrl}"`);
+      trackEvent("live_preview:opened");
       return;
     }
 

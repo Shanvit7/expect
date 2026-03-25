@@ -19,6 +19,7 @@ import { Spinner } from "../ui/spinner";
 import { Logo } from "../ui/logo";
 import { ContextPicker } from "../ui/context-picker";
 import { useContextPicker } from "../../hooks/use-context-picker";
+import { trackEvent } from "../../utils/session-analytics";
 import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions";
 import { getFlowSuggestions } from "../../utils/get-flow-suggestions";
 import { getContextDisplayLabel, getContextDescription } from "../../utils/context-options";
@@ -73,7 +74,18 @@ export const MainMenu = ({ gitState }: MainMenuProps) => {
 
   const picker = useContextPicker({
     gitState: gitState ?? null,
-    onSelect: setSelectedContext,
+    onSelect: (context) => {
+      setSelectedContext(context);
+      const contextTypeMap = {
+        WorkingTree: "working_tree",
+        Branch: "branch",
+        PullRequest: "pull_request",
+        Commit: "commit",
+      } as const;
+      trackEvent("context:selected", {
+        context_type: contextTypeMap[context._tag],
+      });
+    },
   });
 
   const defaultContext =
@@ -184,12 +196,14 @@ export const MainMenu = ({ gitState }: MainMenuProps) => {
 
       if (key.ctrl && input === "k") {
         toggleCookies();
+        trackEvent("cookies:toggled", { enabled: !cookiesEnabled });
         return;
       }
 
       if (key.tab && !key.shift && showSuggestion && currentSuggestion) {
         setValue(currentSuggestion);
         setInputKey((previous) => previous + 1);
+        trackEvent("suggestion:accepted");
         return;
       }
       if (key.tab && key.shift) {

@@ -21,6 +21,7 @@ export interface EventMap {
     readonly duration_ms: number;
   };
   "run:failed": { readonly plan_id: string; readonly error_tag: string };
+  "run:cancelled": undefined;
 
   // Steps
   "step:started": { readonly step_id: string; readonly plan_id: string };
@@ -51,4 +52,28 @@ export interface EventMap {
   // Flows
   "flow:saved": { readonly step_count: number };
   "flow:reused": { readonly slug: string; readonly step_count: number };
+
+  // Live Preview
+  "live_preview:opened": undefined;
+
+  // Context
+  "context:selected": {
+    readonly context_type: "working_tree" | "branch" | "pull_request" | "commit";
+  };
+
+  // Port / URL selection
+  "port:selected": { readonly port_count: number; readonly has_custom_url: boolean };
+  "port:skipped": undefined;
+
+  // Cookies
+  "cookies:toggled": { readonly enabled: boolean };
+  "cookies:sync_choice": { readonly choice: "use_cookies" | "skip_cookies" };
+
+  // Results actions
+  "results:copied_to_clipboard": undefined;
+  "results:posted_to_pr": undefined;
+  "results:restarted": undefined;
+
+  // Suggestions
+  "suggestion:accepted": undefined;
 }
