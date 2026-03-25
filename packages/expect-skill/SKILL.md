@@ -23,7 +23,7 @@ Use expect from the command line when:
 ## Installation
 
 ```bash
-npm install -g @expect/cli
+npm install -g expect-cli
 ```
 
 ## Headless Detection

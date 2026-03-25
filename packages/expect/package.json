@@ -1,6 +1,7 @@
 {
-  "name": "expect",
+  "name": "@expect/expect",
   "version": "0.0.0",
+  "private": true,
   "description": "expect",
   "license": "MIT",
   "files": [

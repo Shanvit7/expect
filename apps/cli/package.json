@@ -1,12 +1,32 @@
 {
-  "name": "@expect/cli",
+  "name": "expect-cli",
   "version": "0.0.1",
+  "description": "Let agents test your code in a real browser",
+  "author": "Million Software <founders@million.dev>",
   "license": "FSL-1.1-MIT",
+  "homepage": "https://expect.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/millionco/expect",
+    "directory": "apps/cli"
+  },
+  "keywords": [
+    "testing",
+    "browser-automation",
+    "playwright",
+    "ai",
+    "agents",
+    "cli",
+    "test-plan",
+    "git-diff",
+    "session-recording"
+  ],
   "bin": {
     "expect": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "type": "module",
   "main": "./dist/index.js",

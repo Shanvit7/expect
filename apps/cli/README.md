@@ -3,9 +3,9 @@
 [![version](https://img.shields.io/npm/v/expect-cli?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
 [![downloads](https://img.shields.io/npm/dt/expect-cli.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/expect-cli)
 
-Let coding agents test your code in a real browser. One command scans your unstaged changes or branch diff, generates a test plan, and runs it against a live browser.
+Let agents test your code in a real browser. One command scans your unstaged changes or branch diff, generates a test plan, and runs it against a live browser.
 
-### [See it in action →](https://expect-website.ami.construction/)
+**[Website](https://expect.dev)** | **[See it in action](https://expect.dev)**
 
 ## Install
 
@@ -62,23 +62,6 @@ Options:
   -h, --help                    display help
 ```
 
-## Development
+## License
 
-```bash
-git clone https://github.com/millionco/expect
-cd expect
-pnpm install --no-frozen-lockfile
-cd apps/cli
-pnpm link-global
-```
-
-Run in dev mode:
-
-```bash
-cd apps/cli
-pnpm dev
-```
-
-### License
-
-FSL-1.1-MIT © Million Software, Inc.
+FSL-1.1-MIT © [Million Software, Inc.](https://million.dev)

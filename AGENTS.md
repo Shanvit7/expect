@@ -15,7 +15,7 @@
 
 **Core architecture:**
 
-- **pnpm monorepo** — `@expect/cli` (Ink TUI), `@expect/supervisor` (orchestration), `@expect/agent` (LLM backend), `@expect/browser` (Playwright automation), `@expect/cookies` (browser profile extraction), `@expect/shared` (domain models)
+- **pnpm monorepo** — `expect-cli` (Ink TUI), `@expect/supervisor` (orchestration), `@expect/agent` (LLM backend), `@expect/browser` (Playwright automation), `@expect/cookies` (browser profile extraction), `@expect/shared` (domain models)
 - **Supervisor** — Owns all state management, agent lifecycle, and git operations. The CLI is a stateless renderer of supervisor state.
 - **Browser automation** — Playwright-based with MCP protocol support and rrweb session recording.
 - **Cookie extraction** — Reads browser profile databases (Chrome, Firefox, Safari) so tests run with real authentication state.
