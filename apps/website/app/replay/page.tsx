@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useSearchParams } from "next/navigation";
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
 import type { eventWithTime } from "@posthog/rrweb";
@@ -10,18 +10,35 @@ import { useMountEffect } from "@/hooks/use-mount-effect";
 import type { ViewerRunState } from "@/lib/replay-types";
 
 const POLL_INTERVAL_MS = 1000;
+const RECORDING_TICK_MS = 1000;
+const RIPPLE_DELAY_STYLE: CSSProperties = { animationDelay: "1s" };
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
 });
 
+const formatElapsed = (totalSeconds: number) => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+};
+
 const RecordingMode = () => {
   const [recording, setRecording] = useState(true);
   const [events, setEvents] = useState<eventWithTime[]>([]);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useMountEffect(() => {
     void startRecording();
   });
+
+  useEffect(() => {
+    if (!recording) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds((previous) => previous + 1);
+    }, RECORDING_TICK_MS);
+    return () => clearInterval(interval);
+  }, [recording]);
 
   const handleCompleteRecording = () => {
     const recordedEvents = stopRecording();
@@ -35,25 +52,45 @@ const RecordingMode = () => {
   }
 
   return (
-    <div className="relative flex h-screen flex-col items-center justify-center">
-      <div className="flex flex-col items-center gap-6">
-        <div className="flex size-16 items-center justify-center rounded-full bg-red-500/10">
-          <div className="size-4 animate-pulse rounded-full bg-red-500" />
+    <div className="flex h-screen items-center justify-center">
+      <div className="flex flex-col items-center gap-10">
+        <div className="relative flex size-24 items-center justify-center">
+          <div className="recording-ripple absolute inset-0 rounded-full border border-red-500/20" />
+          <div
+            className="recording-ripple absolute inset-0 rounded-full border border-red-500/20"
+            style={RIPPLE_DELAY_STYLE}
+          />
+          <div className="flex size-12 items-center justify-center rounded-full bg-red-500/10">
+            <div className="size-4 rounded-full bg-red-500 shadow-[0_0_12px_4px_rgba(239,68,68,0.2)]" />
+          </div>
         </div>
-        <div className="flex flex-col items-center gap-2">
-          <h1 className="text-xl font-semibold tracking-tight text-neutral-900">
-            Recording session...
-          </h1>
-          <p className="text-sm text-neutral-500">
-            Interact with the page, then complete the recording to replay it.
-          </p>
+
+        <div className="flex flex-col items-center gap-3">
+          <span
+            className="font-mono text-4xl tabular-nums tracking-[0.2em] text-neutral-900"
+            style={{ fontWeight: 200 }}
+          >
+            {formatElapsed(elapsedSeconds)}
+          </span>
+          <div className="flex items-center gap-2 rounded-full bg-red-50 px-3 py-1">
+            <div className="size-1.5 animate-pulse rounded-full bg-red-500" />
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-red-600/80">
+              Recording
+            </span>
+          </div>
         </div>
+
+        <p className="max-w-[260px] text-center text-[13px] leading-relaxed text-neutral-400">
+          Interact with the page, then stop to review the session replay.
+        </p>
+
         <button
           type="button"
           onClick={handleCompleteRecording}
-          className="rounded-full bg-neutral-900 px-6 py-2.5 text-sm font-medium text-white shadow-lg transition-transform duration-150 ease-out active:scale-[0.97]"
+          className="group flex items-center gap-2.5 rounded-full border border-neutral-200 bg-white px-6 py-3 text-sm font-medium text-neutral-900 shadow-sm transition-all duration-150 ease-out hover:border-neutral-300 hover:shadow-md active:scale-[0.97]"
         >
-          Complete Recording
+          <div className="size-3 rounded-[3px] bg-red-500 transition-transform duration-150 group-hover:scale-110" />
+          Stop Recording
         </button>
       </div>
     </div>
