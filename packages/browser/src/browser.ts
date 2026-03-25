@@ -94,14 +94,21 @@ const extractDefaultBrowserCookies = Effect.fn("Browser.extractDefaultBrowserCoo
   );
 
   const results = yield* Effect.forEach(
-    [preferredProfile, ...allProfiles.filter((profile) => isSiblingProfile(profile, preferredProfile))],
+    [
+      preferredProfile,
+      ...allProfiles.filter((profile) => isSiblingProfile(profile, preferredProfile)),
+    ],
     (profile) => extractCookiesForProfile(cookiesService, profile),
     { concurrency: "unbounded" },
   );
 
   // Preferred profile is first, so its cookies win when multiple profiles share the same cookie identity.
-  return Arr.dedupeWith(results.flat(), (cookieA, cookieB) =>
-    cookieA.name === cookieB.name && cookieA.domain === cookieB.domain && cookieA.path === cookieB.path,
+  return Arr.dedupeWith(
+    results.flat(),
+    (cookieA, cookieB) =>
+      cookieA.name === cookieB.name &&
+      cookieA.domain === cookieB.domain &&
+      cookieA.path === cookieB.path,
   );
 }, Effect.provide(cookiesLayer));
 

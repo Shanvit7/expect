@@ -13,8 +13,7 @@ import { toViewerRunState, pushStepState } from "../utils/push-step-state";
 const LIVE_VIEW_PORT_MIN = 50000;
 const LIVE_VIEW_PORT_RANGE = 10000;
 
-const pickRandomPort = () =>
-  LIVE_VIEW_PORT_MIN + Math.floor(Math.random() * LIVE_VIEW_PORT_RANGE);
+const pickRandomPort = () => LIVE_VIEW_PORT_MIN + Math.floor(Math.random() * LIVE_VIEW_PORT_RANGE);
 
 interface ExecuteInput {
   readonly options: ExecuteOptions;
