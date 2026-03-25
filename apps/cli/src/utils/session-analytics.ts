@@ -11,11 +11,12 @@ export const trackEvent = <K extends keyof EventMap>(
   Effect.runPromise(
     Effect.gen(function* () {
       const analytics = yield* Analytics;
-      yield* (analytics.capture as Function).call(
+      const captureEffect: Effect.Effect<void> = (analytics.capture as Function).call(
         analytics,
         eventName,
         ...(properties !== undefined ? [properties] : []),
       );
+      yield* captureEffect;
     }).pipe(
       Effect.catchCause(() => Effect.void),
       Effect.provide(analyticsLayer),
