@@ -150,6 +150,34 @@
   }
 }
 
+.replayer-mouse {
+  background-image: url("/macos-cursor.png") !important;
+  background-size: contain !important;
+  background-position: top left !important;
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.replayer-mouse::after {
+  display: none !important;
+}
+
+.replayer-mouse.active {
+  animation: macos-click 0.2s ease-in-out 1 !important;
+}
+
+@keyframes macos-click {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @keyframes terminal-spinner-rotate {
   to {
     transform: rotate(360deg);

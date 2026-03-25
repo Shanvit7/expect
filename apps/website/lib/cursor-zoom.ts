@@ -11,7 +11,7 @@ export interface CursorZoomOptions {
 }
 
 const CURSOR_SIZE_DEFAULT_PX = 24;
-const CURSOR_SIZE_ZOOMED_PX = 48;
+const CURSOR_SIZE_ZOOMED_PX = 36;
 
 const DEFAULTS: Required<Omit<CursorZoomOptions, "mapCursor">> = {
   scale: 2,
@@ -36,6 +36,8 @@ export const createCursorZoom = (
   const mapCursor = options.mapCursor ?? identity;
   let idleTimer: ReturnType<typeof setTimeout>;
   let isZoomed = false;
+  let lastLeft = "";
+  let lastTop = "";
 
   target.style.transformOrigin = "0 0";
   target.style.willChange = "transform";
@@ -92,8 +94,14 @@ export const createCursorZoom = (
   reset();
 
   const cursorObserver = new MutationObserver(() => {
-    const rawX = parseFloat(cursorEl.style.left) || 0;
-    const rawY = parseFloat(cursorEl.style.top) || 0;
+    const currentLeft = cursorEl.style.left;
+    const currentTop = cursorEl.style.top;
+    if (currentLeft === lastLeft && currentTop === lastTop) return;
+    lastLeft = currentLeft;
+    lastTop = currentTop;
+
+    const rawX = parseFloat(currentLeft) || 0;
+    const rawY = parseFloat(currentTop) || 0;
     const { x, y } = mapCursor(rawX, rawY);
 
     panTo(config.scale, x, y);

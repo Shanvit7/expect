@@ -26,20 +26,14 @@ const PAPER_TIME_LENGTH = 5;
 const getReplayDuration = (replayEvents: eventWithTime[]) => {
   if (replayEvents.length < 2) return 0;
 
-  return Math.max(
-    replayEvents[replayEvents.length - 1].timestamp - replayEvents[0].timestamp,
-    0,
-  );
+  return Math.max(replayEvents[replayEvents.length - 1].timestamp - replayEvents[0].timestamp, 0);
 };
 
-const formatPaperTime = (timeMs: number) =>
-  formatTime(timeMs).padStart(PAPER_TIME_LENGTH, "0");
+const formatPaperTime = (timeMs: number) => formatTime(timeMs).padStart(PAPER_TIME_LENGTH, "0");
 
 const getStepRelativeTime = (step: ViewerStepEvent, replayStartMs: number) => {
-  const startMs =
-    step.startedAtMs !== undefined ? step.startedAtMs - replayStartMs : undefined;
-  const endMs =
-    step.endedAtMs !== undefined ? step.endedAtMs - replayStartMs : undefined;
+  const startMs = step.startedAtMs !== undefined ? step.startedAtMs - replayStartMs : undefined;
+  const endMs = step.endedAtMs !== undefined ? step.endedAtMs - replayStartMs : undefined;
   return { startMs, endMs };
 };
 
@@ -68,12 +62,7 @@ interface ControlIconProps {
 }
 
 const PlayIcon = ({ className }: ControlIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-  >
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className={className}>
     <path
       fillRule="evenodd"
       clipRule="evenodd"
@@ -101,12 +90,7 @@ const PauseIcon = ({ className }: ControlIconProps) => (
 );
 
 const FullscreenIcon = ({ className }: ControlIconProps) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    className={className}
-  >
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className={className}>
     <path
       fillRule="evenodd"
       clipRule="evenodd"
@@ -147,9 +131,7 @@ const StepPanel = ({ steps, replayStartMs, currentTime, onSeek }: StepPanelProps
           {steps.status}
         </span>
       </div>
-      {steps.summary && (
-        <p className="text-xs text-neutral-500 leading-relaxed">{steps.summary}</p>
-      )}
+      {steps.summary && <p className="text-xs text-neutral-500 leading-relaxed">{steps.summary}</p>}
       <div className="flex flex-col gap-0.5">
         {steps.steps.map((step, index) => {
           const { startMs } = getStepRelativeTime(step, replayStartMs);
@@ -276,18 +258,14 @@ export const ReplayViewer = ({
     if (!replayRef.current || !backdropRef.current) return;
 
     const replayContainer = replayRef.current;
-    const wrapper = replayContainer.querySelector(
-      ".replayer-wrapper",
-    ) as HTMLElement | undefined;
+    const wrapper = replayContainer.querySelector(".replayer-wrapper") as HTMLElement | undefined;
     if (!wrapper) return;
 
     const iframe = wrapper.querySelector("iframe");
     if (!iframe) return;
 
-    const recordedWidth =
-      Number(iframe.getAttribute("width")) || iframe.offsetWidth;
-    const recordedHeight =
-      Number(iframe.getAttribute("height")) || iframe.offsetHeight;
+    const recordedWidth = Number(iframe.getAttribute("width")) || iframe.offsetWidth;
+    const recordedHeight = Number(iframe.getAttribute("height")) || iframe.offsetHeight;
 
     if (!recordedWidth || !recordedHeight) return;
 
@@ -304,9 +282,7 @@ export const ReplayViewer = ({
     wrapper.style.width = `${recordedWidth}px`;
     wrapper.style.height = `${recordedHeight}px`;
 
-    const cursorEl = wrapper.querySelector(
-      ".replayer-mouse",
-    ) as HTMLElement | undefined;
+    const cursorEl = wrapper.querySelector(".replayer-mouse") as HTMLElement | undefined;
     if (!cursorEl) return;
 
     const backdrop = backdropRef.current;
@@ -318,17 +294,12 @@ export const ReplayViewer = ({
     const offsetX = replayRect.left - backdropRect.left;
     const offsetY = replayRect.top - backdropRect.top;
 
-    cleanupZoomRef.current = createCursorZoom(
-      zoomContainer,
-      backdrop,
-      cursorEl,
-      {
-        mapCursor: (x, y) => ({
-          x: x * fitScale + offsetX,
-          y: y * fitScale + offsetY,
-        }),
-      },
-    );
+    cleanupZoomRef.current = createCursorZoom(zoomContainer, backdrop, cursorEl, {
+      mapCursor: (x, y) => ({
+        x: x * fitScale + offsetX,
+        y: y * fitScale + offsetY,
+      }),
+    });
   };
 
   const handlePlay = async () => {
@@ -501,9 +472,7 @@ export const ReplayViewer = ({
 
             <span className="inline-flex items-center gap-2.5 pl-2 text-[15px] leading-4.5 font-medium tracking-[0em] tabular-nums text-[color(display-p3_0.361_0.361_0.361)]">
               <span>{timeLabel}</span>
-              <span className="text-[color(display-p3_0.727_0.727_0.727)]">
-                /
-              </span>
+              <span className="text-[color(display-p3_0.727_0.727_0.727)]">/</span>
               <span>{totalTimeLabel}</span>
             </span>
 
@@ -550,15 +519,9 @@ export const ReplayViewer = ({
         className="relative h-0 grow overflow-hidden rounded-[32px] bg-white/50"
         style={{ boxShadow: VIEWER_SHELL_SHADOW }}
       >
-        <div
-          ref={backdropRef}
-          className="absolute inset-0 bg-linear-to-br from-sky-200 to-blue-400 p-6"
-        >
+        <div ref={backdropRef} className="absolute inset-0 bg-[#f1f1f1] p-6">
           <MacWindow>
-            <div
-              ref={replayRef}
-              className="relative h-full w-full overflow-hidden"
-            />
+            <div ref={replayRef} className="relative h-full w-full overflow-hidden" />
           </MacWindow>
         </div>
       </div>
