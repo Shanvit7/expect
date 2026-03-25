@@ -10,11 +10,8 @@ const EnsureDebugLogDirectoryLayer = Layer.effectDiscard(
   Effect.gen(function* () {
     const fileSystem = yield* FileSystem.FileSystem;
     yield* fileSystem.makeDirectory(path.dirname(LOG_FILE), { recursive: true });
-    // Add a .gitignore inside the directory to prevent the directory from being committed to git. 
-    yield* fileSystem.writeFileString(
-      path.join(path.dirname(LOG_FILE), ".gitignore"),
-      "*\n",
-    );
+    // Add a .gitignore inside the directory to prevent the directory from being committed to git.
+    yield* fileSystem.writeFileString(path.join(path.dirname(LOG_FILE), ".gitignore"), "*\n");
   }),
 );
 

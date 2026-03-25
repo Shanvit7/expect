@@ -203,7 +203,7 @@ export const Modeline = () => {
             <Text key={action.key + action.label}>
               {index > 0 ? "   " : ""}
               {action.color ? (
-                <Text backgroundColor={action.color} color="#000000">
+                <Text backgroundColor={action.color} color="black">
                   {" "}
                   <Text bold>{action.label}</Text> <Text>[{action.key}]</Text>{" "}
                 </Text>

@@ -272,10 +272,7 @@ export const TestingScreen = ({ changesFor, instruction, existingPlan }: Testing
       </Static>
       <Box flexDirection="column" width="100%" paddingY={1}>
         <Box paddingX={1}>
-          <ScreenHeading
-            title="Executing browser plan"
-            subtitle={instruction}
-          />
+          <ScreenHeading title="Executing browser plan" subtitle={instruction} />
         </Box>
 
         <Box marginTop={1} paddingX={1}>
