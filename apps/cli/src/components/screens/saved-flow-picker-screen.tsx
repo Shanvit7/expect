@@ -7,6 +7,7 @@ import {
   Screen,
   screenForTestingOrPortPicker,
 } from "../../stores/use-navigation";
+import { useProjectPreferencesStore } from "../../stores/use-project-preferences";
 import { useColors } from "../theme-context";
 import { useStdoutDimensions } from "../../hooks/use-stdout-dimensions";
 import { useScrollableList } from "../../hooks/use-scrollable-list";
@@ -31,7 +32,10 @@ const selectFlow = (flow: SavedFlowFileData, mainBranch: string) => {
     userInstruction: flow.flow.userInstruction,
     steps,
   };
-  const requiresCookies = flow.environment.cookies;
+  const storedKeys = useProjectPreferencesStore.getState().cookieBrowserKeys;
+  const cookieBrowserKeys = flow.environment.cookies && storedKeys.length === 0
+    ? ["chrome"]
+    : storedKeys;
 
   trackEvent("flow:reused", { slug: flow.slug, step_count: steps.length });
 
@@ -40,7 +44,7 @@ const selectFlow = (flow: SavedFlowFileData, mainBranch: string) => {
       changesFor,
       instruction: flow.flow.userInstruction,
       savedFlow,
-      requiresCookies,
+      cookieBrowserKeys,
     }),
   );
 };

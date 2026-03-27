@@ -1,6 +1,6 @@
 export {
   EXPECT_LIVE_VIEW_URL_ENV_NAME,
-  EXPECT_NO_COOKIES_ENV_NAME,
+  EXPECT_COOKIE_BROWSERS_ENV_NAME,
   EXPECT_REPLAY_OUTPUT_ENV_NAME,
 } from "./constants";
 export { McpSession } from "./mcp-session";

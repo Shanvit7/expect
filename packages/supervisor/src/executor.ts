@@ -22,7 +22,7 @@ import {
 import { buildExecutionPrompt } from "@expect/shared/prompts";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { Git } from "./git/git";
-import { EXPECT_LIVE_VIEW_URL_ENV_NAME, EXPECT_NO_COOKIES_ENV_NAME } from "@expect/browser/mcp";
+import { EXPECT_LIVE_VIEW_URL_ENV_NAME, EXPECT_COOKIE_BROWSERS_ENV_NAME } from "@expect/browser/mcp";
 import {
   EXECUTION_CONTEXT_FILE_LIMIT,
   EXECUTION_RECENT_COMMIT_LIMIT,
@@ -49,7 +49,7 @@ export interface ExecuteOptions {
   readonly changesFor: ChangesFor;
   readonly instruction: string;
   readonly isHeadless: boolean;
-  readonly requiresCookies: boolean;
+  readonly cookieBrowserKeys: readonly string[];
   readonly baseUrl?: string;
   readonly savedFlow?: SavedFlow;
   readonly learnings?: string;
@@ -99,7 +99,7 @@ export class Executor extends ServiceMap.Service<Executor>()("@supervisor/Execut
         diffPreview: context.diffPreview,
         baseUrl: options.baseUrl,
         isHeadless: options.isHeadless,
-        requiresCookies: options.requiresCookies,
+        cookieBrowserKeys: options.cookieBrowserKeys,
         savedFlow: options.savedFlow,
         learnings: options.learnings,
         testCoverage: options.testCoverage,
@@ -122,7 +122,7 @@ export class Executor extends ServiceMap.Service<Executor>()("@supervisor/Execut
         instruction: options.instruction,
         baseUrl: options.baseUrl ? Option.some(options.baseUrl) : Option.none(),
         isHeadless: options.isHeadless,
-        requiresCookies: options.requiresCookies,
+        cookieBrowserKeys: options.cookieBrowserKeys,
         testCoverage: options.testCoverage ? Option.some(options.testCoverage) : Option.none(),
         title: options.instruction,
         rationale: "Direct execution",
@@ -141,10 +141,10 @@ export class Executor extends ServiceMap.Service<Executor>()("@supervisor/Execut
           value: options.liveViewUrl,
         });
       }
-      if (!options.requiresCookies) {
+      if (options.cookieBrowserKeys.length > 0) {
         mcpEnv.push({
-          name: EXPECT_NO_COOKIES_ENV_NAME,
-          value: "1",
+          name: EXPECT_COOKIE_BROWSERS_ENV_NAME,
+          value: options.cookieBrowserKeys.join(","),
         });
       }
 

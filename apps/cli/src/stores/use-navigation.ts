@@ -11,13 +11,13 @@ export type Screen = Data.TaggedEnum<{
     changesFor: ChangesFor;
     instruction: string;
     savedFlow?: SavedFlow;
-    requiresCookies?: boolean;
+    cookieBrowserKeys?: readonly string[];
   };
   Testing: {
     changesFor: ChangesFor;
     instruction: string;
     savedFlow?: SavedFlow;
-    requiresCookies?: boolean;
+    cookieBrowserKeys?: readonly string[];
     baseUrls?: readonly string[];
   };
   Results: { report: TestReport; replayUrl?: string; localReplayUrl?: string; videoUrl?: string };
@@ -29,7 +29,7 @@ export const screenForTestingOrPortPicker = (props: {
   changesFor: ChangesFor;
   instruction: string;
   savedFlow?: SavedFlow;
-  requiresCookies?: boolean;
+  cookieBrowserKeys?: readonly string[];
 }): Screen => (containsUrl(props.instruction) ? Screen.Testing(props) : Screen.PortPicker(props));
 
 interface NavigationStore {

@@ -95,7 +95,7 @@ export const App = ({ agent }: { agent: AgentBackend }) => {
             changesFor={screen.changesFor}
             instruction={screen.instruction}
             savedFlow={screen.savedFlow}
-            requiresCookies={screen.requiresCookies}
+            cookieBrowserKeys={screen.cookieBrowserKeys}
           />
         );
       case "Testing":
@@ -104,7 +104,7 @@ export const App = ({ agent }: { agent: AgentBackend }) => {
             changesFor={screen.changesFor}
             instruction={screen.instruction}
             savedFlow={screen.savedFlow}
-            requiresCookies={screen.requiresCookies}
+            cookieBrowserKeys={screen.cookieBrowserKeys}
             baseUrls={screen.baseUrls}
           />
         );

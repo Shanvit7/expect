@@ -1,4 +1,4 @@
-import { Browsers, Cookies, layerLive } from "@expect/cookies";
+import { Browsers, Cookies, layerLive, browserKeyOf, Cookie } from "@expect/cookies";
 import type { Browser as BrowserProfile } from "@expect/cookies";
 import { chromium } from "playwright";
 import type { Locator, Page } from "playwright";
@@ -71,6 +71,15 @@ const extractCookiesForProfile = Effect.fn("Browser.extractCookiesForProfile")(
   }),
 );
 
+const dedupCookies = (cookies: Cookie[]) =>
+  Arr.dedupeWith(
+    cookies,
+    (cookieA, cookieB) =>
+      cookieA.name === cookieB.name &&
+      cookieA.domain === cookieB.domain &&
+      cookieA.path === cookieB.path,
+  );
+
 const isSiblingProfile = (profile: BrowserProfile, reference: BrowserProfile) => {
   if (profile._tag !== reference._tag) return false;
   if (profile._tag === "ChromiumBrowser" && reference._tag === "ChromiumBrowser") {
@@ -105,14 +114,31 @@ const extractDefaultBrowserCookies = Effect.fn("Browser.extractDefaultBrowserCoo
   );
 
   // Preferred profile is first, so its cookies win when multiple profiles share the same cookie identity.
-  return Arr.dedupeWith(
-    results.flat(),
-    (cookieA, cookieB) =>
-      cookieA.name === cookieB.name &&
-      cookieA.domain === cookieB.domain &&
-      cookieA.path === cookieB.path,
-  );
+  return dedupCookies(results.flat());
 }, Effect.provide(cookiesLayer));
+
+const extractCookiesForBrowserKeys = Effect.fn("Browser.extractCookiesForBrowserKeys")(
+  function* (browserKeys: readonly string[]) {
+    const cookiesService = yield* Cookies;
+    const browsers = yield* Browsers;
+    const allProfiles = yield* browsers.list.pipe(
+      Effect.catchTag("ListBrowsersError", () => Effect.succeed<BrowserProfile[]>([])),
+    );
+
+    const matchingProfiles = allProfiles.filter((profile) =>
+      browserKeys.includes(browserKeyOf(profile)),
+    );
+
+    const results = yield* Effect.forEach(
+      matchingProfiles,
+      (profile) => extractCookiesForProfile(cookiesService, profile),
+      { concurrency: "unbounded" },
+    );
+
+    return dedupCookies(results.flat());
+  },
+  Effect.provide(cookiesLayer),
+);
 
 const appendCursorInteractiveElements = Effect.fn("Browser.appendCursorInteractive")(function* (
   page: Page,
@@ -380,10 +406,14 @@ export class Browser extends ServiceMap.Service<Browser>()("@browser/Browser", {
       }
     });
 
-    const preExtractCookies = Effect.fn("Browser.preExtractCookies")(function* () {
+    const preExtractCookies = Effect.fn("Browser.preExtractCookies")(function* (
+      browserKeys?: readonly string[],
+    ) {
+      if (browserKeys && browserKeys.length > 0) {
+        return yield* extractCookiesForBrowserKeys(browserKeys);
+      }
       const { preferredProfile } = yield* resolveDefaultBrowserContext();
-      const cookies = yield* extractDefaultBrowserCookies("", preferredProfile);
-      return cookies;
+      return yield* extractDefaultBrowserCookies("", preferredProfile);
     });
 
     return {

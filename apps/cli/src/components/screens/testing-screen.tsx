@@ -36,7 +36,7 @@ interface TestingScreenProps {
   changesFor: ChangesFor;
   instruction: string;
   savedFlow?: SavedFlow;
-  requiresCookies?: boolean;
+  cookieBrowserKeys?: readonly string[];
   baseUrls?: readonly string[];
 }
 
@@ -257,7 +257,7 @@ export const TestingScreen = ({
   changesFor,
   instruction,
   savedFlow,
-  requiresCookies = false,
+  cookieBrowserKeys = [],
   baseUrls,
 }: TestingScreenProps) => {
   const setScreen = useNavigationStore((state) => state.setScreen);
@@ -409,7 +409,7 @@ export const TestingScreen = ({
         changesFor,
         instruction: instructionWithUrls,
         isHeadless: !browserHeaded,
-        requiresCookies,
+        cookieBrowserKeys: [...cookieBrowserKeys],
         savedFlow,
         baseUrl,
       },
@@ -429,7 +429,7 @@ export const TestingScreen = ({
     changesFor,
     instruction,
     savedFlow,
-    requiresCookies,
+    cookieBrowserKeys,
     baseUrls,
     replayHost,
   ]);

@@ -24,7 +24,7 @@ import { buildReplayViewerHtml } from "../replay-viewer";
 import type { AnnotatedScreenshotOptions, SnapshotOptions, SnapshotResult } from "../types";
 import {
   EXPECT_LIVE_VIEW_URL_ENV_NAME,
-  EXPECT_NO_COOKIES_ENV_NAME,
+  EXPECT_COOKIE_BROWSERS_ENV_NAME,
   EXPECT_REPLAY_OUTPUT_ENV_NAME,
 } from "./constants";
 import { McpSessionNotOpenError } from "./errors";
@@ -124,11 +124,14 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
     const fileSystem = yield* FileSystem;
     const replayOutputPath = yield* Config.option(Config.string(EXPECT_REPLAY_OUTPUT_ENV_NAME));
     const liveViewUrl = yield* Config.option(Config.string(EXPECT_LIVE_VIEW_URL_ENV_NAME));
-    const noCookies = yield* Config.option(Config.string(EXPECT_NO_COOKIES_ENV_NAME));
-    const cookiesDisabled = Option.match(noCookies, {
-      onNone: () => false,
-      onSome: (value) => value === "1",
+    const cookieBrowsersConfig = yield* Config.option(
+      Config.string(EXPECT_COOKIE_BROWSERS_ENV_NAME),
+    );
+    const cookieBrowserKeys = Option.match(cookieBrowsersConfig, {
+      onNone: () => [] as string[],
+      onSome: (value) => value.split(",").filter(Boolean),
     });
+    const cookiesDisabled = cookieBrowserKeys.length === 0;
 
     const sessionRef = yield* Ref.make<BrowserSessionData | undefined>(undefined);
     const iosSessionRef = yield* Ref.make<IosSessionData | undefined>(undefined);
@@ -139,10 +142,10 @@ export class McpSession extends ServiceMap.Service<McpSession>()("@browser/McpSe
     const preExtractedCookiesRef = yield* Ref.make<Cookie[] | undefined>(undefined);
 
     if (!cookiesDisabled) {
-      yield* browserService.preExtractCookies().pipe(
+      yield* browserService.preExtractCookies(cookieBrowserKeys).pipe(
         Effect.tap((cookies) => Ref.set(preExtractedCookiesRef, cookies)),
         Effect.tap((cookies) => Effect.logInfo("Cookies pre-extracted", { count: cookies.length })),
-        Effect.catchCause(() => Effect.void),
+        Effect.catchCause((cause) => Effect.logWarning("Cookie pre-extraction failed", { cause })),
         Effect.forkDetach,
       );
     }

@@ -1,31 +1,15 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import figures from "figures";
 import type { ChangesFor, SavedFlow } from "@expect/shared/models";
 import { trackEvent } from "../../utils/session-analytics";
 import { useColors } from "../theme-context";
-import { Clickable } from "../ui/clickable";
 import { Logo } from "../ui/logo";
-import { useNavigationStore, screenForTestingOrPortPicker } from "../../stores/use-navigation";
-
-interface ConfirmOption {
-  id: "enable-sync" | "run-without-sync";
-  label: string;
-  detail: string;
-}
-
-const CONFIRM_OPTIONS: ConfirmOption[] = [
-  {
-    id: "enable-sync",
-    label: "Use existing cookies",
-    detail: "Recommended. Uses your browser session as-is.",
-  },
-  {
-    id: "run-without-sync",
-    label: "Skip cookies",
-    detail: "Not recommended. Tests requiring login will fail.",
-  },
-];
+import { Spinner } from "../ui/spinner";
+import { Clickable } from "../ui/clickable";
+import { useNavigationStore, Screen, screenForTestingOrPortPicker } from "../../stores/use-navigation";
+import { useProjectPreferencesStore } from "../../stores/use-project-preferences";
+import { useInstalledBrowsers, type DetectedBrowser } from "../../hooks/use-installed-browsers";
 
 interface CookieSyncConfirmScreenProps {
   changesFor: ChangesFor;
@@ -40,39 +24,89 @@ export const CookieSyncConfirmScreen = ({
 }: CookieSyncConfirmScreenProps) => {
   const COLORS = useColors();
   const setScreen = useNavigationStore((state) => state.setScreen);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const setCookieBrowserKeys = useProjectPreferencesStore((state) => state.setCookieBrowserKeys);
+  const { data: browsers, isLoading } = useInstalledBrowsers();
 
-  const activateOption = (option: ConfirmOption) => {
-    const requiresCookies = option.id === "enable-sync";
-    trackEvent("cookies:sync_choice", {
-      choice: requiresCookies ? "use_cookies" : "skip_cookies",
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const defaultsInitialized = useRef(false);
+
+  const items: DetectedBrowser[] = browsers ?? [];
+  const itemCount = items.length;
+
+  useEffect(() => {
+    if (defaultsInitialized.current || !browsers || browsers.length === 0) return;
+    defaultsInitialized.current = true;
+    const defaultBrowser = browsers.find((browser) => browser.isDefault);
+    if (defaultBrowser) {
+      setSelectedKeys(new Set([defaultBrowser.key]));
+    }
+  }, [browsers]);
+
+  const toggleKey = (key: string) => {
+    setSelectedKeys((previous) => {
+      const next = new Set(previous);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const confirm = () => {
+    const keys = [...selectedKeys];
+    setCookieBrowserKeys(keys);
+    trackEvent("cookies:browser_selection", {
+      selected_count: keys.length,
+      browsers: keys.join(","),
     });
     setScreen(
-      screenForTestingOrPortPicker({ changesFor, instruction, savedFlow, requiresCookies }),
+      screenForTestingOrPortPicker({
+        changesFor,
+        instruction,
+        savedFlow,
+        cookieBrowserKeys: keys,
+      }),
     );
   };
 
   useInput((input, key) => {
+    if (isLoading) return;
+
     if (key.downArrow || input === "j" || (key.ctrl && input === "n")) {
-      setSelectedIndex((previous) => Math.min(CONFIRM_OPTIONS.length - 1, previous + 1));
+      setHighlightedIndex((previous) => Math.min(itemCount - 1, previous + 1));
     }
 
     if (key.upArrow || input === "k" || (key.ctrl && input === "p")) {
-      setSelectedIndex((previous) => Math.max(0, previous - 1));
+      setHighlightedIndex((previous) => Math.max(0, previous - 1));
     }
 
-    if (input === "c") {
-      activateOption(CONFIRM_OPTIONS[0]);
+    if (input === " " && itemCount > 0) {
+      const item = items[highlightedIndex];
+      if (item) toggleKey(item.key);
     }
 
     if (input === "a") {
-      activateOption(CONFIRM_OPTIONS[1]);
+      const allKeys = items.map((browser) => browser.key);
+      setSelectedKeys(new Set(allKeys));
+    }
+
+    if (input === "n") {
+      setSelectedKeys(new Set());
     }
 
     if (key.return) {
-      activateOption(CONFIRM_OPTIONS[selectedIndex]);
+      confirm();
+    }
+
+    if (key.escape) {
+      setScreen(Screen.Main());
     }
   });
+
+  const selectedCount = selectedKeys.size;
 
   return (
     <Box flexDirection="column" width="100%" paddingY={1} paddingX={1}>
@@ -86,44 +120,56 @@ export const CookieSyncConfirmScreen = ({
       </Box>
 
       <Box marginTop={1}>
-        {selectedIndex === 0 ? (
+        {selectedCount > 0 && (
           <Text color={COLORS.GREEN}>
-            {figures.tick} Your signed-in session will be synced to the browser. Cookies stay on
-            device.
+            {figures.tick} Your signed-in session will be synced from {selectedCount} browser
+            {selectedCount === 1 ? "" : "s"}
           </Text>
-        ) : (
+        )}
+        {selectedCount === 0 && (
           <Text color={COLORS.YELLOW}>
-            {figures.warning} The browser won{"'"}t inherit your signed-in session without cookies.
+            {figures.warning} No browsers selected — tests run without authentication
           </Text>
         )}
       </Box>
 
-      <Box flexDirection="column" marginTop={1}>
-        {CONFIRM_OPTIONS.map((option, index) => {
-          const isSelected = index === selectedIndex;
-          return (
-            <Clickable
-              key={option.id}
-              onClick={() => {
-                setSelectedIndex(index);
-                activateOption(option);
-              }}
-            >
-              <Box flexDirection="column" marginBottom={1}>
-                <Text>
+      {isLoading && (
+        <Box marginTop={1}>
+          <Spinner message="Detecting installed browsers" />
+        </Box>
+      )}
+
+      {!isLoading && (
+        <Box flexDirection="column" marginTop={1}>
+          {items.map((browser, index) => {
+            const isHighlighted = index === highlightedIndex;
+            const isSelected = selectedKeys.has(browser.key);
+
+            return (
+              <Clickable
+                key={browser.key}
+                onClick={() => {
+                  setHighlightedIndex(index);
+                  toggleKey(browser.key);
+                }}
+              >
+                <Box>
+                  <Text color={isHighlighted ? COLORS.PRIMARY : COLORS.DIM}>
+                    {isHighlighted ? `${figures.pointer} ` : "  "}
+                  </Text>
                   <Text color={isSelected ? COLORS.PRIMARY : COLORS.DIM}>
-                    {isSelected ? `${figures.pointer} ` : "  "}
+                    {isSelected ? figures.checkboxOn : figures.checkboxOff}{" "}
                   </Text>
-                  <Text color={isSelected ? COLORS.PRIMARY : COLORS.TEXT} bold={isSelected}>
-                    {option.label}
+                  <Text color={isHighlighted ? COLORS.PRIMARY : COLORS.TEXT} bold={isHighlighted}>
+                    {browser.displayName}
                   </Text>
-                </Text>
-                <Text color={COLORS.DIM}> {option.detail}</Text>
-              </Box>
-            </Clickable>
-          );
-        })}
-      </Box>
+                  {browser.isDefault && <Text color={COLORS.DIM}> (default)</Text>}
+                </Box>
+              </Clickable>
+            );
+          })}
+        </Box>
+      )}
     </Box>
   );
 };

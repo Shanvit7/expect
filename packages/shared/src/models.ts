@@ -403,12 +403,16 @@ export class TestPlanDraft extends Schema.Class<TestPlanDraft>("@supervisor/Test
   instruction: Schema.String,
   baseUrl: Schema.Option(Schema.String),
   isHeadless: Schema.Boolean,
-  requiresCookies: Schema.Boolean,
+  cookieBrowserKeys: Schema.Array(Schema.String),
   testCoverage: Schema.Option(TestCoverageReport),
 }) {
+  get requiresCookies(): boolean {
+    return this.cookieBrowserKeys.length > 0;
+  }
+
   update(
     fields: Partial<
-      Pick<TestPlanDraft, "instruction" | "baseUrl" | "isHeadless" | "requiresCookies">
+      Pick<TestPlanDraft, "instruction" | "baseUrl" | "isHeadless" | "cookieBrowserKeys">
     >,
   ): TestPlanDraft {
     return new TestPlanDraft({ ...this, ...fields });
@@ -423,7 +427,7 @@ export class TestPlan extends TestPlanDraft.extend<TestPlan>("@supervisor/TestPl
 }) {
   update(
     fields: Partial<
-      Pick<TestPlanDraft, "instruction" | "baseUrl" | "isHeadless" | "requiresCookies">
+      Pick<TestPlanDraft, "instruction" | "baseUrl" | "isHeadless" | "cookieBrowserKeys">
     >,
   ): TestPlan {
     return new TestPlan({ ...this, ...fields });

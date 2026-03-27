@@ -68,6 +68,11 @@ export interface EventMap {
   // Cookies
   "cookies:toggled": { readonly enabled: boolean };
   "cookies:sync_choice": { readonly choice: "use_cookies" | "skip_cookies" };
+  "cookies:browser_selection": {
+    readonly selected_count: number;
+    readonly browsers: string;
+  };
+  "cookies:cleared": undefined;
 
   // Results actions
   "results:copied_to_clipboard": undefined;

@@ -20,8 +20,8 @@ import { TextShimmer } from "./text-shimmer";
 const useHintSegments = (screen: Screen, gitState: GitState | undefined): HintSegment[] => {
   const COLORS = useColors();
   const setScreen = useNavigationStore((state) => state.setScreen);
-  const cookiesEnabled = useProjectPreferencesStore((state) => state.cookiesEnabled);
-  const toggleCookies = useProjectPreferencesStore((state) => state.toggleCookies);
+  const cookieBrowserKeys = useProjectPreferencesStore((state) => state.cookieBrowserKeys);
+  const clearCookieBrowserKeys = useProjectPreferencesStore((state) => state.clearCookieBrowserKeys);
   const notifications = usePreferencesStore((state) => state.notifications);
   const toggleNotifications = usePreferencesStore((state) => state.toggleNotifications);
   const expanded = usePlanExecutionStore((state) => state.expanded);
@@ -31,9 +31,12 @@ const useHintSegments = (screen: Screen, gitState: GitState | undefined): HintSe
       const segments: HintSegment[] = [
         {
           key: "ctrl+k",
-          label: cookiesEnabled ? "cookies on" : "cookies off",
+          label:
+            cookieBrowserKeys.length > 0
+              ? `cookies (${cookieBrowserKeys.length})`
+              : "cookies off",
           cta: true,
-          onClick: toggleCookies,
+          onClick: clearCookieBrowserKeys,
         },
         {
           key: "ctrl+r",
@@ -69,42 +72,10 @@ const useHintSegments = (screen: Screen, gitState: GitState | undefined): HintSe
     case "CookieSyncConfirm":
       return [
         { key: "↑↓", label: "nav" },
-        {
-          key: "esc",
-          label: "back",
-          onClick: () => setScreen(Screen.Main()),
-        },
-        {
-          key: "c",
-          label: "enable sync",
-          cta: true,
-          onClick: () => {
-            setScreen(
-              screenForTestingOrPortPicker({
-                changesFor: screen.changesFor,
-                instruction: screen.instruction,
-                savedFlow: screen.savedFlow,
-                requiresCookies: true,
-              }),
-            );
-          },
-        },
-        {
-          key: "a",
-          label: "run anyway",
-          color: COLORS.PRIMARY,
-          cta: true,
-          onClick: () => {
-            setScreen(
-              screenForTestingOrPortPicker({
-                changesFor: screen.changesFor,
-                instruction: screen.instruction,
-                savedFlow: screen.savedFlow,
-                requiresCookies: false,
-              }),
-            );
-          },
-        },
+        { key: "space", label: "toggle" },
+        { key: "a", label: "select all", cta: true },
+        { key: "esc", label: "back", cta: true, onClick: () => setScreen(Screen.Main()) },
+        { key: "enter", label: "confirm", color: COLORS.PRIMARY, cta: true },
       ];
     case "PortPicker":
       return [

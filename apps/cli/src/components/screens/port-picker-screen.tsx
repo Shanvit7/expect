@@ -18,7 +18,7 @@ interface PortPickerScreenProps {
   changesFor: ChangesFor;
   instruction: string;
   savedFlow?: SavedFlow;
-  requiresCookies?: boolean;
+  cookieBrowserKeys?: readonly string[];
 }
 
 interface PortEntry {
@@ -61,7 +61,7 @@ export const PortPickerScreen = ({
   changesFor,
   instruction,
   savedFlow,
-  requiresCookies,
+  cookieBrowserKeys,
 }: PortPickerScreenProps) => {
   const COLORS = useColors();
   const setScreen = useNavigationStore((state) => state.setScreen);
@@ -120,7 +120,7 @@ export const PortPickerScreen = ({
         changesFor,
         instruction,
         savedFlow,
-        requiresCookies,
+        cookieBrowserKeys,
         baseUrls: allUrls.length > 0 ? allUrls : undefined,
       }),
     );

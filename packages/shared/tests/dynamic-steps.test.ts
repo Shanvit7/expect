@@ -28,7 +28,7 @@ const makeEmptyPlan = (): TestPlan =>
     instruction: "test",
     baseUrl: Option.none(),
     isHeadless: false,
-    requiresCookies: false,
+    cookieBrowserKeys: [],
     testCoverage: Option.none(),
   });
 
