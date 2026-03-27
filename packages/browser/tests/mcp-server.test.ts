@@ -73,11 +73,16 @@ describe("MCP server tools", () => {
     expect(toolNames).toEqual([
       "close",
       "console_logs",
+      "ios_devices",
+      "ios_execute",
+      "ios_source",
       "network_requests",
       "open",
       "performance_metrics",
       "playwright",
       "screenshot",
+      "swipe",
+      "tap",
     ]);
   });
 
