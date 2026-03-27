@@ -284,10 +284,6 @@ export const MainMenu = ({ gitState }: MainMenuProps) => {
                 return (
                   <Box>
                     <Text color={coverageColor(testCoverage.percent)} bold>
-                      {figures.warning} Untested changes
-                    </Text>
-                    <Text> </Text>
-                    <Text color={coverageColor(testCoverage.percent)}>
                       {coverageBar(testCoverage.percent).filled}
                     </Text>
                     <Text color={COLORS.DIM}>{coverageBar(testCoverage.percent).empty}</Text>
@@ -306,7 +302,7 @@ export const MainMenu = ({ gitState }: MainMenuProps) => {
               return (
                 <Box>
                   <Text color={COLORS.YELLOW} bold>
-                    {figures.warning} Untested changes detected
+                    {figures.warning} Changes detected
                   </Text>
                   {stats.length > 0 && (
                     <>
