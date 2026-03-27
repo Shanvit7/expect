@@ -44,11 +44,22 @@ jobs:
           claude --version
           echo "What is 1+1?" | claude -p --max-turns 1
 
-      - name: Start website server
-        run: pnpm --filter @expect/website start -- --port 3000 &
-
-      - name: Wait for server
-        run: pnpm dlx wait-on http-get://localhost:3000 --timeout 60000
+      - name: Start and wait for website server
+        run: |
+          cd apps/website
+          npx next start -p 3000 > /tmp/next-server.log 2>&1 &
+          SERVER_PID=$!
+          sleep 3
+          if ! kill -0 $SERVER_PID 2>/dev/null; then
+            echo "::error::Next.js server crashed on startup:"
+            cat /tmp/next-server.log
+            exit 1
+          fi
+          pnpm dlx wait-on http-get://localhost:3000 --timeout 60000 || {
+            echo "::error::Server timed out. Logs:"
+            cat /tmp/next-server.log
+            exit 1
+          }
 
       - name: Run expect tests
         id: expect
