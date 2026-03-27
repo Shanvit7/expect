@@ -3,12 +3,14 @@ import { fileURLToPath } from "node:url";
 import * as acp from "@agentclientprotocol/sdk";
 import {
   Cause,
+  Duration,
   Effect,
   FiberMap,
   Layer,
   Match,
   Option,
   Queue,
+  Ref,
   Schema,
   ServiceMap,
   Stream,
@@ -22,6 +24,8 @@ import * as NodeServices from "@effect/platform-node/NodeServices";
 
 export const SessionId = Schema.String.pipe(Schema.brand("SessionId"));
 export type SessionId = typeof SessionId.Type;
+
+const ACP_STREAM_INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
 
 export class AcpStreamError extends Schema.ErrorClass<AcpStreamError>("AcpStreamError")({
   _tag: Schema.tag("AcpStreamError"),
@@ -110,6 +114,8 @@ export class AcpAdapterNotFoundError extends Schema.ErrorClass<AcpAdapterNotFoun
   )}`;
 }
 
+type SessionQueueError = Cause.Done | AcpStreamError;
+
 export class AcpAdapter extends ServiceMap.Service<
   AcpAdapter,
   {
@@ -195,7 +201,10 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
     const streamFiberMap = yield* FiberMap.make<SessionId>();
 
     const writableQueue = yield* Queue.unbounded<Uint8Array>();
-    const sessionUpdatesMap = new Map<SessionId, Queue.Queue<AcpSessionUpdate, Cause.Done>>();
+    const sessionUpdatesMap = new Map<
+      SessionId,
+      Queue.Queue<AcpSessionUpdate, SessionQueueError>
+    >();
 
     const client: acp.Client = {
       requestPermission: (params) =>
@@ -291,7 +300,7 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
         Effect.map(({ sessionId }) => SessionId.makeUnsafe(sessionId)),
         Effect.tap((sessionId) =>
           Effect.gen(function* () {
-            const updatesQueue = yield* Queue.unbounded<AcpSessionUpdate, Cause.Done>();
+            const updatesQueue = yield* Queue.unbounded<AcpSessionUpdate, SessionQueueError>();
             sessionUpdatesMap.set(sessionId, updatesQueue);
             yield* Effect.logInfo("ACP session created", { sessionId });
           }),
@@ -307,7 +316,7 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
           `Session ${sessionId} not initialized, did you forget to call createSession?`,
         );
       }
-      const fresh = yield* Queue.unbounded<AcpSessionUpdate, Cause.Done>();
+      const fresh = yield* Queue.unbounded<AcpSessionUpdate, SessionQueueError>();
       sessionUpdatesMap.set(sessionId, fresh);
       return fresh;
     });
@@ -330,6 +339,7 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
       yield* Effect.logDebug("ACP stream starting", { sessionId });
 
       const updatesQueue = yield* getQueueBySessionId(sessionId);
+      const lastActivityAt = yield* Ref.make(Date.now());
 
       yield* Effect.tryPromise({
         try: () =>
@@ -344,7 +354,31 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
         FiberMap.run(streamFiberMap, sessionId, { startImmediately: true }),
       );
 
-      return Stream.fromQueue(updatesQueue);
+      const checkInactivity = Effect.gen(function* () {
+        yield* Effect.sleep(Duration.millis(ACP_STREAM_INACTIVITY_TIMEOUT_MS));
+        const lastActivity = yield* Ref.get(lastActivityAt);
+        const elapsed = Date.now() - lastActivity;
+        return elapsed >= ACP_STREAM_INACTIVITY_TIMEOUT_MS;
+      });
+      const inactivityWatchdog = Effect.gen(function* () {
+        const isStalled = yield* Effect.repeat(checkInactivity, {
+          while: (stalled) => !stalled,
+        });
+        if (isStalled) {
+          yield* Effect.logWarning("ACP stream inactivity timeout", { sessionId });
+          yield* Queue.fail(
+            updatesQueue,
+            new AcpStreamError({
+              cause: `Agent produced no output for ${ACP_STREAM_INACTIVITY_TIMEOUT_MS / 1000}s — the agent may be stalled`,
+            }),
+          );
+        }
+      });
+      yield* inactivityWatchdog.pipe(Effect.forkScoped);
+
+      return Stream.fromQueue(updatesQueue).pipe(
+        Stream.tap(() => Ref.set(lastActivityAt, Date.now())),
+      );
     }, Stream.unwrap);
 
     return {
