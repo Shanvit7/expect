@@ -46,11 +46,11 @@ Set `NO_TELEMETRY=1` to disable analytics events.
 
 ## How it works
 
-```
- ┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌─────────┐
- │ Scan changes│────▶│ Generate plan│────▶│ Run in browser│────▶│ Report  │
- │ (git diff)  │     │ (AI agent)   │     │ (Playwright)  │     │ (pass/fail)│
- └─────────────┘     └──────────────┘     └──────────────┘     └─────────┘
+```mermaid
+flowchart LR
+    A["Scan changes\n(git diff)"] --> B["Generate plan\n(AI agent)"]
+    B --> C["Run in browser\n(Playwright)"]
+    C --> D["Report\n(pass/fail)"]
 ```
 
 Expect reads your unstaged changes or branch diff, sends them to an AI agent, and generates a step-by-step test plan describing how to validate the changes. You review and approve the plan in an interactive TUI, then the agent executes each step against a live browser - using your real login sessions so there's no manual auth setup. Every session is recorded so you can replay exactly what happened.
