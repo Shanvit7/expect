@@ -556,11 +556,19 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
     const createSession = Effect.fn("AcpClient.createSession")(function* (
       cwd: string,
       mcpEnv: ReadonlyArray<{ name: string; value: string }> = [],
+      systemPrompt: Option.Option<string> = Option.none(),
     ) {
       yield* Effect.annotateCurrentSpan({ cwd });
       const mcpServers = buildMcpServers(mcpEnv);
       return yield* Effect.tryPromise({
-        try: () => connection.newSession({ cwd, mcpServers }),
+        try: () =>
+          connection.newSession({
+            cwd,
+            mcpServers,
+            ...(adapter.provider === "claude" && Option.isSome(systemPrompt)
+              ? { _meta: { systemPrompt: systemPrompt.value } }
+              : {}),
+          }),
         catch: (cause) => {
           const message = hasStringMessage(cause) ? cause.message : String(cause);
 
@@ -613,26 +621,33 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
       sessionId: sessionIdOption,
       cwd,
       mcpEnv = [],
+      systemPrompt = Option.none(),
     }: {
       sessionId: Option.Option<SessionId>;
       prompt: string;
       cwd: string;
       mcpEnv?: ReadonlyArray<{ name: string; value: string }>;
+      systemPrompt?: Option.Option<string>;
     }) {
       const sessionId = Option.isSome(sessionIdOption)
         ? sessionIdOption.value
-        : yield* createSession(cwd, mcpEnv);
+        : yield* createSession(cwd, mcpEnv, systemPrompt);
 
       yield* Effect.logDebug("ACP stream starting", { sessionId });
 
       const updatesQueue = yield* getQueueBySessionId(sessionId);
       const lastActivityAt = yield* Ref.make(Date.now());
 
+      const effectivePrompt =
+        adapter.provider !== "claude" && Option.isSome(systemPrompt)
+          ? `${systemPrompt.value}\n\n${prompt}`
+          : prompt;
+
       yield* Effect.tryPromise({
         try: () =>
           connection.prompt({
             sessionId,
-            prompt: [{ type: "text", text: prompt }],
+            prompt: [{ type: "text", text: effectivePrompt }],
           }),
         catch: (cause) => new AcpStreamError({ cause }),
       }).pipe(
