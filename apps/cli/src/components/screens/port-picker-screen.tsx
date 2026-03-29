@@ -28,8 +28,7 @@ interface PortEntry {
   readonly protocol: Protocol;
 }
 
-const portEntryToUrl = (entry: PortEntry): string =>
-  `${entry.protocol}://localhost:${entry.port}`;
+const portEntryToUrl = (entry: PortEntry): string => `${entry.protocol}://localhost:${entry.port}`;
 
 const matchesSearch = (entry: PortEntry, query: string): boolean => {
   const lowerQuery = query.toLowerCase();
