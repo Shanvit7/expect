@@ -11,7 +11,7 @@ import {
 } from "../constants";
 
 export type { PackageManager } from "../constants";
-import { isRunningInAgent } from "../utils/is-running-in-agent";
+import { isRunningInAgent } from "@expect/shared/launched-from";
 import { isHeadless } from "../utils/is-headless";
 
 export class ClaudeTokenGenerateError extends Schema.ErrorClass<ClaudeTokenGenerateError>(

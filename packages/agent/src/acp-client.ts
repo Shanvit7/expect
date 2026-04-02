@@ -28,6 +28,7 @@ import {
   AgentProvider,
 } from "@expect/shared/models";
 import { hasStringMessage } from "@expect/shared/utils";
+import { detectLaunchedFrom } from "@expect/shared/launched-from";
 import { buildSessionMeta } from "./build-session-meta";
 
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
@@ -494,6 +495,7 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
         onNone: () => false,
         onSome: (value) => value !== "",
       }) || Option.isSome(githubRunId);
+    const launchedFrom = detectLaunchedFrom();
     /** @note(rasmus): FiberMap that runs strems */
     const streamFiberMap = yield* FiberMap.make<SessionId>();
 
@@ -637,7 +639,7 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
       mcpEnv: ReadonlyArray<{ name: string; value: string }> = [],
       systemPrompt: Option.Option<string> = Option.none(),
     ) {
-      yield* Effect.annotateCurrentSpan({ cwd });
+      yield* Effect.annotateCurrentSpan({ cwd, launchedFrom });
       const mcpServers = buildMcpServers(mcpEnv);
       const sessionMeta = buildSessionMeta({
         provider: adapter.provider,
