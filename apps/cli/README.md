@@ -27,15 +27,13 @@ This will guide you through a setup process. Once installed, you can run `/expec
 
 Instead of writing scripts, maintaining selectors, and wiring up assertions, Expect reads your code changes and tests them in a real browser automatically. It's like having giving your agent QA superpowers.
 
-#### 2. How is this different from my coding agent testing?
+#### 2. How is this different from coding agents or computer-use tools?
 
-For longer tasks, your agent needs to verify its work and get feedback. Expect acts like an expert QA tester: it opens a real browser, checks what the agent built, and reports back what's broken so the agent can fix it.
+Your agent needs to verify its work, and general-purpose browser tools rely on screenshots and mouse coordinates.
 
-#### 3. How is this different from computer use / agent-browser / Claude in Chrome?
+Expect is purpose-built for testing: it uses Playwright for fast DOM automation, reads your code changes, generates a test plan, and runs it with your real cookies, then reports back what's broken so the agent can fix it.
 
-Those tools give your agent general-purpose browser access via screenshots and mouse coordinates. Expect is purpose-built for testing: it uses Playwright for fast DOM automation, reads your code changes, generates a test plan, and runs it with your real cookies.
-
-#### 4. When does it run? How does it fit into my workflow?
+#### 3. How does it fit into my workflow?
 
 Your coding agent calls `/expect` as a skill whenever it needs to validate its work in a real browser. You can also trigger it from CI by adding the GitHub Action to test every PR automatically before merge.
 
@@ -43,15 +41,11 @@ Your coding agent calls `/expect` as a skill whenever it needs to validate its w
 
 Yes. Use `--ci` or the `add github-action` command to set up a workflow that tests every PR. In CI mode it runs headless, skips cookie extraction, auto-approves the plan, and enforces a 30-minute timeout.
 
-#### 6. Can this do mobile testing?
+#### 6. Can this do mobile / desktop testing?
 
 Coming soon.
 
-#### 7. Can this test desktop apps?
-
-Coming soon.
-
-#### 8. Is there a cloud or enterprise version?
+#### 7. Is there a cloud or enterprise version?
 
 Coming soon. Email [aiden@million.dev](mailto:aiden@million.dev) if you have questions or ideas.
 
