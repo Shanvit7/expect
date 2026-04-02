@@ -21,13 +21,18 @@ import {
 
 export { detectAvailableAgents };
 
-const GLOBAL_INSTALL_COMMANDS: Record<PackageManager, string> = {
-  npm: "npm install -g expect-cli@latest",
-  pnpm: "pnpm add -g expect-cli@latest",
-  yarn: "yarn global add expect-cli@latest",
-  bun: "bun add -g expect-cli@latest",
-  deno: "deno install -g npm:expect-cli@latest",
-  vp: "vp install -g expect-cli@latest",
+interface InstallCommand {
+  binary: string;
+  args: readonly string[];
+}
+
+const GLOBAL_INSTALL_COMMANDS: Record<PackageManager, InstallCommand> = {
+  npm: { binary: "npm", args: ["install", "-g", "expect-cli@latest"] },
+  pnpm: { binary: "pnpm", args: ["add", "-g", "expect-cli@latest"] },
+  yarn: { binary: "yarn", args: ["global", "add", "expect-cli@latest"] },
+  bun: { binary: "bun", args: ["add", "-g", "expect-cli@latest"] },
+  deno: { binary: "deno", args: ["install", "-g", "npm:expect-cli@latest"] },
+  vp: { binary: "vp", args: ["install", "-g", "expect-cli@latest"] },
 };
 
 interface InitOptions {
@@ -59,7 +64,7 @@ const logUsageGuide = () => {
 export const runInit = async (options: InitOptions = {}) => {
   const nonInteractive = detectNonInteractive(options.yes ?? false);
   const packageManager = detectPackageManager();
-  const installCommand = GLOBAL_INSTALL_COMMANDS[packageManager];
+  const { binary: installBinary, args: installArgs } = GLOBAL_INSTALL_COMMANDS[packageManager];
 
   setOnCancel(() => {
     logger.break();
@@ -109,7 +114,7 @@ export const runInit = async (options: InitOptions = {}) => {
   }
 
   const globalSpinner = spinner("Installing expect-cli globally...").start();
-  const globalSuccess = await tryRun(installCommand);
+  const globalSuccess = await tryRun(installBinary, installArgs);
 
   if (globalSuccess) {
     if (isCommandAvailable("expect-cli")) {
@@ -134,7 +139,7 @@ export const runInit = async (options: InitOptions = {}) => {
     }
   } else {
     globalSpinner.fail("Failed to install globally.");
-    logger.dim(`  Run manually: ${highlighter.info(installCommand)}`);
+    logger.dim(`  Run manually: ${highlighter.info(`${installBinary} ${installArgs.join(" ")}`)}`);
   }
 
   const playwrightSpinner = spinner(

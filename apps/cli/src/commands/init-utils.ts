@@ -88,10 +88,9 @@ export const isGithubCliAuthenticated = Effect.try({
   ),
 );
 
-export const tryRun = (command: string): Promise<boolean> =>
+export const tryRun = (binary: string, args: readonly string[]): Promise<boolean> =>
   new Promise((resolve) => {
-    const [binary, ...args] = command.split(" ");
-    const child = spawn(binary, args, {
+    const child = spawn(binary, [...args], {
       stdio: "ignore",
       timeout: GLOBAL_INSTALL_TIMEOUT_MS,
     });
