@@ -67,24 +67,24 @@ Screen recordings have dead time — starting the recorder, reading content, thi
 
 **Why Gemini**: It's the only major model with native video input. No frame extraction, no base64 image sequences, no ffmpeg dependency for the core path. Upload the file, get a response. Gemini 2.5 Flash processes up to ~45 min of video at ~$0.005/min — a 2-minute screen recording costs about a cent.
 
+**Why AI SDK**: The codebase already uses `@ai-sdk/provider`. Using `@ai-sdk/google` + `ai` (generateText) keeps the dependency surface unified instead of adding a separate `@google/genai` SDK. AI SDK's `file` content part handles video natively with the Google provider, and auto-uploads large files via the Google Files API.
+
 **API flow**:
 
 ```ts
-import { GoogleGenAI, createUserContent, createPartFromUri } from "@google/genai";
+import { google } from "@ai-sdk/google";
+import { generateText } from "ai";
+import { readFileSync } from "node:fs";
 
-const ai = new GoogleGenAI({ apiKey });
-
-const uploaded = await ai.files.upload({
-  file: videoPath,
-  config: { mimeType },
-});
-
-const response = await ai.models.generateContent({
-  model: "gemini-2.5-flash",
-  contents: createUserContent([
-    createPartFromUri(uploaded.uri, uploaded.mimeType),
-    transcriptPrompt,
-  ]),
+const { text } = await generateText({
+  model: google("gemini-2.5-flash"),
+  messages: [{
+    role: "user",
+    content: [
+      { type: "file", data: readFileSync(videoPath), mimeType: "video/mp4" },
+      { type: "text", text: transcriptPrompt },
+    ],
+  }],
 });
 ```
 
@@ -176,13 +176,9 @@ When `--video` is provided without `--message`, the instruction defaults to: "Te
 
 ### Configuration
 
-Gemini API key via Effect `Config.string`:
+Gemini API key via the `GOOGLE_GENERATIVE_AI_API_KEY` environment variable (AI SDK's default for `@ai-sdk/google`). Alternatively, pass `apiKey` to `createGoogleGenerativeAI()`.
 
-```ts
-const geminiApiKey = Config.string("GEMINI_API_KEY");
-```
-
-The key is required only when `--video` is used. If missing, fail with a clear error: "GEMINI_API_KEY environment variable is required for video transcript extraction."
+The key is required only when `--video` is used. If missing, fail with a clear error: "GOOGLE_GENERATIVE_AI_API_KEY environment variable is required for video transcript extraction."
 
 ---
 
@@ -195,15 +191,13 @@ New service in `packages/supervisor/src/video-transcript.ts`:
 ```ts
 export class VideoTranscript extends ServiceMap.Service<VideoTranscript>()("@supervisor/VideoTranscript", {
   make: Effect.gen(function* () {
-    const geminiApiKey = yield* Config.string("GEMINI_API_KEY");
-
     const extractTranscript = Effect.fn("VideoTranscript.extractTranscript")(
       function* (videoPath: string) {
         yield* Effect.annotateCurrentSpan({ videoPath });
 
         const timeline = yield* analyzeActivity(videoPath);
         const processedPath = yield* cutIdleSegments(videoPath, timeline);
-        const transcript = yield* callGemini(geminiApiKey, processedPath, timeline);
+        const transcript = yield* callGemini(processedPath, timeline);
 
         yield* Effect.logInfo("Video transcript extracted", {
           originalPath: videoPath,
@@ -226,7 +220,7 @@ Internal functions (not exported on the service):
 
 - `analyzeActivity(videoPath: string)` — ffmpeg frame extraction + pixel diff → `ActivityTimeline`
 - `cutIdleSegments(videoPath: string, timeline: ActivityTimeline)` — ffmpeg concat filter → trimmed video path
-- `callGemini(apiKey: string, videoPath: string, timeline: ActivityTimeline)` — Gemini Files API upload + generateContent → transcript string
+- `callGemini(videoPath: string, timeline: ActivityTimeline)` — AI SDK generateText with Google provider → transcript string
 
 ### Error types
 
@@ -293,7 +287,7 @@ export interface ExecutionPromptOptions {
 | `packages/supervisor/src/video-transcript.ts` | New service: VideoTranscript with extractTranscript, analyzeActivity, cutIdleSegments, callGemini |
 | `packages/supervisor/src/constants.ts` | New constants: FRAME_DIFF_IDLE_THRESHOLD, IDLE_CUT_THRESHOLD_SECONDS, SCENE_CHANGE_THRESHOLD, MIN_ACTIVE_SEGMENT_SECONDS |
 | `packages/supervisor/src/executor.ts` | Add videoTranscript to ExecuteOptions, pass through to buildExecutionPrompt |
-| `packages/supervisor/package.json` | Add `@google/genai` dependency |
+| `packages/supervisor/package.json` | Add `@ai-sdk/google` and `ai` dependencies |
 | `packages/shared/src/prompts.ts` | Add videoTranscript to ExecutionPromptOptions, add `<developer_demonstration>` section to buildExecutionPrompt, add note to system prompt |
 | `apps/cli/src/index.tsx` | Add `--video <path>` CLI flag, wire through to execution |
 | `apps/cli/src/components/screens/main-menu-screen.tsx` | Pass video transcript to testing screen when available |
@@ -308,6 +302,7 @@ export interface ExecutionPromptOptions {
 |---|---|
 | Gemini over GPT/Claude for video | Only model with native video input. No frame extraction, no base64 encoding, no ffmpeg hard dependency for the core path. Cheapest per-minute cost. |
 | Gemini 2.5 Flash over Pro | Flash is 10x cheaper, fast enough for transcript extraction, and handles up to 45 min of video. Pro is overkill for describing UI interactions. |
+| AI SDK over `@google/genai` | Codebase already uses `@ai-sdk/provider`. AI SDK's `@ai-sdk/google` provides a unified `generateText` API with file part support — no need for a second SDK with different patterns. Keeps provider-switching open (could swap to Vertex AI or another provider later). |
 | ffmpeg for preprocessing over native Node | ffmpeg is the standard for video processing, nearly universal on dev machines, and handles frame extraction + concatenation in single commands. Native alternatives (fluent-ffmpeg, sharp) add large dependencies. |
 | Graceful degradation without ffmpeg | Preprocessing is an optimization, not a requirement. Raw video upload works fine — just costs more tokens. Warning instead of hard failure. |
 | Frame diff at 1 FPS | Matches Gemini's default sampling rate. No point detecting sub-second idle periods when Gemini only sees 1 frame/sec. |
