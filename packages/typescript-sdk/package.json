@@ -1,12 +1,12 @@
 {
   "name": "expect-sdk",
   "version": "0.0.26",
-  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/millionco/expect",
     "directory": "packages/typescript-sdk"
   },
+  "type": "module",
   "exports": {
     ".": {
       "import": {
