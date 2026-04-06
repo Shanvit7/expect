@@ -110,11 +110,31 @@ describe("detectAvailableAgents", () => {
     expect(agents).toEqual(["droid"]);
   });
 
-  it("checks all seven supported agents", () => {
+  it("detects pi via pi binary", () => {
+    mockedWhichSync.mockImplementation((command: string) => {
+      if (command === "pi") return "/usr/local/bin/pi";
+      throw new Error("not found");
+    });
+
+    const agents = detectAvailableAgents();
+    expect(agents).toEqual(["pi"]);
+  });
+
+  it("detects pi via omegon binary fallback", () => {
+    mockedWhichSync.mockImplementation((command: string) => {
+      if (command === "omegon") return "/usr/local/bin/omegon";
+      throw new Error("not found");
+    });
+
+    const agents = detectAvailableAgents();
+    expect(agents).toEqual(["pi"]);
+  });
+
+  it("checks all eight supported agents", () => {
     mockedWhichSync.mockImplementation((command: string) => `/usr/local/bin/${command}`);
 
     const agents = detectAvailableAgents();
-    expect(agents).toEqual(["claude", "codex", "copilot", "gemini", "cursor", "opencode", "droid"]);
+    expect(agents).toEqual(["claude", "codex", "copilot", "gemini", "cursor", "opencode", "droid", "pi"]);
   });
 
   it("isCommandAvailable returns true when binary is on PATH", () => {

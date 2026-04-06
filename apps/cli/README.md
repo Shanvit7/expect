@@ -57,7 +57,7 @@ Coming soon. Email [aiden@million.dev](mailto:aiden@million.dev) if you have que
 | `-m, --message <instruction>` | Natural language instruction for what to test                                          | -                    |
 | `-f, --flow <slug>`           | Reuse a saved flow by its slug                                                         | -                    |
 | `-y, --yes`                   | Run immediately without confirmation                                                   | -                    |
-| `-a, --agent <provider>`      | Agent provider (`claude`, `codex`, `copilot`, `gemini`, `cursor`, `opencode`, `droid`) | auto-detect          |
+| `-a, --agent <provider>`      | Agent provider (`claude`, `codex`, `copilot`, `gemini`, `cursor`, `opencode`, `droid`, `pi`) | auto-detect          |
 | `-t, --target <target>`       | What to test: `unstaged`, `branch`, or `changes`                                       | `changes`            |
 | `-u, --url <urls...>`         | Base URL(s) for the dev server (skips port picker)                                     | -                    |
 | `--headed`                    | Show a visible browser window during tests                                             | -                    |
@@ -83,6 +83,7 @@ Expect works with the following coding agents. It auto-detects which agents are 
 | [Cursor](https://cursor.com)                                  | `-a cursor`   | [cursor.com](https://cursor.com)           |
 | [OpenCode](https://opencode.ai)                               | `-a opencode` | `npm install -g opencode-ai`               |
 | [Factory Droid](https://factory.ai)                           | `-a droid`    | `npm install -g droid`                     |
+| [Pi](https://www.npmjs.com/package/@mariozechner/pi-coding-agent)              | `-a pi`       | `npm install -g @mariozechner/pi-coding-agent` |
 
 ## Resources & Contributing Back
 

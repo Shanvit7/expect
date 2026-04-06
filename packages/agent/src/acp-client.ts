@@ -38,6 +38,9 @@ export const SessionId = Schema.String.pipe(Schema.brand("SessionId"));
 export type SessionId = typeof SessionId.Type;
 
 const ACP_STREAM_INACTIVITY_TIMEOUT_MS = 3 * 60 * 1000;
+// Pi uses extended thinking and may silently reason for several minutes before
+// emitting any output token. Give it a much longer inactivity window.
+const PI_STREAM_INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
 const ACP_AUTH_CHECK_TIMEOUT = "3 seconds" as const;
 
 export class AcpStreamError extends Schema.ErrorClass<AcpStreamError>("AcpStreamError")({
@@ -91,6 +94,11 @@ export class AcpProviderNotInstalledError extends Schema.ErrorClass<AcpProviderN
       () =>
         "Factory Droid is not installed. Install it with `npm install -g droid`, or use Claude Code with `expect -a claude`.",
     ),
+    Match.when(
+      "pi",
+      () =>
+        "Pi is not installed. Install it with `npm install -g @mariozechner/pi-coding-agent`, or use Claude Code with `expect -a claude`.",
+    ),
     Match.orElse(
       () => "Your coding agent CLI is not installed. Please install it and then re-run expect.",
     ),
@@ -118,6 +126,11 @@ export class AcpProviderUnauthenticatedError extends Schema.ErrorClass<AcpProvid
       "droid",
       () =>
         "Please set the FACTORY_API_KEY environment variable (get one at app.factory.ai/settings/api-keys), and then re-run expect.",
+    ),
+    Match.when(
+      "pi",
+      () =>
+        "Pi is not authenticated. Open pi and complete provider setup, then re-run expect.",
     ),
     Match.orElse(() => "Please sign in to your coding agent, and then re-run expect."),
   );
@@ -214,6 +227,8 @@ export class AcpAdapter extends ServiceMap.Service<
     readonly bin: string;
     readonly args: readonly string[];
     readonly env: Record<string, string>;
+    /** Override the inactivity timeout for this provider. Defaults to ACP_STREAM_INACTIVITY_TIMEOUT_MS. */
+    readonly inactivityTimeoutMs?: number;
   }
 >()("@expect/AcpAdapter") {
   static layerCodex = Layer.effect(AcpAdapter)(
@@ -434,6 +449,59 @@ export class AcpAdapter extends ServiceMap.Service<
         bin: "droid",
         args: ["exec", "--output-format", "acp"],
         env: {},
+      });
+    }),
+  ).pipe(Layer.provide(NodeServices.layer));
+
+  static layerPi = Layer.effect(AcpAdapter)(
+    Effect.gen(function* () {
+      const fileSystem = yield* FileSystem.FileSystem;
+      const homeOption = yield* Config.option(
+        Config.string("HOME").pipe(Config.orElse(() => Config.string("USERPROFILE"))),
+      );
+      const homedir = Option.isSome(homeOption)
+        ? homeOption.value
+        : yield* new AcpProviderUnauthenticatedError({ provider: "pi" });
+
+      const authPath = `${homedir}/.pi/agent/auth.json`;
+
+      yield* fileSystem.readFileString(authPath).pipe(
+        Effect.flatMap(
+          Schema.decodeEffect(Schema.fromJsonString(Schema.Record(Schema.String, Schema.Unknown))),
+        ),
+        Effect.flatMap((auth) =>
+          Object.keys(auth).length > 0
+            ? Effect.void
+            : new AcpProviderUnauthenticatedError({ provider: "pi" }).asEffect(),
+        ),
+        Effect.catchReason("PlatformError", "NotFound", () =>
+          new AcpProviderUnauthenticatedError({ provider: "pi" }).asEffect(),
+        ),
+        Effect.catchTag("PlatformError", () =>
+          new AcpProviderUnauthenticatedError({ provider: "pi" }).asEffect(),
+        ),
+        Effect.catchTag("SchemaError", () =>
+          new AcpProviderUnauthenticatedError({ provider: "pi" }).asEffect(),
+        ),
+      );
+
+      return yield* Effect.try({
+        try: () => {
+          const require = makeRequire();
+          const binPath = require.resolve("pi-acp/dist/index.js");
+          return AcpAdapter.of({
+            provider: "pi",
+            bin: process.execPath,
+            args: [binPath],
+            env: {},
+            inactivityTimeoutMs: PI_STREAM_INACTIVITY_TIMEOUT_MS,
+          });
+        },
+        catch: (cause) =>
+          new AcpAdapterNotFoundError({
+            packageName: "pi-acp",
+            cause,
+          }),
       });
     }),
   ).pipe(Layer.provide(NodeServices.layer));
@@ -790,12 +858,16 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
       );
 
       const checkInactivity = Effect.gen(function* () {
-        yield* Effect.sleep(Duration.millis(ACP_STREAM_INACTIVITY_TIMEOUT_MS));
+        const inactivityTimeoutMs =
+          adapter.inactivityTimeoutMs ?? ACP_STREAM_INACTIVITY_TIMEOUT_MS;
+        yield* Effect.sleep(Duration.millis(inactivityTimeoutMs));
         const lastActivity = yield* Ref.get(lastActivityAt);
         const elapsed = Date.now() - lastActivity;
-        return elapsed >= ACP_STREAM_INACTIVITY_TIMEOUT_MS;
+        return elapsed >= inactivityTimeoutMs;
       });
       const inactivityWatchdog = Effect.gen(function* () {
+        const inactivityTimeoutMs =
+          adapter.inactivityTimeoutMs ?? ACP_STREAM_INACTIVITY_TIMEOUT_MS;
         const isStalled = yield* Effect.repeat(checkInactivity, {
           while: (stalled) => !stalled,
         });
@@ -804,7 +876,7 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
           yield* Queue.fail(
             updatesQueue,
             new AcpStreamError({
-              cause: `Agent produced no output for ${ACP_STREAM_INACTIVITY_TIMEOUT_MS / 1000}s — the agent may be stalled`,
+              cause: `Agent produced no output for ${inactivityTimeoutMs / 1000}s — the agent may be stalled`,
             }),
           );
         }
@@ -881,4 +953,5 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
   static layerCursor = this.layer.pipe(Layer.provide(AcpAdapter.layerCursor));
   static layerOpencode = this.layer.pipe(Layer.provide(AcpAdapter.layerOpencode));
   static layerDroid = this.layer.pipe(Layer.provide(AcpAdapter.layerDroid));
+  static layerPi = this.layer.pipe(Layer.provide(AcpAdapter.layerPi));
 }

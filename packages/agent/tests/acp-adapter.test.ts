@@ -200,6 +200,38 @@ describe("AcpAdapter", () => {
       const error = new AcpProviderNotInstalledError({ provider: "codex" });
       expect(error.message).toContain("@openai/codex");
     });
+
+    it("pi not-installed error mentions @mariozechner/pi-coding-agent", () => {
+      const error = new AcpProviderNotInstalledError({ provider: "pi" });
+      expect(error.message).toContain("@mariozechner/pi-coding-agent");
+    });
+
+    it("pi unauthenticated error mentions pi", () => {
+      const error = new AcpProviderUnauthenticatedError({ provider: "pi" });
+      expect(error.message).toContain("pi");
+    });
+  });
+
+  describe("layerPi", () => {
+    it("resolves the pi adapter using the published pi-acp package", async () => {
+      const adapter = await Effect.gen(function* () {
+        return yield* AcpAdapter;
+      }).pipe(Effect.provide(AcpAdapter.layerPi), Effect.runPromise);
+
+      expect(adapter.provider).toBe("pi");
+      expect(adapter.bin).toBe(process.execPath);
+      expect(adapter.args[0]).toContain("pi-acp");
+      expect(adapter.args[0]).toContain("dist/index.js");
+    }, 15_000);
+
+    it("resolves pi-acp from node_modules", async () => {
+      const adapter = await Effect.gen(function* () {
+        return yield* AcpAdapter;
+      }).pipe(Effect.provide(AcpAdapter.layerPi), Effect.runPromise);
+
+      expect(adapter.args[0]).toContain("node_modules");
+      expect(adapter.args[0]).toContain("pi-acp");
+    }, 15_000);
   });
 
   describe("Agent.layerFor", () => {
@@ -212,6 +244,7 @@ describe("AcpAdapter", () => {
         "cursor",
         "opencode",
         "droid",
+        "pi",
       ] as const;
 
       for (const backend of backends) {
