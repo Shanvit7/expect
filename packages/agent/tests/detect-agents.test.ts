@@ -134,7 +134,16 @@ describe("detectAvailableAgents", () => {
     mockedWhichSync.mockImplementation((command: string) => `/usr/local/bin/${command}`);
 
     const agents = detectAvailableAgents();
-    expect(agents).toEqual(["claude", "codex", "copilot", "gemini", "cursor", "opencode", "droid", "pi"]);
+    expect(agents).toEqual([
+      "claude",
+      "codex",
+      "copilot",
+      "gemini",
+      "cursor",
+      "opencode",
+      "droid",
+      "pi",
+    ]);
   });
 
   it("isCommandAvailable returns true when binary is on PATH", () => {

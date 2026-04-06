@@ -129,8 +129,7 @@ export class AcpProviderUnauthenticatedError extends Schema.ErrorClass<AcpProvid
     ),
     Match.when(
       "pi",
-      () =>
-        "Pi is not authenticated. Open pi and complete provider setup, then re-run expect.",
+      () => "Pi is not authenticated. Open pi and complete provider setup, then re-run expect.",
     ),
     Match.orElse(() => "Please sign in to your coding agent, and then re-run expect."),
   );
@@ -858,16 +857,14 @@ export class AcpClient extends ServiceMap.Service<AcpClient>()("@expect/AcpClien
       );
 
       const checkInactivity = Effect.gen(function* () {
-        const inactivityTimeoutMs =
-          adapter.inactivityTimeoutMs ?? ACP_STREAM_INACTIVITY_TIMEOUT_MS;
+        const inactivityTimeoutMs = adapter.inactivityTimeoutMs ?? ACP_STREAM_INACTIVITY_TIMEOUT_MS;
         yield* Effect.sleep(Duration.millis(inactivityTimeoutMs));
         const lastActivity = yield* Ref.get(lastActivityAt);
         const elapsed = Date.now() - lastActivity;
         return elapsed >= inactivityTimeoutMs;
       });
       const inactivityWatchdog = Effect.gen(function* () {
-        const inactivityTimeoutMs =
-          adapter.inactivityTimeoutMs ?? ACP_STREAM_INACTIVITY_TIMEOUT_MS;
+        const inactivityTimeoutMs = adapter.inactivityTimeoutMs ?? ACP_STREAM_INACTIVITY_TIMEOUT_MS;
         const isStalled = yield* Effect.repeat(checkInactivity, {
           while: (stalled) => !stalled,
         });
