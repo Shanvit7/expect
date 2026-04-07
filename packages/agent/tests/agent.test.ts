@@ -6,10 +6,12 @@ import { isCommandAvailable } from "@expect/shared/is-command-available";
 
 const hasCodex = isCommandAvailable("codex");
 const hasClaude = isCommandAvailable("claude");
+const hasPi = isCommandAvailable("pi");
 
 const TEST_LAYERS = [
   ["codex-acp", Agent.layerCodex, hasCodex],
   ["claude-acp", Agent.layerClaude, hasClaude],
+  ["pi-acp", Agent.layerPi, hasPi],
 ] as const;
 
 const makeOptions = (prompt: string): AgentStreamOptions =>

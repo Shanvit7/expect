@@ -25,6 +25,7 @@
     "@google/gemini-cli": "^0.35.3",
     "@zed-industries/codex-acp": "^0.10.0",
     "effect": "4.0.0-beta.35",
+    "pi-acp": "^0.0.24",
     "which": "^6.0.1"
   },
   "devDependencies": {

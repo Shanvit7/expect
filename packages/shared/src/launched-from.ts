@@ -9,6 +9,7 @@ const AGENT_ENVIRONMENT_VARIABLES = [
   "OPENCODE",
   "AMP_HOME",
   "AMI",
+  "PI_CODING_AGENT_DIR",
 ];
 
 export const detectLaunchedFrom = (): LaunchedFrom => {
