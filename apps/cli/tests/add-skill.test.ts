@@ -173,6 +173,22 @@ describe("skill copy installation", () => {
     );
   });
 
+  it("replaces empty skill directories left behind by a partial install", () => {
+    const sharedSkillDir = path.join(projectRoot, ".agents", "skills", "expect");
+    const cursorSkillsDir = path.join(projectRoot, ".cursor", "skills");
+    const emptySkillDir = path.join(cursorSkillsDir, "expect");
+
+    fs.mkdirSync(sharedSkillDir, { recursive: true });
+    fs.mkdirSync(emptySkillDir, { recursive: true });
+    fs.writeFileSync(path.join(sharedSkillDir, "SKILL.md"), "---\nname: expect\n---\n");
+
+    expect(ensureAgentSkillCopy(projectRoot, "cursor")).toBe("copied");
+    expect(fs.lstatSync(emptySkillDir).isDirectory()).toBe(true);
+    expect(fs.readFileSync(path.join(emptySkillDir, "SKILL.md"), "utf8")).toBe(
+      "---\nname: expect\n---\n",
+    );
+  });
+
   it("keeps existing matching copied skill directories untouched", () => {
     const sharedSkillDir = path.join(projectRoot, ".agents", "skills", "expect");
     const opencodeSkillsDir = path.join(projectRoot, ".opencode", "skills");

@@ -139,6 +139,7 @@ const selectAgents = async (agents: readonly SupportedAgent[], nonInteractive: b
 };
 
 type AgentSkillCopyResult = "copied" | "already-copied" | string;
+const RECOVERABLE_SKILL_DIR_ENTRIES = new Set([".DS_Store", "Thumbs.db"]);
 
 const getExistingPathStats = (targetPath: string): fs.Stats | undefined => {
   try {
@@ -184,6 +185,16 @@ const haveMatchingContents = (sourcePath: string, targetPath: string): boolean =
   return false;
 };
 
+const isRecoverableSkillDirectory = (targetPath: string): boolean =>
+  fs.readdirSync(targetPath).every((entry) => RECOVERABLE_SKILL_DIR_ENTRIES.has(entry));
+
+const copySkillDirectoryContents = (sourceDir: string, targetDir: string) => {
+  fs.mkdirSync(targetDir, { recursive: true });
+  for (const entry of fs.readdirSync(sourceDir)) {
+    fs.cpSync(path.join(sourceDir, entry), path.join(targetDir, entry), { recursive: true });
+  }
+};
+
 export const ensureAgentSkillCopy = (
   projectRoot: string,
   agent: SupportedAgent,
@@ -191,22 +202,33 @@ export const ensureAgentSkillCopy = (
   const skillSourceDir = path.join(projectRoot, AGENTS_SKILLS_DIR, SKILL_NAME);
   const agentSkillDir = path.join(projectRoot, toSkillDir(agent));
   const installedSkillDir = path.join(agentSkillDir, SKILL_NAME);
+  const installedSkillFilePath = path.join(installedSkillDir, "SKILL.md");
 
   try {
     const existingPathStats = getExistingPathStats(installedSkillDir);
     if (existingPathStats?.isDirectory()) {
-      if (!fs.existsSync(path.join(installedSkillDir, "SKILL.md"))) {
-        return `${installedSkillDir} exists and is not an expect skill directory`;
+      if (!fs.existsSync(installedSkillFilePath)) {
+        if (isRecoverableSkillDirectory(installedSkillDir)) {
+          fs.rmSync(installedSkillDir, { recursive: true, force: true });
+        } else {
+          return `${installedSkillDir} exists and is not an expect skill directory`;
+        }
+      } else if (haveMatchingContents(skillSourceDir, installedSkillDir)) {
+        return "already-copied";
+      } else {
+        fs.rmSync(installedSkillDir, { recursive: true, force: true });
       }
-      if (haveMatchingContents(skillSourceDir, installedSkillDir)) return "already-copied";
-      fs.rmSync(installedSkillDir, { recursive: true, force: true });
     } else if (existingPathStats !== undefined) {
       fs.unlinkSync(installedSkillDir);
     }
 
     fs.mkdirSync(path.dirname(installedSkillDir), { recursive: true });
+
     // Copying is more reliable than symlinking across agent CLIs and avoids path, permission, and broken-link edge cases.
-    fs.cpSync(skillSourceDir, installedSkillDir, { recursive: true });
+    copySkillDirectoryContents(skillSourceDir, installedSkillDir);
+    if (!fs.existsSync(installedSkillFilePath)) {
+      throw new Error("copied skill is missing SKILL.md");
+    }
     return "copied";
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
