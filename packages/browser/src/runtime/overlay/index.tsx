@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 // eslint-disable-next-line no-restricted-imports -- overlay runs in injected runtime, not the CLI React app; React Compiler doesn't apply
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 // @ts-expect-error -- CSS imported as text via esbuild cssTextPlugin
 import cssText from "../../../dist/overlay.css";
 
@@ -27,7 +27,64 @@ import { usePolledPositions } from "./lib/use-polled-positions";
 import { finder } from "@medv/finder";
 import { CursorIcon, detectCursorShape } from "./components/cursors";
 import { Glow } from "./components/glow";
-import { TextMorph } from "torph/react";
+
+const CAROUSEL_DURATION_MS = 350;
+
+const TextCarousel = ({ text }: { text: string }) => {
+  const [items, setItems] = useState([{ text, id: 0 }]);
+  const nextIdRef = useRef(1);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    const current = items[items.length - 1];
+    if (text === current.text) return;
+
+    const id = nextIdRef.current++;
+    setItems((previous) => [...previous.slice(-1), { text, id }]);
+
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      setItems((previous) => previous.slice(-1));
+    }, CAROUSEL_DURATION_MS);
+
+    return () => clearTimeout(timeoutRef.current);
+  }, [text, items]);
+
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        position: "relative",
+        overflow: "hidden",
+        verticalAlign: "top",
+      }}
+    >
+      {items.map((item, index) => {
+        const isOutgoing = items.length > 1 && index === 0;
+        const isIncoming = items.length > 1 && index === 1;
+        return (
+          <span
+            key={item.id}
+            style={{
+              display: "inline-block",
+              whiteSpace: "nowrap",
+              position: isOutgoing ? "absolute" : undefined,
+              left: isOutgoing ? 0 : undefined,
+              top: isOutgoing ? 0 : undefined,
+              animation: isOutgoing
+                ? `expect-carousel-out ${CAROUSEL_DURATION_MS}ms cubic-bezier(0.22,1,0.36,1) forwards`
+                : isIncoming
+                  ? `expect-carousel-in ${CAROUSEL_DURATION_MS}ms cubic-bezier(0.22,1,0.36,1) forwards`
+                  : "none",
+            }}
+          >
+            {item.text}
+          </span>
+        );
+      })}
+    </span>
+  );
+};
 
 const AgentOverlay = () => {
   const [state, setState] = useState<OverlayState>(loadInitialState);
@@ -192,9 +249,7 @@ const AgentOverlay = () => {
                   textOverflow: "ellipsis",
                 }}
               >
-                <TextMorph style={{ display: "inline", whiteSpace: "nowrap" }}>
-                  {state.label}
-                </TextMorph>
+                <TextCarousel text={state.label} />
               </div>
             </div>
           )}
