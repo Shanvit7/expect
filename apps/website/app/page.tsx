@@ -902,9 +902,23 @@ const formatStarCount = (count: number) => {
 function highlightSyntax(code: string, lang: "json" | "toml" | "sh") {
   if (lang === "sh") {
     return code.split(/(\s+)/).map((token, index) => {
-      if (token.startsWith("--")) return <span key={index} className="text-[#0033B3]">{token}</span>;
-      if (token.startsWith("-")) return <span key={index} className="text-[#0033B3]">{token}</span>;
-      return <span key={index} className="text-[#000000]">{token}</span>;
+      if (token.startsWith("--"))
+        return (
+          <span key={index} className="text-[#0033B3]">
+            {token}
+          </span>
+        );
+      if (token.startsWith("-"))
+        return (
+          <span key={index} className="text-[#0033B3]">
+            {token}
+          </span>
+        );
+      return (
+        <span key={index} className="text-[#000000]">
+          {token}
+        </span>
+      );
     });
   }
   if (lang === "toml") {
@@ -919,12 +933,36 @@ function highlightSyntax(code: string, lang: "json" | "toml" | "sh") {
         },
       );
       const parts = highlighted.split("\x01").map((part, partIndex) => {
-        if (part.startsWith("s")) return <span key={partIndex} className="text-[#871094]">{part.slice(1)}</span>;
-        if (part.startsWith("v")) return <span key={partIndex} className="text-[#067D17]">{part.slice(1)}</span>;
-        if (part.startsWith("k")) return <span key={partIndex} className="text-[#871094]">{part.slice(1)}</span>;
-        return <span key={partIndex} className="text-[#000000]">{part}</span>;
+        if (part.startsWith("s"))
+          return (
+            <span key={partIndex} className="text-[#871094]">
+              {part.slice(1)}
+            </span>
+          );
+        if (part.startsWith("v"))
+          return (
+            <span key={partIndex} className="text-[#067D17]">
+              {part.slice(1)}
+            </span>
+          );
+        if (part.startsWith("k"))
+          return (
+            <span key={partIndex} className="text-[#871094]">
+              {part.slice(1)}
+            </span>
+          );
+        return (
+          <span key={partIndex} className="text-[#000000]">
+            {part}
+          </span>
+        );
       });
-      return <span key={lineIndex}>{parts}{lineIndex < lines.length - 1 && "\n"}</span>;
+      return (
+        <span key={lineIndex}>
+          {parts}
+          {lineIndex < lines.length - 1 && "\n"}
+        </span>
+      );
     });
   }
   return code.split("\n").map((line, lineIndex, lines) => {
@@ -938,27 +976,66 @@ function highlightSyntax(code: string, lang: "json" | "toml" | "sh") {
       },
     );
     const parts = highlighted.split("\x01").map((part, partIndex) => {
-      if (part.startsWith("k")) return <span key={partIndex} className="text-[#871094]">{part.slice(1)}</span>;
-      if (part.startsWith("p")) return <span key={partIndex} className="text-[#000000]">{part.slice(1)}</span>;
-      if (part.startsWith("v")) return <span key={partIndex} className="text-[#067D17]">{part.slice(1)}</span>;
-      if (part.startsWith("l")) return <span key={partIndex} className="text-[#0033B3]">{part.slice(1)}</span>;
-      return <span key={partIndex} className="text-[#000000]">{part}</span>;
+      if (part.startsWith("k"))
+        return (
+          <span key={partIndex} className="text-[#871094]">
+            {part.slice(1)}
+          </span>
+        );
+      if (part.startsWith("p"))
+        return (
+          <span key={partIndex} className="text-[#000000]">
+            {part.slice(1)}
+          </span>
+        );
+      if (part.startsWith("v"))
+        return (
+          <span key={partIndex} className="text-[#067D17]">
+            {part.slice(1)}
+          </span>
+        );
+      if (part.startsWith("l"))
+        return (
+          <span key={partIndex} className="text-[#0033B3]">
+            {part.slice(1)}
+          </span>
+        );
+      return (
+        <span key={partIndex} className="text-[#000000]">
+          {part}
+        </span>
+      );
     });
-    return <span key={lineIndex}>{parts}{lineIndex < lines.length - 1 && "\n"}</span>;
+    return (
+      <span key={lineIndex}>
+        {parts}
+        {lineIndex < lines.length - 1 && "\n"}
+      </span>
+    );
   });
 }
 
 const MCP_CLIENTS = [
-  { name: "Claude Code", command: "claude mcp add --scope user expect -- npx -y expect-cli@latest mcp", lang: "sh" as const },
-  { name: "Cursor", command: `{
+  {
+    name: "Claude Code",
+    command: "claude mcp add --scope user expect -- npx -y expect-cli@latest mcp",
+    lang: "sh" as const,
+  },
+  {
+    name: "Cursor",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "VS Code", command: `"mcp": {
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "VS Code",
+    command: `"mcp": {
   "servers": {
     "expect": {
       "type": "stdio",
@@ -966,50 +1043,78 @@ const MCP_CLIENTS = [
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Windsurf", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Windsurf",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Claude Desktop", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Claude Desktop",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Opencode", command: `"mcp": {
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Opencode",
+    command: `"mcp": {
   "expect": {
     "type": "local",
     "command": ["npx", "-y", "expect-cli@latest", "mcp"],
     "enabled": true
   }
-}`, lang: "json" as const },
-  { name: "OpenAI Codex", command: `[mcp_servers.expect]
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "OpenAI Codex",
+    command: `[mcp_servers.expect]
 command = "npx"
-args = ["-y", "expect-cli@latest", "mcp"]`, lang: "toml" as const },
-  { name: "Antigravity", command: `{
+args = ["-y", "expect-cli@latest", "mcp"]`,
+    lang: "toml" as const,
+  },
+  {
+    name: "Antigravity",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Roo Code", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Roo Code",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Kilo Code", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Kilo Code",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
@@ -1018,16 +1123,24 @@ args = ["-y", "expect-cli@latest", "mcp"]`, lang: "toml" as const },
       "disabled": false
     }
   }
-}`, lang: "json" as const },
-  { name: "Cline", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Cline",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Copilot Agent", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Copilot Agent",
+    command: `{
   "mcpServers": {
     "expect": {
       "type": "stdio",
@@ -1035,8 +1148,12 @@ args = ["-y", "expect-cli@latest", "mcp"]`, lang: "toml" as const },
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Copilot CLI", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Copilot CLI",
+    command: `{
   "mcpServers": {
     "expect": {
       "type": "stdio",
@@ -1044,34 +1161,58 @@ args = ["-y", "expect-cli@latest", "mcp"]`, lang: "toml" as const },
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Gemini CLI", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Gemini CLI",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Trae", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Trae",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "JetBrains", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "JetBrains",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Qwen Code", command: "qwen mcp add expect -- npx -y expect-cli@latest mcp", lang: "sh" as const },
-  { name: "Amp", command: "amp mcp add expect -- npx -y expect-cli@latest mcp", lang: "sh" as const },
-  { name: "VS 2022", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Qwen Code",
+    command: "qwen mcp add expect -- npx -y expect-cli@latest mcp",
+    lang: "sh" as const,
+  },
+  {
+    name: "Amp",
+    command: "amp mcp add expect -- npx -y expect-cli@latest mcp",
+    lang: "sh" as const,
+  },
+  {
+    name: "VS 2022",
+    command: `{
   "inputs": [],
   "servers": {
     "expect": {
@@ -1080,17 +1221,29 @@ args = ["-y", "expect-cli@latest", "mcp"]`, lang: "toml" as const },
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Qodo Gen", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Qodo Gen",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Factory", command: "droid mcp add expect -- npx -y expect-cli@latest mcp", lang: "sh" as const },
-  { name: "Crush", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Factory",
+    command: "droid mcp add expect -- npx -y expect-cli@latest mcp",
+    lang: "sh" as const,
+  },
+  {
+    name: "Crush",
+    command: `{
   "$schema": "https://charm.land/crush.json",
   "mcp": {
     "expect": {
@@ -1099,15 +1252,21 @@ args = ["-y", "expect-cli@latest", "mcp"]`, lang: "toml" as const },
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
-  { name: "Rovo Dev", command: `{
+}`,
+    lang: "json" as const,
+  },
+  {
+    name: "Rovo Dev",
+    command: `{
   "mcpServers": {
     "expect": {
       "command": "npx",
       "args": ["-y", "expect-cli@latest", "mcp"]
     }
   }
-}`, lang: "json" as const },
+}`,
+    lang: "json" as const,
+  },
 ];
 
 export default function HomePage() {
@@ -1174,6 +1333,7 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMcpScrollFade("right");
     if (mcpPreRef.current) mcpPreRef.current.scrollLeft = 0;
     requestAnimationFrame(updateMcpScrollFade);
@@ -1213,7 +1373,9 @@ export default function HomePage() {
             >
               Expect
             </div>
-            <div className="[letter-spacing:0em] [white-space-collapse:preserve] font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif] font-medium text-[17px]/[25px] text-[#707070]">A skill for testing your agent&apos;s code in a real browser.</div>
+            <div className="[letter-spacing:0em] [white-space-collapse:preserve] font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif] font-medium text-[17px]/[25px] text-[#707070]">
+              A skill for testing your agent&apos;s code in a real browser.
+            </div>
           </div>
           {/**
            * from Paper
@@ -1454,11 +1616,15 @@ export default function HomePage() {
               </div>
             </div>
           </a>
-          <div className="left-0 top-0 w-full min-w-0 [white-space-collapse:preserve] relative text-[#3F3F3F] font-['OpenRunde-Semibold','Open_Runde',system-ui,sans-serif] font-semibold text-[18px]/5.75 mt-14" style={{ marginBottom: "10px" }}>
+          <div
+            className="left-0 top-0 w-full min-w-0 [white-space-collapse:preserve] relative text-[#3F3F3F] font-['OpenRunde-Semibold','Open_Runde',system-ui,sans-serif] font-semibold text-[18px]/5.75 mt-14"
+            style={{ marginBottom: "10px" }}
+          >
             MCP clients
           </div>
           <div className="[letter-spacing:0em] max-w-102 [white-space-collapse:preserve] font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif] font-medium text-[16px]/6.75 text-[#707070] mt-1.5">
-            Expect supports all MCP clients that implement the stdio transport. Below are configuration examples for popular clients.
+            Expect supports all MCP clients that implement the stdio transport. Below are
+            configuration examples for popular clients.
           </div>
           <div
             className="[font-synthesis:none] flex w-full flex-col rounded-[14px] [box-shadow:#0000000F_0px_0px_0px_1px,#0000000F_0px_1px_2px_-1px,#0000000A_0px_2px_4px] antialiased cursor-text"
@@ -1466,36 +1632,42 @@ export default function HomePage() {
           >
             <div className="flex items-center justify-between bg-white rounded-t-[14px] pt-2.5 pr-3.5 pb-2.5 pl-3.75">
               <div className="flex items-center gap-1.5">
-              <div className="font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif] font-medium text-[15.5px]/5.75 text-[#6e6e6e]">
-                Agent:
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger className="cursor-pointer flex items-center gap-1.5 outline-none">
-                  <div className="font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif] font-medium text-[15.5px]/5.75 text-[#414141]">
-                    {MCP_CLIENTS[activeMcpClient].name}
-                  </div>
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 10 10"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M2.5 4L5 6.5L7.5 4" stroke="#696969" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="max-h-64 w-56 scrollbar-visible font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif]">
-                  {MCP_CLIENTS.map((client, index) => (
-                    <DropdownMenuItem
-                      key={client.name}
-                      className={`cursor-pointer font-medium text-[15px]/5.75 ${activeMcpClient === index ? "text-[#1a1a1a] bg-accent" : "text-[#696969]"}`}
-                      onClick={() => setActiveMcpClient(index)}
+                <div className="font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif] font-medium text-[15.5px]/5.75 text-[#6e6e6e]">
+                  Agent:
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="cursor-pointer flex items-center gap-1.5 outline-none">
+                    <div className="font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif] font-medium text-[15.5px]/5.75 text-[#414141]">
+                      {MCP_CLIENTS[activeMcpClient].name}
+                    </div>
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 10 10"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      {client.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      <path
+                        d="M2.5 4L5 6.5L7.5 4"
+                        stroke="#696969"
+                        strokeWidth="1.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="max-h-64 w-56 scrollbar-visible font-['OpenRunde-Medium','Open_Runde',system-ui,sans-serif]">
+                    {MCP_CLIENTS.map((client, index) => (
+                      <DropdownMenuItem
+                        key={client.name}
+                        className={`cursor-pointer font-medium text-[15px]/5.75 ${activeMcpClient === index ? "text-[#1a1a1a] bg-accent" : "text-[#696969]"}`}
+                        onClick={() => setActiveMcpClient(index)}
+                      >
+                        {client.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <button
                 type="button"
@@ -1515,7 +1687,12 @@ export default function HomePage() {
                     viewBox="0 0 12 12"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    style={{ height: "20px", verticalAlign: "middle", width: "20px", overflow: "clip" }}
+                    style={{
+                      height: "20px",
+                      verticalAlign: "middle",
+                      width: "20px",
+                      overflow: "clip",
+                    }}
                   >
                     <path
                       fillRule="evenodd"
@@ -1533,7 +1710,13 @@ export default function HomePage() {
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                     color="#0A0A0A"
-                    style={{ height: "20px", verticalAlign: "middle", width: "20px", overflow: "clip", flexShrink: "0" }}
+                    style={{
+                      height: "20px",
+                      verticalAlign: "middle",
+                      width: "20px",
+                      overflow: "clip",
+                      flexShrink: "0",
+                    }}
                   >
                     <path
                       fillRule="evenodd"
@@ -1556,11 +1739,20 @@ export default function HomePage() {
                 onScroll={updateMcpScrollFade}
                 className="min-w-0 font-mono-override font-medium text-[15.5px]/5.75 whitespace-pre overflow-x-auto scrollbar-none"
                 style={{
-                  maskImage: mcpScrollFade === "none" ? "none" : `linear-gradient(to right, ${mcpScrollFade === "left" || mcpScrollFade === "both" ? "transparent, black 32px" : "black 0%"}, ${mcpScrollFade === "right" || mcpScrollFade === "both" ? "black calc(100% - 32px), transparent" : "black 100%"})`,
-                  WebkitMaskImage: mcpScrollFade === "none" ? "none" : `linear-gradient(to right, ${mcpScrollFade === "left" || mcpScrollFade === "both" ? "transparent, black 32px" : "black 0%"}, ${mcpScrollFade === "right" || mcpScrollFade === "both" ? "black calc(100% - 32px), transparent" : "black 100%"})`,
+                  maskImage:
+                    mcpScrollFade === "none"
+                      ? "none"
+                      : `linear-gradient(to right, ${mcpScrollFade === "left" || mcpScrollFade === "both" ? "transparent, black 32px" : "black 0%"}, ${mcpScrollFade === "right" || mcpScrollFade === "both" ? "black calc(100% - 32px), transparent" : "black 100%"})`,
+                  WebkitMaskImage:
+                    mcpScrollFade === "none"
+                      ? "none"
+                      : `linear-gradient(to right, ${mcpScrollFade === "left" || mcpScrollFade === "both" ? "transparent, black 32px" : "black 0%"}, ${mcpScrollFade === "right" || mcpScrollFade === "both" ? "black calc(100% - 32px), transparent" : "black 100%"})`,
                 }}
               >
-                {highlightSyntax(MCP_CLIENTS[activeMcpClient].command, MCP_CLIENTS[activeMcpClient].lang)}
+                {highlightSyntax(
+                  MCP_CLIENTS[activeMcpClient].command,
+                  MCP_CLIENTS[activeMcpClient].lang,
+                )}
               </pre>
             </div>
           </div>
