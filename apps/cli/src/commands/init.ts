@@ -64,16 +64,16 @@ const promptBrowserMode = async (flagMode: BrowserMode | undefined): Promise<Bro
   const response = await prompts({
     type: "select",
     name: "browserMode",
-    message: "How should Expect launch the browser?",
+    message: "Pick the default browser experience (your agent can change this later)",
     choices: [
       {
         title: "Open a browser window (recommended)",
-        description: "Launches a visible browser for each test run",
+        description: "Launches a visible browser so you can watch each test run",
         value: "headed",
       },
       {
         title: "Run headless",
-        description: "No visible browser — best for CI and agents",
+        description: "No visible browser — best for CI and background agents",
         value: "headless",
       },
     ],
